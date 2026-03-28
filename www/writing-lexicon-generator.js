@@ -285,7 +285,7 @@ function generateAppearanceFromLexicon(star, gender, age) {
     appearance += `${genderPrefix}是${ageDesc}的${genderDesc}人物，${genderDesc}的外貌给人留下深刻印象。\n\n`;
     
     appearance += `**面容特征**：\n`;
-    appearance += `- ${genderPrefix}长着一副${faceStyle}${faceShape}\n`;
+    appearance += `- ${genderPrefix}长着一副${style}的${faceShape}\n`;
     appearance += `- ${eyes}，${eyebrows}\n`;
     appearance += `- ${nose}，${lips}\n`;
     appearance += `- ${skin}，${hair}\n\n`;
