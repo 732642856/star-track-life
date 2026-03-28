@@ -290,6 +290,26 @@ body {
     margin-bottom: var(--space-4);
 }
 
+.name-input {
+    width: 100%;
+    padding: var(--space-4) var(--space-5);
+    font-size: var(--text-lg);
+    font-family: var(--font-sans);
+    color: var(--color-text);
+    background: var(--color-surface);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.name-input:focus {
+    border-color: var(--color-primary);
+}
+.name-input::placeholder {
+    color: var(--color-text-muted, #aaa);
+}
+
 .option-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
