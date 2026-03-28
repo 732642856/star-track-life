@@ -257,15 +257,15 @@ function generateAppearanceFromLexicon(star, gender, age) {
     const style = styles[star] || '普通';
     
     // 随机选择各个部位
-    const faceShape = randomPick(APPEARANCE_LEXICON.faceShape);
-    const eyes = randomPick(APPEARANCE_LEXICON.eyes);
-    const eyebrows = randomPick(APPEARANCE_LEXICON.eyebrows);
-    const nose = randomPick(APPEARANCE_LEXICON.nose);
-    const lips = randomPick(APPEARANCE_LEXICON.lips);
-    const skin = randomPick(APPEARANCE_LEXICON.skin);
-    const hair = randomPick(APPEARANCE_LEXICON.hair);
-    const body = randomPick(APPEARANCE_LEXICON.body);
-    const temperament = randomPick(APPEARANCE_LEXICON.temperament);
+    const faceShape = _randomPickLocal(APPEARANCE_LEXICON.faceShape);
+    const eyes = _randomPickLocal(APPEARANCE_LEXICON.eyes);
+    const eyebrows = _randomPickLocal(APPEARANCE_LEXICON.eyebrows);
+    const nose = _randomPickLocal(APPEARANCE_LEXICON.nose);
+    const lips = _randomPickLocal(APPEARANCE_LEXICON.lips);
+    const skin = _randomPickLocal(APPEARANCE_LEXICON.skin);
+    const hair = _randomPickLocal(APPEARANCE_LEXICON.hair);
+    const body = _randomPickLocal(APPEARANCE_LEXICON.body);
+    const temperament = _randomPickLocal(APPEARANCE_LEXICON.temperament);
     
     // 根据性别调整
     const genderPrefix = gender === 'male' ? '他' : '她';
@@ -295,8 +295,8 @@ function generateAppearanceFromLexicon(star, gender, age) {
     appearance += `- ${genderDesc}的${style}气质，让人难以忘怀\n\n`;
     
     // 随机添加1-2个细节
-    const gesture = randomPick(DETAIL_LEXICON.gestures);
-    const voice = randomPick(DETAIL_LEXICON.voice);
+    const gesture = _randomPickLocal(DETAIL_LEXICON.gestures);
+    const voice = _randomPickLocal(DETAIL_LEXICON.voice);
     
     appearance += `**细节特征**：\n`;
     appearance += `- ${genderPrefix}${gesture}\n`;
@@ -354,10 +354,10 @@ function generateDetailFromLexicon(star) {
     
     detail += `**细节描写**\n\n`;
     
-    const walking = randomPick(DETAIL_LEXICON.walking);
-    const standing = randomPick(DETAIL_LEXICON.standing);
-    const sitting = randomPick(DETAIL_LEXICON.sitting);
-    const smile = randomPick(DETAIL_LEXICON.smile);
+    const walking = _randomPickLocal(DETAIL_LEXICON.walking);
+    const standing = _randomPickLocal(DETAIL_LEXICON.standing);
+    const sitting = _randomPickLocal(DETAIL_LEXICON.sitting);
+    const smile = _randomPickLocal(DETAIL_LEXICON.smile);
     
     detail += `- ${gender}${walking}\n`;
     detail += `- ${gender}${standing}\n`;
@@ -368,7 +368,9 @@ function generateDetailFromLexicon(star) {
 }
 
 // 随机选择工具
-function randomPick(array) {
+// 私有 randomPick，避免覆盖 character-bio-enhanced-generator.js 里带 fallback 的同名全局函数
+function _randomPickLocal(array) {
+    if (!array || array.length === 0) return null;
     return array[Math.floor(Math.random() * array.length)];
 }
 

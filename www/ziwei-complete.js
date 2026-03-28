@@ -423,8 +423,8 @@ const MALEVOLENT_STARS = {
     '地劫': { name: '地劫', element: '火', trait: '劫夺、破财、突变', desc: '地劫为劫夺之星，主破财突变，易有损失' }
 };
 
-// 四化星
-const FOUR_TRANSFORMATIONS = {
+// 四化星（用var避免与后加载文件重复const声明冲突）
+var FOUR_TRANSFORMATIONS = {
     '化禄': { name: '化禄', element: '土', trait: '财富、机遇、人缘', desc: '化禄主财富增长，机遇良好，人缘旺盛' },
     '化权': { name: '化权', element: '火', trait: '权力、掌控、晋升', desc: '化权主权力掌控，决策力强，易有晋升' },
     '化科': { name: '化科', element: '水', trait: '名声、学业、贵人', desc: '化科主名声远播，学业有成，贵人相助' },
@@ -434,8 +434,8 @@ const FOUR_TRANSFORMATIONS = {
 // 地支
 const EARTHLY_BRANCHES = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
 
-// 144种命盘组合（简化版，实际根据出生年月日时计算）
-const CHART_PATTERNS = [
+// 144种命盘组合（简化版，实际根据出生年月日时计算）（用var避免与后加载文件重复const声明冲突）
+var CHART_PATTERNS = [
     { pattern: '紫微天府', mainStars: ['紫微', '天府'], trait: '紫府同宫格', desc: '帝王之相，富贵双全，领导才能出众' },
     { pattern: '紫微贪狼', mainStars: ['紫微', '贪狼'], trait: '桃花犯主格', desc: '多才多艺，桃花旺盛，易沉迷享乐' },
     { pattern: '紫微天相', mainStars: ['紫微', '天相'], trait: '君臣庆会格', desc: '贵人相助，事业稳定，有管理才能' },
