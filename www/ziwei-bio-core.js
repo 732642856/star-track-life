@@ -340,6 +340,60 @@ function _getSihuaCognitiveFlaw(sihua) {
     return f[sihua] || '特定方式';
 }
 
+function _getSihuaPositive(sihua) {
+    var p = {
+        '化禄型':'天赋自然流露，无需刻意努力就能做到',
+        '化禄':  '天赋自然流露，无需刻意努力就能做到',
+        '化权型':'主导能力强，执行力强，有责任感',
+        '化权':  '主导能力强，执行力强，有责任感',
+        '化科型':'注重形象，理性思考，追求完美',
+        '化科':  '注重形象，理性思考，追求完美',
+        '化忌型':'深刻洞察，坚持不懈，执著追求',
+        '化忌':  '深刻洞察，坚持不懈，执著追求',
+        '禄权叠加型':'天赋加掌控，能力强，效率高',
+        '权忌冲突型':'在矛盾中成长，思想深刻',
+        '科忌矛盾型':'理想与现实碰撞，思想深刻',
+        '禄忌纠缠型':'在纠缠中探索，情感丰富'
+    };
+    return p[sihua] || '独特的心理特质';
+}
+
+function _getSihuaNegative(sihua) {
+    var n = {
+        '化禄型':'过度依赖天赋，缺乏持续动力',
+        '化禄':  '过度依赖天赋，缺乏持续动力',
+        '化权型':'控制欲过强，难以放手',
+        '化权':  '控制欲过强，难以放手',
+        '化科型':'过度在意他人眼光，压抑真实情感',
+        '化科':  '过度在意他人眼光，压抑真实情感',
+        '化忌型':'执念深重，难以释怀过去',
+        '化忌':  '执念深重，难以释怀过去',
+        '禄权叠加型':'欲望过强，容易膨胀',
+        '权忌冲突型':'内心纠结，难以取舍',
+        '科忌矛盾型':'理性与执念冲突，内耗严重',
+        '禄忌纠缠型':'情感波动大，难以稳定'
+    };
+    return n[sihua] || '需要平衡的特质';
+}
+
+function _getSihuaPrinciple(sihua) {
+    var pr = {
+        '化禄型':'这是人格中最自然、最轻松的部分，天生优势',
+        '化禄':  '这是人格中最自然、最轻松的部分，天生优势',
+        '化权型':'这是人格中通过掌控获得安全感的部分',
+        '化权':  '这是人格中通过掌控获得安全感的部分',
+        '化科型':'这是人格中通过理性管理维护自我的部分',
+        '化科':  '这是人格中通过理性管理维护自我的部分',
+        '化忌型':'这是人格中最深层的伤痕，也是成长的契机所在',
+        '化忌':  '这是人格中最深层的伤痕，也是成长的契机所在',
+        '禄权叠加型':'天赋与掌控的结合，需要平衡发挥',
+        '权忌冲突型':'掌控与执念的冲突，需要化解',
+        '科忌矛盾型':'理性与执念的矛盾，需要整合',
+        '禄忌纠缠型':'享受与执念的纠缠，需要解脱'
+    };
+    return pr[sihua] || '独特的心理机制';
+}
+
 function _getDramaticRole(patternType) {
     var r = {
         '杀破狼':   '催化剂或死敌——推动剧情发展，制造冲突',
@@ -538,6 +592,9 @@ function generateZiweiCharacterBio(userData, chart, attributes, sihuaType) {
     bio += `# 五、四化心理动机深度解析\n\n`;
     bio += `**${sihuaType}的核心特质：** ${sihuaData.desc || sihuaDetails.psychology.slice(0, 40)}\n\n`;
     bio += `**心理机制：** ${sihuaDetails.psychology}\n\n`;
+    bio += `**正向表达：** ${_getSihuaPositive(sihuaType)}\n\n`;
+    bio += `**负向表达：** ${_getSihuaNegative(sihuaType)}\n\n`;
+    bio += `**心理学原理：** ${_getSihuaPrinciple(sihuaType)}\n\n`;
     bio += `**日常表现：** ${sihuaDetails.manifestation}\n\n`;
     bio += `**最大挑战：** ${sihuaDetails.challenge}\n\n`;
     bio += `**成长方向：** ${sihuaDetails.growth}\n\n`;
