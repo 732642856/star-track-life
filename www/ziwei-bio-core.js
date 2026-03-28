@@ -1,0 +1,576 @@
+/**
+ * 紫微斗数人物小传核心引擎 v1.0
+ * 整合 ziwei-core-combined.js 的独有数据库 + 新版8模块生成函数
+ * 复用现有 ziwei-psychology.js 中的：PSYCHOLOGY_TERMS / SIHUA_PSYCHOLOGY_MAPPING /
+ *   PALACE_PSYCHOLOGY_MAPPING / CP_PREFERENCE_RULES / GAN_FLYING_PSYCHOLOGY /
+ *   SAN_FANG_SI_ZHENG_PSYCHOLOGY / JIA_JU_PSYCHOLOGY / AN_HE_PSYCHOLOGY
+ */
+
+// ==================== 时辰能量库 ====================
+var SHI_CHEN_ENERGY = {
+    '子': { element: '水', yinYang: '阴', peak: '深夜',   trait: '深沉内敛、直觉敏锐、善于谋略' },
+    '丑': { element: '土', yinYang: '阴', peak: '凌晨',   trait: '稳如泰山、耐力持久、积蓄力量' },
+    '寅': { element: '木', yinYang: '阳', peak: '黎明',   trait: '生机勃勃、开创进取、充满希望' },
+    '卯': { element: '木', yinYang: '阴', peak: '日出',   trait: '温润如玉、善解人意、柔中带刚' },
+    '辰': { element: '土', yinYang: '阳', peak: '上午',   trait: '厚重稳健、包容万象、有威严' },
+    '巳': { element: '火', yinYang: '阴', peak: '正午前', trait: '热情内敛、智慧深沉、善于表达' },
+    '午': { element: '火', yinYang: '阳', peak: '正午',   trait: '光明磊落、热情奔放、有领导力' },
+    '未': { element: '土', yinYang: '阴', peak: '下午',   trait: '温厚敦实、包容理解、有耐心' },
+    '申': { element: '金', yinYang: '阳', peak: '傍晚前', trait: '锋芒毕露、锐意进取、执行力强' },
+    '酉': { element: '金', yinYang: '阴', peak: '日落',   trait: '精致细腻、完美主义、有品位' },
+    '戌': { element: '土', yinYang: '阳', peak: '夜晚',   trait: '忠诚可靠、有责任感、守护型' },
+    '亥': { element: '水', yinYang: '阴', peak: '深夜',   trait: '智慧深邃、有灵性、直觉强' }
+};
+window.SHI_CHEN_ENERGY = SHI_CHEN_ENERGY;
+
+// ==================== 八刻能量强度 ====================
+var KE_INTENSITY = {
+    '初刻': { level: 1, influence: '潜质型', trait: '特质隐藏，需要环境激发' },
+    '一刻': { level: 2, influence: '渐显型', trait: '特质初现，需要时间成长' },
+    '二刻': { level: 3, influence: '明朗型', trait: '特征明显，个性鲜明' },
+    '三刻': { level: 4, influence: '强显型', trait: '特质强烈，优缺点都明显' },
+    '正刻': { level: 5, influence: '巅峰型', trait: '能量最强，影响力大' },
+    '正一刻': { level: 4, influence: '转折型', trait: '能量转折，特征复杂' },
+    '正二刻': { level: 3, influence: '收敛型', trait: '能量收敛，内敛深沉' },
+    '末刻': { level: 2, influence: '归藏型', trait: '能量归藏，大智若愚' }
+};
+window.KE_INTENSITY = KE_INTENSITY;
+
+// ==================== 8种人格驱动类型 ====================
+var PERSONALITY_8_TYPES = {
+    '天赋优势型（化禄阳）': {
+        sihua: '化禄', gender: '阳',
+        desc: '天生有某种优势，轻松自然就做得比别人好',
+        visibleTrait: '轻松、自信、有魅力、多才多艺',
+        hiddenNeed: '害怕失去优势，对"不擅长"有焦虑',
+        lifePattern: '顺风顺水时光芒四射，逆境时容易逃避',
+        example: '像天生会表演的演员，天生有商业头脑的商人'
+    },
+    '掌控主导型（化权阳）': {
+        sihua: '化权', gender: '阳',
+        desc: '强烈的主导欲，凡事都要掌控在手中',
+        visibleTrait: '强势、果断、有领导力、执行力强',
+        hiddenNeed: '用掌控掩饰不安全感，害怕失控',
+        lifePattern: '成功时一呼百应，失败时孤独压抑',
+        example: '像雷厉风行的将军，不怒自威的管理者'
+    },
+    '声誉理想型（化科阳）': {
+        sihua: '化科', gender: '阳',
+        desc: '极度在意他人看法，用理想形象示人',
+        visibleTrait: '理性、克制、有原则、注重形象',
+        hiddenNeed: '压抑真实情感，活在他人期待中',
+        lifePattern: '功成名就时内心空虚，需要学会真实',
+        example: '像完美的学者、无懈可击的君子'
+    },
+    '执念深重型（化忌阳）': {
+        sihua: '化忌', gender: '阳',
+        desc: '有某种执念或伤口，成为人生的驱动力',
+        visibleTrait: '深刻、执著、有韧性、不轻易放弃',
+        hiddenNeed: '执念是养分也是枷锁，需要转化',
+        lifePattern: '苦难中成长，执念成就也折磨',
+        example: '像复仇的英雄、为爱执著的痴情人'
+    },
+    '天赋内秀型（化禄阴）': {
+        sihua: '化禄', gender: '阴',
+        desc: '天赋内敛，外表平静内心丰富',
+        visibleTrait: '温和、内敛、有内涵、低调优雅',
+        hiddenNeed: '害怕被忽视，需要被真正理解',
+        lifePattern: '默默耕耘后绽放，大器晚成',
+        example: '像低调的天才、不张扬的艺术家'
+    },
+    '掌控内敛型（化权阴）': {
+        sihua: '化权', gender: '阴',
+        desc: '内在有强烈掌控欲，外表温和',
+        visibleTrait: '外柔内刚、有城府、善于谋略',
+        hiddenNeed: '温和是策略，掌控是本质',
+        lifePattern: '韬光养晦后发力，以柔克刚',
+        example: '像深沉的政治家、腹黑的谋士'
+    },
+    '声誉内修型（化科阴）': {
+        sihua: '化科', gender: '阴',
+        desc: '追求精神层面的完美和清高',
+        visibleTrait: '清高、自律、有精神追求、内心丰富',
+        hiddenNeed: '难以接受现实的粗糙，需要落地',
+        lifePattern: '精神世界的贵族，现实的隐士',
+        example: '像清高的隐士、精神导师'
+    },
+    '执念内化型（化忌阴）': {
+        sihua: '化忌', gender: '阴',
+        desc: '执念深藏内心，化创伤为深度',
+        visibleTrait: '深沉、敏感、有洞察力、理解他人',
+        hiddenNeed: '与过去和解，化执念为智慧',
+        lifePattern: '在黑暗中寻找光明，伤痕成勋章',
+        example: '像治愈他人的心理师、历劫重生的智者'
+    }
+};
+window.PERSONALITY_8_TYPES = PERSONALITY_8_TYPES;
+
+// ==================== 主星深度描述库（14星全覆盖） ====================
+var STAR_DETAILED_DESCRIPTIONS = {
+    '七杀': {
+        personality: '刚毅果决、雷厉风行、不怒自威、铁面无私。行事如疾风骤雨，决策如雷霆万钧。不喜拖泥带水，崇尚快刀斩乱麻。内心藏着一团烈火，外表却冷如寒冰。',
+        psychology: '潜意识中渴望掌控一切，对失控有深层恐惧。用强势和果断来掩饰内心的脆弱，用征服来证明自己的价值。每一次成功的征服，都在填补童年时期的不安全感。',
+        relationship: '在感情中容易陷入"征服-被征服"的模式。渴望被理解，却不善于表达。需要一个既能独立自主，又能在关键时刻示弱的伴侣。',
+        growth: '学会在强硬中保留柔软，在果断中留有余地。理解真正的强大不是征服他人，而是掌控自己。',
+        wound: '童年可能经历过被迫服从的创伤，从此立誓不再被人控制。或曾目睹软弱带来的灾难，决心让自己变得强大。',
+        shadow: '过度强势可能导致孤独，因为无人敢接近。对失败的恐惧可能让决策过于冒险，陷入"不成功便成仁"的极端思维。'
+    },
+    '破军': {
+        personality: '破旧立新、颠覆常规、开拓先锋、不甘平庸。眼中的世界不是"是什么"，而是"可以是什么"。破坏力与创造力并存，每一次打破都是为了更好的重建。',
+        psychology: '内心深处对现状有强烈的不满，总在寻找变革的机会。不是在变革中，就是在准备变革的路上。对稳定和重复有本能的排斥。',
+        relationship: '容易被与众不同的人吸引，讨厌千篇一律的伴侣。在亲密关系中需要新鲜感和刺激，容易因为平淡而感到窒息。',
+        growth: '学会在变革中保留有价值的传统，在创新中尊重他人的感受。理解破坏容易，建设更难，需要耐心和智慧。',
+        wound: '可能经历过重大的人生变革（家庭变故、学校转学、环境迁移），从此对"变化"有了特殊的理解。',
+        shadow: '过度追求变革可能让生活失去根基，陷入不断打破重建的循环。可能因为缺乏耐心而错过深度关系的建立。'
+    },
+    '贪狼': {
+        personality: '多才多艺、八面玲珑、魅力四射、享乐主义。天生懂得如何让人开心，有让人移不开眼的本事。对生活充满热情，对美好事物有强烈的追求。',
+        psychology: '内心深处渴望被关注、被喜爱。通过才艺和魅力来获得认可，通过社交来填补内心的空虚。害怕孤独，害怕被遗忘。',
+        relationship: '在感情中容易成为焦点，但也容易陷入多重关系。需要学会专注和忠诚，理解真正的亲密关系需要时间的沉淀。',
+        growth: '学会在追求快乐中保持清醒，在社交中保持真诚。理解内在价值比外在认可更重要，深度的少数关系比浅度的多数关系更有意义。',
+        wound: '童年可能缺乏足够的关注，或是在比较中长大，从此对"被喜爱"有强烈的需求。',
+        shadow: '过度追求享乐可能让人生失去方向，沉溺于即时的快乐而忽略长期的价值。'
+    },
+    '紫微': {
+        personality: '气宇轩昂、胸怀大志、领袖气质、自尊自强。天生有让人信服的气场，不用刻意表现就能获得尊重。做任何事都有"要做就做最好"的信念。',
+        psychology: '潜意识中需要被仰视、被尊重。对平庸有本能的恐惧，对失败有强烈的不安。用成就和地位来证明自己的价值，用完美表现来维持自尊。',
+        relationship: '容易被同样优秀的人吸引，但相处中容易出现"谁说了算"的权力斗争。需要学会放下身段，理解真正的强者可以示弱。',
+        growth: '学会接受自己的不完美，理解自尊建立在真实的自我之上，而非外在的成就。',
+        wound: '童年可能生活在高期望的环境中，从小就被灌输"必须优秀"的观念。或经历过被轻视的创伤，从此立誓要站在顶峰。',
+        shadow: '过度追求完美可能让人际关系变得紧张。对失败的恐惧可能让决策过于保守，不敢冒险。'
+    },
+    '天府': {
+        personality: '稳重可靠、运筹帷幄、守成有道、包容大度。善于将混乱变得有序，将危机转为机遇。有让人安心的本事，是团队的稳定器。',
+        psychology: '内心深处渴望安全感和确定性。通过掌控和规划来获得安心，通过积累和守成来抵御未知的风险。对失去有强烈的恐惧。',
+        relationship: '需要同样稳重可靠的伴侣，能共同建立稳定的生活。在关系中扮演保护者和供养者的角色，有时可能过于保守和谨慎。',
+        growth: '学会在稳定中保持灵活性，在守成中保留创新的空间。理解真正的安全感来自内心的强大，而非外在的掌控。',
+        wound: '童年可能经历过物质或情感的匮乏，从此对"拥有"有强烈的执念。或目睹过失去带来的痛苦，决心建立稳固的堡垒。',
+        shadow: '过度追求稳定可能错失变革的机会，让生活陷入固步自封。'
+    },
+    '天机': {
+        personality: '思维敏捷、谋略过人、洞察先机、运筹帷幄。眼中的世界是一盘棋，永远比别人多想三步。善于在复杂中找到简单，在混乱中发现规律。',
+        psychology: '内心世界永不停歇，思维像一台高速运转的机器。通过思考来应对不安，通过策划来掌控未来。对未知有既害怕又好奇的矛盾心理。',
+        relationship: '需要能跟上自己思维节奏的伴侣，能进行深度对话。在关系中可能过于理性，需要学会用情感而非逻辑来处理亲密关系。',
+        growth: '学会将思维转化为行动，将计划转化为成果。理解有时候"足够好"比"完美计划"更重要。',
+        wound: '童年可能通过观察和思考来应对环境的复杂性，学会通过预见风险来保护自己。',
+        shadow: '过度思考可能让行动瘫痪，陷入"分析瘫痪"的状态。可能因为总是预见风险而变得焦虑。'
+    },
+    '太阳': {
+        personality: '光明磊落、热情开朗、正义凛然、感染力强。像一个小太阳，走到哪里都能照亮周围的人。有强烈的理想主义情怀，相信正义终将战胜邪恶。',
+        psychology: '内心深处需要被看见、被认可。通过发光发热来证明自己的价值，通过帮助他人来获得存在感。害怕被忽视，害怕失去影响力。',
+        relationship: '容易被同样阳光的人吸引，或被需要帮助的人吸引。在关系中可能过于付出，需要学会接受他人的帮助和关爱。',
+        growth: '学会在接受与付出之间保持平衡，在发光的同时也允许自己休息。',
+        wound: '童年可能被迫扮演"乖孩子"或"小大人"的角色，承担了过多的期待和责任。',
+        shadow: '过度付出可能让身心俱疲，陷入"燃烧自己照亮他人"的模式。'
+    },
+    '太阴': {
+        personality: '温婉柔和、细腻敏感、诗意盎然、母性光辉。像一缕月光，温柔地照进他人的心里。有强烈的审美能力和艺术天分，对美有独特的理解。',
+        psychology: '内心世界丰富而细腻，对情感有深度的感知能力。通过艺术和美好来应对世界的复杂，通过温柔来保护自己。害怕冲突，害怕粗糙。',
+        relationship: '需要能理解和呵护自己的伴侣，能欣赏自己的细腻和敏感。在关系中容易受伤，需要学会保护自己的边界。',
+        growth: '学会在柔软中保持力量，在温和中坚持原则。理解温柔不是软弱，而是一种更强大的力量。',
+        wound: '童年可能在敏感的环境中长大，学会通过察言观色来保护自己。或经历过粗暴的对待，从此对温柔有强烈的渴望。',
+        shadow: '过度敏感可能让生活充满不必要的痛苦，过度包容可能让边界模糊。'
+    },
+    '武曲': {
+        personality: '刚毅果断、务实重财、行动力强、独立自主。不说废话，只看结果。对金钱和实际利益有清醒的判断，是团队中最可靠的执行者。',
+        psychology: '内心追求实际成果，对空谈和幻想有天然的排斥。通过成就和积累来建立安全感，害怕一无所有。',
+        relationship: '需要同样务实、有能力的伴侣，共同建设实际的生活。在感情中可能显得冷漠，实则是用行动而非语言来表达爱。',
+        growth: '学会在务实中保留浪漫，在行动中照顾他人的情感需求。理解情感不能只用效率来衡量。',
+        wound: '可能经历过匮乏或被迫独立，从此形成"靠自己"的人生哲学。',
+        shadow: '过度务实可能让关系失去温度，让他人感到被忽视。'
+    },
+    '天同': {
+        personality: '温和善良、与世无争、福气深厚、享受生活。天生有一种让人放松的气场，走进哪个团体都能带来和谐。对物质要求不高，更在意内心的平静。',
+        psychology: '内心深处追求平静和和谐，对冲突有本能的回避。通过和谐关系来获得安全感，通过助人来体现价值。',
+        relationship: '需要同样温和、能陪伴的伴侣，一起享受生活的小美好。在关系中往往是付出方，需要学会表达自己的需求。',
+        growth: '学会在和谐中保持自我，在温和中坚持立场。理解有时候冲突是成长的必经之路。',
+        wound: '可能在一个压抑冲突的家庭环境中成长，学会了用顺从来换取和平。',
+        shadow: '过度回避冲突可能导致问题积累，最终在平静下暗流涌动。'
+    },
+    '廉贞': {
+        personality: '复杂好胜、魅力十足、争强好胜、感情多变。像一把双刃剑，美丽而危险。拥有让人着迷的魅力，也有让人敬而远之的锋芒。',
+        psychology: '内心充满矛盾：既渴望被爱，又害怕被束缚；既追求成功，又迷恋放纵。通过竞争和征服来证明自己的魅力。',
+        relationship: '感情世界复杂多变，容易在多段关系中纠缠。需要找到一个既能理解其复杂性，又能给予稳定的伴侣。',
+        growth: '学会在复杂中寻找简单，在矛盾中找到统一。理解真正的魅力来自内心的和谐，而非外在的张力。',
+        wound: '可能经历过情感的背叛或伤害，从此用复杂的外表来保护内心的脆弱。',
+        shadow: '情感上的复杂性可能伤害他人，也可能让自己在纠缠中迷失方向。'
+    },
+    '天相': {
+        personality: '稳重正直、贵人运强、公正持平、善于协调。天生是和平的使者，能在各方之间找到平衡点。有强烈的公义感，不允许不公平的事情发生。',
+        psychology: '内心追求公正和和谐，对不平等有强烈的敏感。通过帮助他人和协调关系来获得满足感。',
+        relationship: '需要同样正直、有品德的伴侣，共同维护双方的尊严。在关系中扮演协调者和守护者的角色。',
+        growth: '学会在公正中保持弹性，理解世界不是非黑即白的。在帮助他人的同时，也要照顾自己的需求。',
+        wound: '可能经历过不公平的对待，从此对正义有强烈的执念。',
+        shadow: '过度追求公正可能让自己陷入不必要的冲突，成为"管太多"的人。'
+    },
+    '天梁': {
+        personality: '清高正直、长辈风范、有原则有底线、守护正义。有一种天然的权威感，让人不自觉地想要倾诉和寻求建议。对年轻人有强烈的保护欲。',
+        psychology: '内心有强烈的使命感，相信自己有责任守护他人和传承智慧。对失序和不公有强烈的反应。',
+        relationship: '容易成为伴侣的精神支柱，但也可能因此形成不平等的关系。需要一个既能尊重其权威，又能给予平等回应的伴侣。',
+        growth: '学会在守护中放手，理解每个人都有自己的成长路径。在给予建议的同时，也要倾听他人的声音。',
+        wound: '可能经历过重要长辈的缺失，从此承担起了不属于自己年龄的责任。',
+        shadow: '过度的清高可能让人感到距离，过强的保护欲可能让他人感到窒息。'
+    },
+    '巨门': {
+        personality: '口才出众、研究精神、洞察人心、直言不讳。说话像手术刀，精准而犀利。对事物有超强的分析能力，能一眼看穿问题的本质。',
+        psychology: '内心对真相有强烈的追求，无法接受谎言和粉饰。通过言语和分析来建立安全感，通过揭示真相来证明自己的价值。',
+        relationship: '需要能进行深度对话、不隐瞒的伴侣。在关系中可能因直言而伤人，需要学会在真诚和体贴之间找到平衡。',
+        growth: '学会在揭示真相的同时，考虑他人的感受。理解有时候温柔的谎言比残酷的真相更有力量。',
+        wound: '可能经历过被欺骗或信息封锁的创伤，从此对真相有强烈的渴望。',
+        shadow: '过于直言可能在无意间伤害他人，过度的怀疑可能让关系充满猜忌。'
+    }
+};
+window.STAR_DETAILED_DESCRIPTIONS = STAR_DETAILED_DESCRIPTIONS;
+
+// ==================== 四化心理深度描述库 ====================
+var SIHUA_DEEP_DESCRIPTIONS = {
+    '化禄型': {
+        psychology: '天赋如流水，自然流淌。做事如呼吸，无需费力。在某个领域天生就有优势，仿佛前世就曾习得。这种天赋带来的是轻松和愉悦，但也可能带来依赖和惰性。',
+        manifestation: '不需要刻意练习就能做好的事、不费力就能获得的东西、天生就有感觉的领域。但也容易因此缺乏动力，不去开发其他潜能。',
+        challenge: '不要让天赋成为舒适圈，不要让轻松成为逃避努力的借口。学会用天赋作为基础，继续深耕和提升。',
+        growth: '在发挥天赋的同时，培养其他能力。理解天赋是起点，不是终点。用天赋来服务更大的目标，而非仅仅享受轻松。'
+    },
+    '化权型': {
+        psychology: '掌控是安全感的来源，失去掌控是最大的恐惧。通过制定规则、做出决策、影响他人来获得确定感。每件事都必须在自己的掌控范围内，否则就会焦虑。',
+        manifestation: '喜欢做决定、不喜欢被安排、凡事都要过问、难以放手。这种特质让执行能力强，但也可能让他人感到压力。',
+        challenge: '学会信任他人，学会放手，学会接受不可控的现实。理解真正的掌控不是控制一切，而是掌控自己的反应。',
+        growth: '培养对他人的信任，培养应对不确定性的能力。学会在失控中找到新的秩序，在放手后建立新的连接。'
+    },
+    '化科型': {
+        psychology: '面子是第二生命，声誉是最重要的资产。极度在意他人的看法，用完美表现来维护形象。理性克制情感，用逻辑和规则来管理自己。',
+        manifestation: '注重仪表和言辞、避免冲突和尴尬、用理性而非情感做决策、在公众场合保持克制。但也可能因此压抑真实的自我。',
+        challenge: '学会展示真实的自己，学会接受不完美。理解真正的声誉建立在真实性之上，而非完美表现。',
+        growth: '培养自我接纳的能力，学会在适当时候卸下完美面具。理解面子是工具，不是目的。真实比完美更有力量。'
+    },
+    '化忌型': {
+        psychology: '执念如附骨之疽，挥之不去。某个未完成的愿望、未解的遗憾、未愈的伤口，成为了人生的驱动力。痛苦是养分，执念是燃料。',
+        manifestation: '反复思考过去、纠结某个问题、难以释怀的遗憾、执著的追求。这种特质带来深度和坚持，但也可能带来痛苦。',
+        challenge: '学会放手，学会与过去和解，学会转化痛苦为成长的力量。理解执念可以成为动力，也可能成为枷锁。',
+        growth: '面对过去的创伤，转化执念为动力，学会放下。理解人生的意义不在于执著于某个结果，而在于过程中的成长。'
+    }
+};
+window.SIHUA_DEEP_DESCRIPTIONS = SIHUA_DEEP_DESCRIPTIONS;
+
+// ==================== 时代伤痕深度描述库 ====================
+var ERA_WOUNDS = {
+    'ancient': {
+        '杀破狼':   '少年目睹家族被仇家灭门，鲜血染红了祖宅的门槛。从此明白，在这个弱肉强食的世界，只有足够强大才能保护所爱之人。',
+        '紫府廉武相': '父亲因政治斗争被陷害入狱，全家一夜之间从云端跌入泥泞。曾经的朋友避之不及，曾经的仆人落井下石。立誓要重新夺回家族的荣耀。',
+        '机月同梁': '母亲在难产中去世，父亲另娶后，后母的冷眼和刻薄让童年充满阴影。学会了察言观色，学会了隐藏真实想法，学会了在不被爱中活下来。',
+        '巨日':     '因直言进谏得罪了权贵，被流放到边疆苦寒之地。途中目睹了官场的黑暗，人性的冷漠，理想被现实碾压成粉末。却仍然相信，正义终将得到伸张。'
+    },
+    'modern': {
+        '杀破狼':   '军阀混战时，家园在炮火中化为灰烬。亲眼看到父亲为了保护家人倒在枪口下，母亲含泪将唯一的口粮塞进自己嘴里后咽气。从此明白，活下去就是最大的复仇。',
+        '紫府廉武相': '家族的票号在金融风暴中破产，祖宅被抵押，仆人散去。曾经衣食无忧的少爷小姐，一夜之间沦为无人问津的落魄者。从此立誓要重建家业。',
+        '机月同梁': '战乱中与家人失散，流落异乡。在陌生人的施舍中长大，学会了对每个人都说谢谢，学会了对每个机会都珍惜。内心深处，永远在寻找回家的路。',
+        '巨日':     '因理想参加革命，目睹战友在眼前牺牲。在生与死的边缘，理解了什么是真正值得用生命去换的东西。从此，用笔作为武器，继续战斗。'
+    },
+    'contemporary': {
+        '杀破狼':   '创业失败，负债累累。曾经的朋友纷纷避让，债权人上门逼债。在绝望的夜晚，差点走上天台，但最终选择咬牙重新开始。',
+        '紫府廉武相': '中年失业，房贷车贷孩子的学费压得喘不过气。曾经的高管变成了送外卖的骑手，但仍然保持着体面，相信这只是人生的低谷而非终点。',
+        '机月同梁': '从小在父母的高期望下长大，每一次考试失利都换来叹息和失望。渐渐学会了压抑真实的自己，活成了别人眼中的"优秀"。',
+        '巨日':     '因为坚持原则得罪了领导，事业发展受阻。看着不如自己的人步步高升，内心充满不甘。但仍然相信，是金子总会发光。'
+    }
+};
+window.ERA_WOUNDS = ERA_WOUNDS;
+
+// ==================== 辅助函数 ====================
+
+function _getProfessionLabel(prof) {
+    var labels = {political:'政界', business:'商界', cultural:'文教', military:'军警', technical:'技术', other:'其他'};
+    return labels[prof] || '其他';
+}
+
+function _getStarPersonality(star) {
+    var p = STAR_DETAILED_DESCRIPTIONS[star];
+    if (p) return p.personality.split('。')[0];
+    var fallback = {
+        '紫微':'尊贵威严、领导力强', '天机':'聪明机智、善于策划', '太阳':'光明磊落、热情大方',
+        '武曲':'刚毅果断、务实重财', '天同':'温和善良、福气深厚', '廉贞':'复杂好胜、魅力十足',
+        '天府':'稳重保守、善于守成', '太阴':'温柔细腻、艺术气质', '贪狼':'多才多艺、桃花旺盛',
+        '巨门':'口才出众、研究精神', '天相':'稳重正直、贵人运强', '天梁':'清高正直、长辈风范',
+        '七杀':'勇猛果断、将星特质', '破军':'开创变革、先锋精神'
+    };
+    return fallback[star] || '独特个性';
+}
+
+function _getStarSpiritualNeed(star) {
+    var needs = {
+        '紫微':'追求尊贵和认可，内心需要被仰视', '天机':'追求智慧和思考，内心永不停歇',
+        '太阳':'追求表达和光明，内心需要被看见', '武曲':'追求实际成果，内心需要成就感',
+        '天同':'追求平静和和谐，内心需要安全感', '廉贞':'追求复杂和刺激，内心需要激情',
+        '天府':'追求稳定和富足，内心需要保障',   '太阴':'追求浪漫和美好，内心需要呵护',
+        '贪狼':'追求刺激和满足，内心需要新鲜感', '巨门':'追求真相和表达，内心需要理解',
+        '天相':'追求公正和和谐，内心需要平衡',   '天梁':'追求清高和理想，内心需要尊重',
+        '七杀':'追求独立和强大，内心需要掌控',   '破军':'追求变革和突破，内心需要自由'
+    };
+    return needs[star] || '追求自我实现';
+}
+
+function _getStarPartnerNeed(star) {
+    var needs = {
+        '紫微':'需要能仰视、尊重的伴侣',         '天机':'需要聪明、能沟通的伴侣',
+        '太阳':'需要阳光、能配合的伴侣',         '武曲':'需要务实、有能力的伴侣',
+        '天同':'需要温和、能陪伴的伴侣',         '廉贞':'需要理解其复杂性的伴侣',
+        '天府':'需要稳重、有担当的伴侣',         '太阴':'需要温柔、能呵护的伴侣',
+        '贪狼':'需要有趣、有品位的伴侣',         '巨门':'需要能沟通、不隐瞒的伴侣',
+        '天相':'需要正直、有品德的伴侣',         '天梁':'需要尊重、能成长的伴侣',
+        '七杀':'需要独立、有担当的伴侣',         '破军':'需要包容、能变化的伴侣'
+    };
+    return needs[star] || '需要能理解的伴侣';
+}
+
+function _getDefenseMechanism(sihua) {
+    var m = {
+        '化禄':'通过轻松愉悦来化解压力',   '化禄型':'通过轻松愉悦来化解压力',
+        '化权':'通过掌控来获得安全感',     '化权型':'通过掌控来获得安全感',
+        '化科':'通过理性管理来维护形象',   '化科型':'通过理性管理来维护形象',
+        '化忌':'通过执念来对抗不安全感',   '化忌型':'通过执念来对抗不安全感'
+    };
+    return m[sihua] || '通过特定方式获得心理平衡';
+}
+
+function _getSihuaCognitiveFlaw(sihua) {
+    var f = {
+        '化禄':'依赖天赋', '化禄型':'依赖天赋',
+        '化权':'通过掌控', '化权型':'通过掌控',
+        '化科':'通过理性管理维持形象', '化科型':'通过理性管理维持形象',
+        '化忌':'通过执念', '化忌型':'通过执念'
+    };
+    return f[sihua] || '特定方式';
+}
+
+function _getDramaticRole(patternType) {
+    var r = {
+        '杀破狼':   '催化剂或死敌——推动剧情发展，制造冲突',
+        '紫府廉武相':'导师或对手——提供智慧或形成对抗',
+        '机月同梁': '守护者或镜像人物——给予支持或形成对比',
+        '巨日':     '理想主义者或公众人物——代表某种价值观'
+    };
+    return r[patternType] || '关键角色';
+}
+
+function _generateAppearanceByStar(star, attribute) {
+    var appearances = {
+        '紫微':'面容方正威严，天庭饱满，眼神坚定，气质尊贵',
+        '天机':'面容清秀，眉目清朗，眼神灵动，身形修长',
+        '太阳':'面容饱满红润，眼神明亮，笑容灿烂，气质阳光',
+        '武曲':'面容刚毅，线条分明，眼神坚定，身形魁梧',
+        '天同':'面容圆润和善，笑容可掬，给人亲切之感',
+        '廉贞':'面容俊美，眼神勾人，自带魅力，身形匀称',
+        '天府':'面容方正稳重，气质可靠，身形端正',
+        '太阴':'面容柔和温婉，气质优雅，身形柔美',
+        '贪狼':'面容俊美，眼神迷人，自带艺术气质',
+        '巨门':'面容严肃，眼神锐利，动作干脆利落',
+        '天相':'面容端正正直，气质稳重，手掌厚实',
+        '天梁':'面容慈祥清高，身形修长，有长辈风范',
+        '七杀':'面容刚毅锐利，眼神威严，身形魁梧',
+        '破军':'面容独特，气质不凡，动作敏捷有力'
+    };
+    var base = appearances[star] || '面容端正，气质不凡';
+    return attribute ? attribute + '。' + base : base;
+}
+
+function _generateSignatureByStar(star) {
+    var s = {
+        '紫微':'习惯性地整理衣袖，确保一丝不苟',
+        '天机':'思考时习惯转动手中物品',
+        '太阳':'笑声爽朗，感染力强，喜欢拍人肩膀',
+        '武曲':'走路带风，脚步声重，从不废话',
+        '天同':'总是带着温和的笑容，说话轻声细语',
+        '廉贞':'眼神魅惑，有意无意吸引他人注意',
+        '天府':'坐姿端正，从不懒散，喜欢用公文包',
+        '太阴':'说话轻柔，容易害羞，喜欢低头',
+        '贪狼':'总是带着迷人的微笑，喜欢展示才艺',
+        '巨门':'说话语速快，思维敏捷，习惯推眼镜',
+        '天相':'说话温和有分寸，喜欢用敬语',
+        '天梁':'说话慢条斯理，喜欢给建议',
+        '七杀':'走路带风，气势逼人，说话简短有力',
+        '破军':'说话直来直去，不留情面，喜欢打破常规'
+    };
+    return s[star] || '有独特的个人习惯';
+}
+
+function _getSihuaAbbr(sihua) {
+    return (sihua || '').replace('型', '');
+}
+
+function _getSihuaKeyword(sihua) {
+    var k = {
+        '化禄':'轻松愉悦', '化禄型':'轻松愉悦',
+        '化权':'强势掌控', '化权型':'强势掌控',
+        '化科':'理性管理', '化科型':'理性管理',
+        '化忌':'执念驱动', '化忌型':'执念驱动'
+    };
+    return k[sihua] || '独特方式';
+}
+
+// ==================== 空间交互模块 ====================
+function _generateSpatialInteraction(chart, sihua) {
+    var mainStar = (chart.stars && chart.stars[0]) || chart.mainStar || '命主';
+    var abbr = _getSihuaAbbr(sihua);
+    var keyword = _getSihuaKeyword(sihua);
+
+    return `## 6.1 宫干飞星心理学\n\n**核心概念：** 命宫宫干飞${abbr}入财帛宫\n\n**能量传递：** 个人能力与财富追求的因果关联\n\n**心理机制：** 通过${keyword}的方式实现人生目标\n\n## 6.2 三方四正心理学\n\n**核心概念：** 命宫、财帛宫、官禄宫、迁移宫的整体格局\n\n**整体解读：** 四宫联动，不可分割单论，体现命运的网状结构\n\n## 6.3 夹局影响心理学\n\n**核心概念：** ${mainStar}被相邻宫位的星曜影响\n\n**隐性力量：** 环境和他人的意志对角色的被动塑造\n\n## 6.4 暗合影响心理学\n\n**核心概念：** 命宫与福德宫的暗合关系\n\n**暗中连接：** 个人能力与精神世界的潜在纽带\n\n`;
+}
+
+// ==================== 灵魂伤痕（融合 ERA_WOUNDS + 星曜伤痕）====================
+function _generateSoulWound(era, patternType, mainStar) {
+    // 优先用具体时代+格局的故事性伤痕
+    var eraKey = {ancient:'ancient', modern:'modern', contemporary:'contemporary'}[era] || 'contemporary';
+    var wounds = ERA_WOUNDS[eraKey] || ERA_WOUNDS['contemporary'];
+    var eraWound = wounds[patternType] || '经历过改变人生的重大事件，在伤痛中蜕变成型';
+
+    // 补充主星层面的心理伤痕
+    var starDetails = STAR_DETAILED_DESCRIPTIONS[mainStar] || {};
+    var starWound = starDetails.wound || '';
+
+    return `**时代伤痕：** ${eraWound}\n\n**星曜伤痕：** ${starWound}\n\n`;
+}
+
+// ==================== 核心生成函数：8模块 2400字+ ====================
+/**
+ * generateZiweiCharacterBio
+ * @param {object} userData   - { name, gender, era, age, profession }
+ * @param {object} chart      - { stars:[], type:'杀破狼', name:'七杀独坐', desc:'...', mainStar }
+ * @param {object} attributes - 8维度属性 { appearance, speech, behavior, emotion, social, crisis, learning, growth }
+ * @param {string} sihuaType  - '化禄型' / '化权型' / '化科型' / '化忌型'
+ */
+function generateZiweiCharacterBio(userData, chart, attributes, sihuaType) {
+    if (!userData) userData = {};
+    if (!chart)    chart    = {};
+    if (!attributes) attributes = {};
+    if (!sihuaType) sihuaType = '化禄型';
+
+    var name        = userData.name || '角色';
+    var genderRaw   = userData.gender || 'male';
+    var genderCN    = (genderRaw === 'female' || genderRaw === '女') ? '女' : '男';
+    var pronoun     = genderCN === '女' ? '她' : '他';
+    var eraRaw      = userData.era || 'contemporary';
+    var eraCN       = {ancient:'古代', modern:'近代', contemporary:'现代'}[eraRaw] || eraRaw;
+    var ageRaw      = userData.age || 'youth';
+    var ageCN       = {youth:'青年（18-30岁）', middle:'中年（30-50岁）', senior:'老年（50岁以上）'}[ageRaw] || ageRaw;
+    var profession  = _getProfessionLabel(userData.profession);
+
+    var mainStar    = (chart.stars && chart.stars[0]) || chart.mainStar || '紫微';
+    var patternType = chart.type  || '杀破狼';
+    var patternName = chart.name  || patternType;
+    var patternDesc = chart.desc  || '';
+
+    // 从现有数据库取格局数据（兜底）
+    var patternData = (window.CHART_DATABASE && window.CHART_DATABASE[patternType]) || {
+        traits: { positive: ['勇敢', '果断', '开创'], negative: ['冲动', '急躁'], psychology: '追求突破' }
+    };
+    // 从现有数据库取四化数据
+    var sihuaKey    = sihuaType.replace('型', ''); // '化禄'
+    var sihuaData   = (window.SIHUA_TYPES && window.SIHUA_TYPES[sihuaType]) ||
+                      (window.SIHUA_TYPES && window.SIHUA_TYPES[sihuaKey])  || {
+        desc: '独特的心理特质', mingEffect: '在命宫有独特表现',
+        fudeEffect: '内心世界丰富', fuqiEffect: '感情模式独特',
+        traits: ['深刻', '独特']
+    };
+    var cpData = (window.CP_PREFERENCE_RULES && window.CP_PREFERENCE_RULES[patternType]) || {
+        idealPartner: '能理解自己的伴侣', conflict: '容易与性格极端相反的人产生张力',
+        chemistry: '与志同道合的人有强烈共鸣', growth: '需要学会在关系中保持自我'
+    };
+
+    // 主星 & 四化深度库
+    var starDetails  = STAR_DETAILED_DESCRIPTIONS[mainStar] || {
+        personality: _getStarPersonality(mainStar), psychology: '内心有独特的心理世界',
+        relationship: '感情模式独特', growth: '在挑战中持续成长',
+        wound: '经历过塑造性格的关键事件', shadow: '有自己需要面对的阴影'
+    };
+    var sihuaDetails = SIHUA_DEEP_DESCRIPTIONS[sihuaType] || SIHUA_DEEP_DESCRIPTIONS['化禄型'];
+
+    var appearance = _generateAppearanceByStar(mainStar, attributes.appearance);
+    var signature  = _generateSignatureByStar(mainStar);
+
+    // ===== 开始拼接8模块 =====
+    var bio = '';
+
+    // ── 一、基础设定 ──
+    bio += `# 一、基础设定\n\n`;
+    bio += `**角色名字：** ${name}\n\n`;
+    bio += `**标签：** ${ageCN}，${genderCN}性，${profession}\n\n`;
+    bio += `**时代背景：** ${eraCN}\n\n`;
+    bio += `**命盘格局：** ${patternName}${patternDesc ? '（' + patternDesc + '）' : ''}\n\n`;
+    bio += `**主星：** ${(chart.stars || [mainStar]).join('、')}\n\n`;
+    bio += `**外貌特征：** ${appearance}\n\n`;
+    bio += `**标志性细节：** ${signature}\n\n`;
+    bio += `---\n\n`;
+
+    // ── 二、显性人格——命宫心理学 ──
+    var posTraits = (patternData.traits.positive || []).slice(0, 3).join('、');
+    var negTraits = (patternData.traits.negative || []).slice(0, 2).join('、');
+    bio += `# 二、显性人格——命宫心理学\n\n`;
+    bio += `**核心公式：** 命宫${mainStar} + ${sihuaType}\n\n`;
+    bio += `**显性人格：** ${starDetails.personality}\n\n`;
+    bio += `**社会面具：** ${sihuaData.mingEffect || ''}，外在呈现${(sihuaData.traits || []).slice(0, 2).join('、')}的特质\n\n`;
+    bio += `**核心特质：** ${posTraits}，也带有${negTraits}的倾向\n\n`;
+    bio += `**心理机制：** ${starDetails.psychology}\n\n`;
+    bio += `**行为模式：** ${attributes.behavior || '根据情境灵活切换，既能强硬果断，也能温和迂回'}\n\n`;
+    bio += `**说话方式：** ${attributes.speech || '言辞有力，惜字如金，说话前先想好每一句'}\n\n`;
+    bio += `---\n\n`;
+
+    // ── 三、潜意识底色——福德宫心理学 ──
+    bio += `# 三、潜意识底色——福德宫心理学\n\n`;
+    bio += `**核心公式：** 福德宫 + ${sihuaType}\n\n`;
+    bio += `**精神需求：** ${_getStarSpiritualNeed(mainStar)}\n\n`;
+    bio += `**内心世界：** ${starDetails.psychology}\n\n`;
+    bio += `**心理防御机制：** ${_getDefenseMechanism(sihuaType)}\n\n`;
+    bio += `**阴影面：** ${starDetails.shadow}\n\n`;
+    bio += `**情感表达：** ${attributes.emotion || '内敛含蓄，不轻易在人前展示脆弱'}\n\n`;
+    bio += `---\n\n`;
+
+    // ── 四、亲密关系需求——夫妻宫心理学 ──
+    bio += `# 四、亲密关系需求——夫妻宫心理学\n\n`;
+    bio += `**核心公式：** 夫妻宫 + ${sihuaType}\n\n`;
+    bio += `**关系模式：** ${starDetails.relationship}\n\n`;
+    bio += `**情感模式：** ${sihuaData.fuqiEffect || ''}\n\n`;
+    bio += `**理想伴侣：** ${_getStarPartnerNeed(mainStar)}\n\n`;
+    bio += `**化学反应：** ${cpData.chemistry || cpData.idealPartner}\n\n`;
+    bio += `**冲突模式：** ${cpData.conflict}\n\n`;
+    bio += `**关系成长：** ${cpData.growth}\n\n`;
+    bio += `**社交风格：** ${attributes.social || '朋友不多但深交，对陌生人保持适度距离'}\n\n`;
+    bio += `---\n\n`;
+
+    // ── 五、四化心理动机深度解析 ──
+    bio += `# 五、四化心理动机深度解析\n\n`;
+    bio += `**${sihuaType}的核心特质：** ${sihuaData.desc || sihuaDetails.psychology.slice(0, 40)}\n\n`;
+    bio += `**心理机制：** ${sihuaDetails.psychology}\n\n`;
+    bio += `**日常表现：** ${sihuaDetails.manifestation}\n\n`;
+    bio += `**最大挑战：** ${sihuaDetails.challenge}\n\n`;
+    bio += `**成长方向：** ${sihuaDetails.growth}\n\n`;
+    bio += `---\n\n`;
+
+    // ── 六、空间交互高阶逻辑 ──
+    bio += `# 六、空间交互高阶逻辑\n\n`;
+    bio += _generateSpatialInteraction(chart, sihuaType);
+    bio += `---\n\n`;
+
+    // ── 七、灵魂伤痕与成长弧光 ──
+    bio += `# 七、灵魂伤痕与成长弧光\n\n`;
+    bio += _generateSoulWound(eraRaw, patternType, mainStar);
+    bio += `**成长弧光：**\n\n`;
+    bio += `- **起点：** ${pronoun}带着${sihuaType}的心理特征，用${_getDefenseMechanism(sihuaType)}面对世界\n\n`;
+    bio += `- **认知缺陷：** 相信只有${_getSihuaCognitiveFlaw(sihuaType)}才能获得真正的安全\n\n`;
+    bio += `- **转折事件：** 某个打破防御的关键事件迫使${pronoun}重新审视自己\n\n`;
+    bio += `- **学到的真相：** ${starDetails.growth}\n\n`;
+    bio += `- **危机应对：** ${attributes.crisis || '在极限压力下，防御崩塌，真实的内心才会浮出水面'}\n\n`;
+    bio += `---\n\n`;
+
+    // ── 八、剧作功能与社会关系 ──
+    bio += `# 八、剧作功能与社会关系\n\n`;
+    bio += `**剧作功能：** ${_getDramaticRole(patternType)}\n\n`;
+    bio += `**核心关系：**\n\n`;
+    bio += `- **对主角：** 可能是推动者，也可能是隐藏对立面——两者皆因${mainStar}的特质而充满张力\n\n`;
+    bio += `- **对朋友：** ${pronoun}的圈子小但稳固，每段关系都经过时间的考验\n\n`;
+    bio += `- **对对手：** 以${patternType === '杀破狼' ? '直接对抗' : patternType === '机月同梁' ? '迂回博弈' : '智谋较量'}为主要方式\n\n`;
+    bio += `**学习与成长模式：** ${attributes.learning || '在实战中学习，拒绝纸上谈兵，每一次失败都是最好的课堂'}\n\n`;
+    bio += `**人物弧光总结：** 从${sihuaDetails.psychology.slice(0, 20)}……出发，经历核心创伤，最终走向${starDetails.growth.slice(0, 30)}……的蜕变之路。\n\n`;
+
+    return bio;
+}
+
+// 挂载为独立命名，避免与 app-v2.js 的桥接函数同名覆盖
+window._ziweiCoreGenerateBio = generateZiweiCharacterBio;

@@ -579,56 +579,100 @@ function generate144Chart(inputs) {
  * 优先走增强版（面相+词库+20问+爽点桥段+悬念手法），回退基础版
  */
 function generateZiweiCharacterBio(inputs, chart, eightAttrs, subPattern) {
+  // ── 优先：新版8模块 2400字+ 核心引擎（ziwei-bio-core.js → window._ziweiCoreGenerateBio）──
+  if (typeof window._ziweiCoreGenerateBio === 'function') {
+    try {
+      var userData = {
+        name:       inputs.name || '',
+        gender:     inputs.gender || 'male',
+        era:        inputs.era || 'contemporary',
+        age:        inputs.age || 'youth',
+        profession: inputs.career || inputs.profession || 'other'
+      };
+      // 解析四化类型：subPattern 可能是驱动力名称，需映射到四化
+      var sihuaType = _resolveSihuaType(subPattern, chart);
+      // chart 整形：保证 stars/type/name/desc/mainStar 字段存在
+      var chartObj = _normalizeChart(chart);
+      return window._ziweiCoreGenerateBio(userData, chartObj, eightAttrs || {}, sihuaType);
+    } catch (e) {
+      console.warn('新版8模块引擎出错，回退增强版:', e);
+    }
+  }
+
+  // ── 次选：增强版 ──
   var era = inputs.era || 'contemporary';
   var characterData = {
-    name:           inputs.name || '',
-    gender:         inputs.gender || 'male',
-    age:            inputs.age   || 'youth',
-    career:         inputs.career || eightAttrs.career || '',
-    family:         inputs.family || eightAttrs.family || '',
-    personality:    inputs.personality || eightAttrs.personality || '',
-    driveType:      subPattern || '',
+    name: inputs.name || '', gender: inputs.gender || 'male',
+    age: inputs.age || 'youth', driveType: subPattern || '',
     eightAttributes: eightAttrs,
   };
-
-  // ── 优先：增强版（面相/词库/20问/爽点桥段/悬念手法全接入）──
   if (typeof generateEnhancedCharacterBio === 'function') {
     try {
       var bioObj = generateEnhancedCharacterBio(chart, era, characterData);
       if (bioObj && bioObj.fullBio) return bioObj.fullBio;
     } catch (e) {
-      console.warn('增强版小传引擎出错，回退基础版:', e);
+      console.warn('增强版小传引擎出错，回退兜底:', e);
     }
   }
 
-  // ── 次选：基础版（词汇矩阵驱动）──
-  if (window.CharacterBioGenerator) {
-    try {
-      return window.CharacterBioGenerator.generateCharacterBio({
-        attrs: Object.assign({
-          name:      inputs.name,
-          gender:    inputs.gender,
-          age:       inputs.age,
-          era:       era === 'ancient' ? '古代江湖' : era === 'modern' ? '民国乱世' : '当代都市',
-          role:      subPattern,
-          driveType: subPattern,
-        }, eightAttrs),
-        chartData: chart._fullChart || chart,
-        personality: {},
-      });
-    } catch (e) {
-      console.warn('基础版小传引擎出错，回退兜底:', e);
-    }
-  }
-
-  // ── 兜底：简单拼接 ──
+  // ── 兜底 ──
   var pr = inputs.gender === '男' ? '他' : '她';
-  var name = inputs.name || (pr === '他' ? '男主' : '女主');
+  var nm = inputs.name || (pr === '他' ? '男主' : '女主');
   var stars = ((chart.pattern && chart.pattern.stars) || []).join('、') || '命主';
-  var desc = (chart.pattern && chart.pattern.desc) || '';
-  return '【人物小传：' + name + '】\n\n' + pr + '命盘主星为' + stars + '，' + desc + '\n\n' +
-    '驱动力：' + (subPattern || '未选择') + '\n\n' +
-    Object.entries(eightAttrs).filter(function(kv){return kv[1];}).map(function(kv){return kv[0]+'：'+kv[1];}).join('\n');
+  return '【人物小传：' + nm + '】\n\n' + pr + '命盘主星为' + stars + '\n\n驱动力：' + (subPattern || '未选择');
+}
+
+// 将 subPattern（驱动力名称）映射到四化类型
+function _resolveSihuaType(subPattern, chart) {
+  if (!subPattern) return '化禄型';
+  // 直接是四化类型名
+  if (/化禄|化权|化科|化忌/.test(subPattern)) {
+    var m = subPattern.match(/化[禄权科忌]/);
+    return m ? m[0] + '型' : '化禄型';
+  }
+  // 驱动力名称 → 四化映射
+  var map = {
+    '野心者':'化权型', '执念者':'化忌型', '谋局者':'化科型',
+    '天才型':'化禄型', '流浪者':'化权型', '救赎者':'化科型',
+    '复仇者':'化忌型', '守护者':'化科型',
+    '天赋优势型':'化禄型', '掌控主导型':'化权型',
+    '声誉理想型':'化科型', '执念深重型':'化忌型',
+    '天赋内秀型':'化禄型', '掌控内敛型':'化权型',
+    '声誉内修型':'化科型', '执念内化型':'化忌型'
+  };
+  for (var key in map) {
+    if (subPattern.indexOf(key) !== -1) return map[key];
+  }
+  return '化禄型';
+}
+
+// 整形 chart 对象，保证字段统一
+function _normalizeChart(chart) {
+  if (!chart) return {stars:['紫微'], type:'杀破狼', name:'紫微独坐', desc:'', mainStar:'紫微'};
+  var pattern = chart.pattern || {};
+  var stars   = pattern.stars || chart.stars || (chart.mainStar ? [chart.mainStar] : ['紫微']);
+  var type    = chart.patternType || chart.type || (pattern.name ? _guessPatternType(stars) : '杀破狼');
+  return {
+    stars:    stars,
+    type:     type,
+    name:     pattern.name  || chart.name  || stars[0] + '格局',
+    desc:     pattern.desc  || chart.desc  || '',
+    mainStar: stars[0]
+  };
+}
+
+function _guessPatternType(stars) {
+  var killStars = ['七杀','破军','贪狼'];
+  var purpleStars = ['紫微','天府','廉贞','武曲','天相'];
+  var moonStars = ['天机','太阴','天同','天梁'];
+  var sunStars = ['太阳','巨门'];
+  for (var i = 0; i < stars.length; i++) {
+    if (killStars.indexOf(stars[i]) !== -1) return '杀破狼';
+    if (purpleStars.indexOf(stars[i]) !== -1) return '紫府廉武相';
+    if (moonStars.indexOf(stars[i]) !== -1) return '机月同梁';
+    if (sunStars.indexOf(stars[i]) !== -1) return '巨日';
+  }
+  return '杀破狼';
 }
 
 // ==================== 角色保存系统 ====================
