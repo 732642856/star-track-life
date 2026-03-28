@@ -299,38 +299,38 @@ function generateScreenwritingDimensions(mainStar, chartData, era) {
     // 内在动机
     const motivation = randomPick(SCREENWRITING_DIMENSIONS.innerMotivation.filter(m =>
         starMapping.innerMotivations.includes(m.id)
-    ));
+    ), SCREENWRITING_DIMENSIONS.innerMotivation);
 
     // 灵魂创伤
     const wound = randomPick(SCREENWRITING_DIMENSIONS.soulWound.filter(w =>
         starMapping.soulWounds.includes(w.id)
-    ));
+    ), SCREENWRITING_DIMENSIONS.soulWound);
 
     // 恐惧
     const fear = randomPick(SCREENWRITING_DIMENSIONS.fear.filter(f =>
         starMapping.fears.includes(f.id)
-    ));
+    ), SCREENWRITING_DIMENSIONS.fear);
 
     // 价值观冲突
-    const valueConflict = randomPick(SCREENWRITING_DIMENSIONS.valueConflict);
+    const valueConflict = randomPick(SCREENWRITING_DIMENSIONS.valueConflict, SCREENWRITING_DIMENSIONS.valueConflict);
 
     // 外部冲突
-    const externalConflict = randomPick(SCREENWRITING_DIMENSIONS.externalConflict);
+    const externalConflict = randomPick(SCREENWRITING_DIMENSIONS.externalConflict, SCREENWRITING_DIMENSIONS.externalConflict);
 
     // 谎言
     const lie = randomPick(SCREENWRITING_DIMENSIONS.lie.filter(l =>
         starMapping.lies.includes(l.id)
-    ));
+    ), SCREENWRITING_DIMENSIONS.lie);
 
     // 真理
     const truth = randomPick(SCREENWRITING_DIMENSIONS.truth.filter(t =>
         starMapping.truths.includes(t.id)
-    ));
+    ), SCREENWRITING_DIMENSIONS.truth);
 
     // 人物弧光
     const arc = randomPick(SCREENWRITING_DIMENSIONS.characterArc.filter(a =>
         starMapping.arcTypes.includes(a.id)
-    ));
+    ), SCREENWRITING_DIMENSIONS.characterArc);
 
     return {
         innerMotivation: motivation,
@@ -565,7 +565,13 @@ function generateNickname(era, gender) {
 /**
  * 随机选择一个元素
  */
-function randomPick(array) {
+function randomPick(array, fallbackArray) {
+    if (!array || array.length === 0) {
+        // 空数组时用 fallbackArray（整个大数组）兜底；如果都没有就返回空对象
+        const src = (fallbackArray && fallbackArray.length > 0) ? fallbackArray : null;
+        if (!src) return { id: 'fallback', name: '未知', desc: '——' };
+        return src[Math.floor(Math.random() * src.length)];
+    }
     return array[Math.floor(Math.random() * array.length)];
 }
 
