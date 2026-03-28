@@ -53,11 +53,22 @@ jobs:
           security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
           security list-keychain -d user -s $KEYCHAIN_PATH
 
-          # 安装描述文件
+          # 安装描述文件（使用 UUID 命名，Xcode 才能识别）
           PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
           echo -n "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode -o $PP_PATH
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
+          PP_UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID xml1 -o - - | sed -n 's/.*<string>\(.*\)<\/string>.*/\1/p')
+          echo "描述文件 UUID: $PP_UUID"
+          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/${PP_UUID}.mobileprovision
+          echo "已安装的描述文件:"
+          ls ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: 验证签名环境
+        run: |
+          echo "=== Keychain 中的证书 ==="
+          security find-identity -v -p codesigning
+          echo "=== 已安装的描述文件 ==="
+          ls ~/Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null || echo "目录不存在"
 
       - name: 构建并归档
         run: |
