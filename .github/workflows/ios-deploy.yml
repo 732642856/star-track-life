@@ -57,7 +57,7 @@ jobs:
           PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
           echo -n "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode -o $PP_PATH
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          PP_UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID xml1 -o - - | sed -n 's/.*<string>\(.*\)<\/string>.*/\1/p')
+          PP_UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID raw -)
           echo "描述文件 UUID: $PP_UUID"
           cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/${PP_UUID}.mobileprovision
           echo "已安装的描述文件:"
