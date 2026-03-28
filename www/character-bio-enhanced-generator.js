@@ -306,7 +306,8 @@ function generateEnhancedCharacterBio(chartData, era, characterData) {
             gender: characterData.gender,
             age: characterData.age,
             career: characterData.career,
-            family: characterData.family
+            family: characterData.family,
+            eightAttributes: characterData.eightAttributes || {}
         })
     };
 
@@ -533,56 +534,123 @@ function generateFullBio(dimensions, storyElements, era, questions20Answers = []
     bio += `| **命盘主星** | ${ziweiData.mainStar || '未知'} |\n`;
     bio += '\n';
 
-    // 维度1：基本设定
-    bio += `## 1. 基本设定\n\n`;
-    bio += `**内在动机**：${innerMotivation.name}\n`;
-    bio += `${innerMotivation.desc}\n\n`;
+    // ── 人物背景变量，用于各维度叙事融入 ──
+    var _name    = _bi.name || '该角色';
+    var _gStr    = genderMap[_bi.gender] || _bi.gender || '人';
+    var _ageStr  = ageMap[_bi.age] || _bi.age || '青年';
+    var _eraStr  = eraMap[era] || era || '当代';
+    var _appear  = _ea.appearance || '';
+    var _speech  = _ea.speech || '';
+    var _behav   = _ea.behavior || '';
+    var _emotion = _ea.emotion || '';
+    var _social  = _ea.social || '';
+    var _crisis  = _ea.response || '';
+    var _learn   = _ea.learning || '';
+    var _growth  = _ea.growth || '';
 
-    bio += `**灵魂创伤**：${soulWound.name}\n`;
-    bio += `${soulWound.desc}\n\n`;
+    // 年龄段 × 时代 → 社会处境描述
+    var ageEraContext = {
+        '青年_古代': '正值功名未定、家族期望压身的年岁，科举、战乱、门第这些东西都还压在前路上',
+        '青年_近代': '赶上了新旧交替的时代，传统规矩和西洋思想同时向他/她涌来，两头都要应付',
+        '青年_现代': '在信息过载、选择过多的当下，外表看似自由，其实焦虑深藏，每条路都走得不踏实',
+        '中年_古代': '年过而立，功业成否已见分晓，往上走的机会收窄，家里的担子却越来越重',
+        '中年_近代': '历经过动荡的那一代，身上有很多说不清楚的伤，既不是旧人也不算新人',
+        '中年_现代': '上有老下有小，事业到了一个卡口，过去的逻辑开始失效，却还没找到新的方向',
+        '老年_古代': '已经活过了大多数同龄人，见过太多起落，反而有一种旁人看不懂的平静',
+        '老年_近代': '一生跨过了好几个历史节点，身体开始不听话，但很多事情终于想清楚了',
+        '老年_现代': '退出了主舞台，却还有很多没说完的话，子女和这个时代都不太听得进去',
+    };
+    var ageEraKey = _ageStr + '_' + _eraStr;
+    var socialContext = ageEraContext[ageEraKey] || (_ageStr + '，' + _eraStr + '背景');
 
-    bio += `**主要恐惧**：${fear.name}\n`;
-    bio += `${fear.desc}\n\n`;
+    // 维度1：人物基本设定
+    bio += `## 1. 人物基本设定\n\n`;
+    bio += `**核心驱动力**：${innerMotivation.name}\n\n`;
+    bio += `${innerMotivation.desc}`;
+    if (_appear) bio += `在外形上体现为${_appear}，`;
+    bio += `\n\n`;
+    bio += `**主要恐惧**：${fear.name}\n\n`;
+    bio += `${fear.desc}。${socialContext}，这种恐惧在${_ageStr}这个阶段尤其容易被触发。\n\n`;
+    bio += `**性格底色**：`;
+    if (sihuaReadable) bio += sihuaReadable;
+    if (dizhiReadable) bio += `；${dizhiReadable}`;
+    bio += `。\n\n`;
 
     // 维度2：欲求与需要（Want vs Need）
     bio += `## 2. 欲求与需要\n\n`;
-    bio += `**表面欲望**：${innerMotivation.desc.split('，')[0]}\n\n`;
-    bio += `**深层需求**：${truth.desc}\n\n`;
-    bio += `**人物弧光类型**：${characterArc.name}\n`;
-    bio += `${characterArc.desc}\n\n`;
+    bio += `**表面欲望（Want）**：${innerMotivation.name}——${innerMotivation.desc.split('，')[0]}。\n\n`;
+    bio += `**深层需求（Need）**：${truth.desc}。\n\n`;
+    bio += `**两者的张力**：${_name}拼命追求的和真正需要的是两件事。`;
+    bio += `表面欲望让${_gStr === '女' ? '她' : '他'}不断向外索取，深层需求却始终没有得到正面。`;
+    bio += `这个落差是${_gStr === '女' ? '她' : '他'}大多数行为矛盾的根源。\n\n`;
+    bio += `**人物弧光类型**：${characterArc.name}——${characterArc.desc}\n\n`;
 
     // 维度3：灵魂伤口与前史
     bio += `## 3. 灵魂伤口与前史\n\n`;
-    bio += `**核心创伤事件**：${soulWound.name}\n`;
-    bio += `${soulWound.desc}\n\n`;
-    bio += `**创伤影响**：这一创伤导致他/她${fear.desc}，因此发展出${lie.desc}的信念。\n\n`;
+    bio += `**核心创伤**：${soulWound.name}\n\n`;
+    bio += `${soulWound.desc}。在${_eraStr}的社会背景下，${socialContext}，这类创伤往往没有出口，只能向内压。\n\n`;
+    bio += `**形成的错误信念**：因为这段经历，${_name}内化了"${lie.desc}"的逻辑——这不是${_gStr === '女' ? '她' : '他'}的错，`;
+    bio += `是${_ageStr}经历那件事后的自我保护机制，只是这套机制后来也开始伤人。\n\n`;
+    bio += `**前史重量**：${fear.desc}，这是${_gStr === '女' ? '她' : '他'}在进入故事时就带着的底色，不用解释，从${_behav || '行为细节'}里看得出来。\n\n`;
 
     // 维度4：性格与矛盾
     bio += `## 4. 性格与矛盾\n\n`;
-    bio += `**价值观冲突**：${valueConflict.name}\n`;
-    bio += `${valueConflict.desc}\n\n`;
-    bio += `**外部冲突**：${externalConflict.name}\n`;
-    bio += `${externalConflict.desc}\n\n`;
+    bio += `**价值观冲突（核心矛盾）**：${valueConflict.name}\n\n`;
+    bio += `${valueConflict.desc}。`;
+    if (_social) bio += `在社交场合，${_name}的${_social}风格会把这个冲突推到明面上。`;
+    bio += `\n\n`;
+    bio += `**外部冲突**：${externalConflict.name}\n\n`;
+    bio += `${externalConflict.desc}。`;
+    if (_crisis) bio += `遇到危机时，${_name}的第一反应是${_crisis}，这个模式在外部冲突激化时会特别明显。`;
+    bio += `\n\n`;
+    bio += `**情感表达方式**：${_emotion || '相对压抑，不轻易外露'}。这影响${_gStr === '女' ? '她' : '他'}与所有人的关系，包括最亲近的人。\n\n`;
 
-    // 维度5：戏剧功能与关系
-    bio += `## 5. 戏剧功能与关系\n\n`;
-
-    // 添加悬念手法
+    // 维度5：人物关系与戏剧功能
+    bio += `## 5. 人物关系与戏剧功能\n\n`;
+    bio += `**在关系中的位置**：\n\n`;
+    bio += `- **对亲密关系**：${_emotion || '情感内敛'}，倾向于用行动而非语言表达。深层需求是${truth.desc.split('，')[0]}，但实际行为常常与这个需求背道而驰。\n`;
+    bio += `- **对权力关系**：${valueConflict.desc.split('。')[0]}，这套逻辑在面对上级/对手时会最直接地显现。\n`;
+    bio += `- **对陌生人**：${_social ? `社交风格${_social}，` : ''}第一印象和真实内核通常有落差，认识久了才能看到不一样的层次。\n\n`;
+    bio += `**戏剧功能**：\n\n`;
     if (suspenseTechniques && suspenseTechniques.length > 0) {
-        bio += `**核心悬念设计**：\n`;
-        suspenseTechniques.forEach((tech, index) => {
+        bio += `以下是本角色最适合制造的悬念类型：\n\n`;
+        suspenseTechniques.forEach(function(tech, index) {
             bio += `${index + 1}. ${tech.desc}\n`;
         });
         bio += '\n';
+    } else {
+        bio += `- 作为推动者：核心驱动力（${innerMotivation.name}）会持续制造事件，是情节发动机\n`;
+        bio += `- 作为镜子：价值观冲突（${valueConflict.name}）能反射其他角色的选择，触发对比张力\n\n`;
     }
 
-    // 维度6：行为与对话风格
-    bio += `## 6. 行为与对话风格\n\n`;
-
-    // 添加爽点桥段作为行为模式参考
+    // 维度6：行为模式与对话风格
+    bio += `## 6. 行为模式与对话风格\n\n`;
+    bio += `**日常行为特征**：\n\n`;
+    if (_behav) bio += `- 行为习惯：${_behav}\n`;
+    if (_learn) bio += `- 学习与适应：${_learn}\n`;
+    if (_growth) bio += `- 成长方向：${_growth}\n`;
+    bio += '\n';
+    bio += `**对话风格**：\n\n`;
+    if (_speech) {
+        bio += `说话方式为${_speech}。`;
+    }
+    bio += `受核心驱动力（${innerMotivation.name}）影响，${_name}在对话中`;
+    // 根据动机类型给出具体对话特征
+    var speechPatternMap = {
+        '权力': '习惯主导对话节奏，结论先行，不太愿意被打断',
+        '归属': '对对方的情绪变化很敏感，话说到一半会先确认对方有没有在听',
+        '安全': '措辞谨慎，不轻易表态，留很多余地',
+        '自由': '话题跳脱，不按套路，有时候绕了一圈说的才是真正想说的',
+        '成就': '喜欢用结果说话，对"但是"特别有防御反应',
+        '认可': '话里有话，需要反复听才能听出真实意图',
+        '复仇': '言辞精准，不废话，说的每句话都有位置',
+        '自我实现': '思维跳跃，对话里经常出现突然的停顿，是在想更深的东西',
+    };
+    var speechPattern = speechPatternMap[innerMotivation.name] || '言辞和行为之间常有微妙的落差，值得细读';
+    bio += `${speechPattern}。\n\n`;
     if (suangqiaoBridges && suangqiaoBridges.length > 0) {
-        bio += `**典型行为模式**：\n`;
-        suangqiaoBridges.forEach((bridge, index) => {
+        bio += `**适合该角色的高光桥段**：\n\n`;
+        suangqiaoBridges.forEach(function(bridge, index) {
             bio += `${index + 1}. ${bridge.desc}\n`;
         });
         bio += '\n';
@@ -590,9 +658,17 @@ function generateFullBio(dimensions, storyElements, era, questions20Answers = []
 
     // 维度7：人物弧光
     bio += `## 7. 人物弧光\n\n`;
-    bio += `**起始点**：${lie.desc}\n\n`;
-    bio += `**转折点**：在经历${externalConflict.desc}的过程中，他/她开始质疑自己的信念。\n\n`;
-    bio += `**终点**：最终意识到${truth.desc}，完成${characterArc.name}。\n\n`;
+    bio += `**起点状态**：\n\n`;
+    bio += `相信"${lie.desc}"——这是${_name}进入故事时的底层逻辑。`;
+    bio += `${_ageStr}的${_gStr}，${socialContext}，这个信念在当时的处境里是有道理的，甚至是必要的。\n\n`;
+    bio += `**转折触发点**：\n\n`;
+    bio += `${externalConflict.desc}——这个外部压力会直接冲击${_name}赖以运作的信念系统，`;
+    bio += `让${_gStr === '女' ? '她' : '他'}第一次被迫正视"${lie.desc}"这套逻辑是否真的成立。\n\n`;
+    bio += `**终点状态（弧光完成）**：\n\n`;
+    bio += `最终看见"${truth.desc}"。这不是开悟，不是解脱，是在代价已经付出之后，`;
+    bio += `终于搞清楚了自己到底在为什么而活。完成${characterArc.name}。\n\n`;
+    bio += `**弧光的代价**：从"${lie.desc}"到"${truth.desc}"，${_name}在这段路上会失去什么，`;
+    bio += `比得到的东西更值得写。\n\n`;
 
     // 维度8：20问角色深度挖掘
     bio += `## 8. 20问角色深度挖掘\n\n`;
