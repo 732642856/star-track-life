@@ -410,25 +410,29 @@ function generateFinalBio() {
             return;
         }
         
-        // 构造 generateEnhancedCharacterBio 需要的 chartData 格式
+        // 构造 generateCharacterBio 需要的 chartData 格式
         const chartDataForBio = {
-            mainStars: selectedChart.stars || ['紫微'],
-            pattern: { name: selectedChart.name, desc: selectedChart.desc },
-            patternType: selectedChart.type,
-            twelvePalaces: {},
-            fourTransformations: selectedSubPattern || {}
+            mainStars: selectedChart.mainStars || (selectedChart.stars ? Object.fromEntries((selectedChart.stars).map(s => [s, true])) : { '紫微': true }),
+            fourTransformations: selectedSubPattern || {},
+            pattern: { name: selectedChart.name, desc: selectedChart.desc }
         };
-        // 构造 characterData
-        const characterDataForBio = {
-            name: userInputs.name,
-            gender: userInputs.gender,
-            age: userInputs.age,
-            career: userInputs.profession,
-            family: userInputs.family,
+        // 职业/家庭/年龄中文映射
+        const careerMap = { political:'从政官员', business:'商界人士', cultural:'文化创作者', military:'军警人员', technical:'技术专家', other:'普通人' };
+        const familyMap = { wealthy:'豪门权贵', middle:'书香中产', poor:'寒门草根', decline:'落魄世家' };
+        const ageMap2 = { youth:'青年', middle:'中年', senior:'老年' };
+
+        // 构造 profile（character-bio-generator.js 期望的字段）
+        const profileForBio = {
+            name: userInputs.name || '未命名',
+            gender: userInputs.gender || 'male',
+            age: ageMap2[userInputs.age] || userInputs.age || '青年',
+            career: careerMap[userInputs.profession] || userInputs.profession || '普通人',
+            familyBackground: familyMap[userInputs.family] || userInputs.family || '普通家庭',
+            era: selectedEra || 'contemporary',
             personality: eightAttributes
         };
-        const bioResult = generateEnhancedCharacterBio(chartDataForBio, selectedEra, characterDataForBio);
-        const bioText = bioResult.fullBio || JSON.stringify(bioResult, null, 2);
+        // 调用正确的生成函数
+        const bioText = generateCharacterBio(chartDataForBio, profileForBio);
         currentCharacterBio = bioText;
         
         // 使用Markdown渲染
