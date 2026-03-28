@@ -657,12 +657,4 @@ const TIME_KE_CUTS = [
     { name: '末刻', range: '105-120分钟', code: 'mo' }
 ];
 
-// 导出所有数据
-export {
-    ERAS,
-    CAREERS,
-    FAMILY_BACKGROUNDS,
-    LIFE_EXPERIENCES,
-    TIME_PERIODS,
-    TIME_KE_CUTS
-};
+// 全局变量，供其他JS直接访问（不使用ES Module export，保持与普通script标签兼容）

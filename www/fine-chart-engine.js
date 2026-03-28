@@ -5,15 +5,7 @@
  * 男女在身宫、四化计算上有差异化处理
  */
 
-// 引入时代数据
-import {
-    ERAS,
-    CAREERS,
-    FAMILY_BACKGROUNDS,
-    LIFE_EXPERIENCES,
-    TIME_PERIODS,
-    TIME_KE_CUTS
-} from './era-data.js';
+// era-data.js 中的变量（ERAS, CAREERS 等）通过全局 script 标签加载，无需 import
 
 // ==================== 精细排盘计算 ====================
 
@@ -715,16 +707,4 @@ function generateBioContent(pattern, character, chart) {
 `;
 }
 
-// ==================== 导出函数 ====================
-
-export {
-    calculateFineChart,
-    generateCharacter,
-    generateCharacterBio, // 新增：生成人物小传
-    TIME_PERIODS,
-    TIME_KE_CUTS,
-    ERAS,
-    CAREERS,
-    FAMILY_BACKGROUNDS,
-    LIFE_EXPERIENCES
-};
+// 以上函数均为全局函数，直接通过 script 标签供其他文件访问，无需 export

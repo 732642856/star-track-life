@@ -44,6 +44,7 @@
     }
     #splash-screen.flash-out {
         animation: hideAfterFlash 0.5s ease-out forwards;
+        pointer-events: none;
     }
     @keyframes whiteFlash {
         0%   { opacity: 0; }
@@ -51,9 +52,9 @@
         100% { opacity: 1; }
     }
     @keyframes hideAfterFlash {
-        0%,39% { opacity: 1; }
-        40%    { opacity: 1; }
-        100%   { opacity: 0; }
+        0%,39% { opacity: 1; pointer-events: none; }
+        40%    { opacity: 1; pointer-events: none; }
+        100%   { opacity: 0; pointer-events: none; }
     }
 
     /* 头像 */
@@ -146,6 +147,7 @@
             // 3秒后白闪消失
             setTimeout(function() {
                 var sp = document.getElementById('splash-screen');
+                sp.style.pointerEvents = 'none'; // 立即停止拦截点击
                 sp.classList.add('flash-out');
                 setTimeout(function() {
                     sp.style.display = 'none';
