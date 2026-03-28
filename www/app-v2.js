@@ -818,14 +818,47 @@ function generateComparison(chars) {
     html += '</div>';
     
     // 添加对比分析
+    var sihuaList = chars.map(function(c) { return c.sihua || '未知'; });
+    var genderList = chars.map(function(c) { return c.inputs.gender === 'female' ? '女' : '男'; });
+    var ageMap2 = {youth:'青年', middle:'中年', senior:'老年'};
+    var ageList  = chars.map(function(c) { return ageMap2[c.inputs.age] || c.inputs.age || '未知'; });
+    var eraMap2  = {ancient:'古代', modern:'近代', contemporary:'现代'};
+    var eraList  = chars.map(function(c) { return eraMap2[c.inputs.era] || c.inputs.era || '未知'; });
+    var nameList = chars.map(function(c) { return c.name || '角色'; });
+
+    // 根据四化组合推断戏剧关系
+    var relationMap = {
+        '野心者_执念者': '两人都是目标导向型，容易在同一条路上形成竞争，甚至互为镜像——一个代表外向扩张，一个代表内向执着，放在同一场戏里张力极强。',
+        '执念者_野心者': '两人都是目标导向型，容易在同一条路上形成竞争，甚至互为镜像——一个代表外向扩张，一个代表内向执着，放在同一场戏里张力极强。',
+        '野心者_隐忍者': '一个主动出击，一个蓄力待发。表面上是强弱关系，实际上隐忍者的爆发往往比野心者更彻底。适合设计一段从依附到反转的关系弧。',
+        '隐忍者_野心者': '一个主动出击，一个蓄力待发。表面上是强弱关系，实际上隐忍者的爆发往往比野心者更彻底。适合设计一段从依附到反转的关系弧。',
+        '谋局者_执念者': '一个算计全局，一个死磕一点。前者容易把后者当棋子，后者往往是最后翻盘的变量。适合设计利用与被利用、最终失控的关系。',
+        '执念者_谋局者': '一个算计全局，一个死磕一点。前者容易把后者当棋子，后者往往是最后翻盘的变量。适合设计利用与被利用、最终失控的关系。',
+        '隐忍者_执念者': '两人都有强烈的内驱力，但一个向内消化，一个向外固着。这种组合放在亲密关系里尤其有戏——彼此理解却互相消耗。',
+        '执念者_隐忍者': '两人都有强烈的内驱力，但一个向内消化，一个向外固着。这种组合放在亲密关系里尤其有戏——彼此理解却互相消耗。',
+    };
+    var sihuaKey = sihuaList[0] + '_' + sihuaList[1];
+    var relationDesc = relationMap[sihuaKey] || '这两种类型并置，核心戏剧张力来自各自核心动机的碰撞——当两人的目标出现交叉，冲突自然产生，合作也会带着裂缝。';
+
+    // 时代/年龄差异分析
+    var contextNote = '';
+    if (eraList[0] !== eraList[1]) {
+        contextNote = `两人处于不同时代（${eraList.join(' / ')}），若需同框，需要设计跨时代叙事结构或平行时间线。`;
+    } else if (ageList[0] !== ageList[1]) {
+        contextNote = `年龄段不同（${nameList[0]}${ageList[0]}，${nameList[1]}${ageList[1]}），适合设计代际关系：传承、对抗、或同一段历史的不同切面。`;
+    } else if (genderList[0] !== genderList[1]) {
+        contextNote = `一男一女，${eraList[0]}背景下${ageList[0]}阶段，性别带来的社会处境差异本身就是戏剧资源。`;
+    } else {
+        contextNote = `背景相近（${eraList[0]}，${ageList[0]}），关系张力主要来自内在驱动力和价值观的差异，适合设计同类相斥的竞争或镜像关系。`;
+    }
+
     html += `
     <div class="compare-analysis">
         <h3>对比分析</h3>
-        <ul>
-            <li><strong>格局差异：</strong>${chars.map(c => c.chart.name).join(' vs ')}</li>
-            <li><strong>四化差异：</strong>${chars.map(c => c.sihua).join(' vs ')}</li>
-            <li><strong>适合场景：</strong>不同格局适合不同的剧情需求和人物关系</li>
-        </ul>
+        <p><strong>命盘差异：</strong>${chars.map(function(c){ return (c.name||'角色') + '（' + (c.chart.pattern && c.chart.pattern.name || c.chart.name || '未知格局') + '）'; }).join(' vs ')}</p>
+        <p><strong>四化类型：</strong>${sihuaList.join(' vs ')}</p>
+        <p><strong>两人之间的戏剧关系：</strong>${relationDesc}</p>
+        <p><strong>背景处境：</strong>${contextNote}</p>
     </div>
     `;
     
