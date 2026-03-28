@@ -478,11 +478,11 @@ function generateFullBio(dimensions, storyElements, era, questions20Answers = []
     if (window.FaceReadingGenerator) {
         bio += `### 9.1 面相学特征\n\n`;
         const appearance = window.FaceReadingGenerator.generateAppearance(
-            ziweiData.mainStar,
-            ziweiData.auspiciousStars || [],
-            ziweiData.malignantStars || [],
+            { mainStars: [ziweiData.mainStar] },
             basicInfo.gender,
-            basicInfo.age
+            basicInfo.age,
+            ziweiData.auspiciousStars || [],
+            ziweiData.malignantStars || []
         );
         bio += appearance;
         bio += '\n';
