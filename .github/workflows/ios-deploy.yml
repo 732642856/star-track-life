@@ -80,9 +80,9 @@ jobs:
             -archivePath $RUNNER_TEMP/App.xcarchive \
             -destination 'generic/platform=iOS' \
             CODE_SIGN_STYLE=Manual \
-            PROVISIONING_PROFILE_SPECIFIER="${{ secrets.PROVISIONING_PROFILE_NAME }}" \
-            CODE_SIGN_IDENTITY="iPhone Distribution" \
-            DEVELOPMENT_TEAM="${{ secrets.TEAM_ID }}" \
+            PROVISIONING_PROFILE_SPECIFIER="StarTrackLifeAppStore" \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            DEVELOPMENT_TEAM="2DM78YY6PM" \
             -allowProvisioningUpdates
 
       - name: 导出 IPA
