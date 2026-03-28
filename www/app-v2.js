@@ -410,12 +410,30 @@ function generateFinalBio() {
             return;
         }
         
-        const bio = generateZiweiCharacterBio(userInputs, selectedChart, eightAttributes, selectedSubPattern);
-        currentCharacterBio = bio;
+        // 构造 generateEnhancedCharacterBio 需要的 chartData 格式
+        const chartDataForBio = {
+            mainStars: selectedChart.stars || ['紫微'],
+            pattern: { name: selectedChart.name, desc: selectedChart.desc },
+            patternType: selectedChart.type,
+            twelvePalaces: {},
+            fourTransformations: selectedSubPattern || {}
+        };
+        // 构造 characterData
+        const characterDataForBio = {
+            name: userInputs.name,
+            gender: userInputs.gender,
+            age: userInputs.age,
+            career: userInputs.profession,
+            family: userInputs.family,
+            personality: eightAttributes
+        };
+        const bioResult = generateEnhancedCharacterBio(chartDataForBio, selectedEra, characterDataForBio);
+        const bioText = bioResult.fullBio || JSON.stringify(bioResult, null, 2);
+        currentCharacterBio = bioText;
         
         // 使用Markdown渲染
         const resultDiv = document.getElementById('result-content');
-        resultDiv.innerHTML = renderMarkdown(bio);
+        resultDiv.innerHTML = renderMarkdown(bioText);
         
         showStep(5);
     } catch (error) {
