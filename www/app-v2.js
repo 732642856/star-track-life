@@ -13,6 +13,19 @@ let selectedSubPattern = null;
 let currentCharacterBio = '';
 let savedCharacters = [];
 
+// ==================== 8种人物驱动力 ====================
+// 每个选项是小传差异化的核心触发器，选哪个决定角色叙事方向
+var DRIVE_8_TYPES = [
+    { label: '野心者', keIdx: 0, desc: '想要更多，永不满足，代价是很难真正停下来' },
+    { label: '执念者', keIdx: 1, desc: '有一件事/一个人放不下，整个人生都在绕着它转' },
+    { label: '谋局者', keIdx: 2, desc: '凡事都在布局，极少暴露真实意图，连身边人也未必读得懂' },
+    { label: '享乐者', keIdx: 3, desc: '活在当下，本能地回避痛苦，不太愿意为明天透支今天' },
+    { label: '守护者', keIdx: 4, desc: '为某人或某件事活着，习惯把自己放在最后' },
+    { label: '破局者', keIdx: 5, desc: '天生看不惯既有秩序，不打破什么就浑身难受' },
+    { label: '漂泊者', keIdx: 6, desc: '找不到真正意义上的根，永远在路上，停下来反而迷茫' },
+    { label: '隐忍者', keIdx: 7, desc: '能扛，扛到极限才会爆发，平时看起来比任何人都稳' },
+];
+
 // ==================== 144盘数据库 ====================
 const CHART_DATABASE = {
     // 杀破狼系列 (36盘)
@@ -268,21 +281,19 @@ function generate8PersonalityTypes(chartData) {
     const grid = document.getElementById('sub-patterns-grid');
     if (!grid) return;
     
-    const personalityTypes = chartData.personalityTypes || [];
+    // 始终使用8种驱动力，personalityTypes字段为备选
+    const personalityTypes = (chartData.personalityTypes && chartData.personalityTypes.length > 0)
+        ? chartData.personalityTypes
+        : DRIVE_8_TYPES;
     
     grid.innerHTML = personalityTypes.map((type, i) => {
-        // 兼容新版（对象含keIdx）和旧版（字符串）
         const label = (typeof type === 'object') ? type.label : type;
-        const keIdx = (typeof type === 'object') ? type.keIdx : i;
-        const desc = generatePersonalityDescription(label, chartData);
+        const keIdx = (typeof type === 'object') ? (type.keIdx !== undefined ? type.keIdx : i) : i;
+        const desc  = (typeof type === 'object' && type.desc) ? type.desc : label;
         return `
             <div class="star-card ${i === 0 ? 'selected' : ''}" data-personality="${label}" data-ke-idx="${keIdx}">
                 <div class="star-name">${label}</div>
-                <div class="star-desc">${desc.shortDesc}</div>
-                <div style="margin-top: 8px; font-size: 11px; color: #666;">
-                    <div>外在：${desc.visibleTrait.substring(0, 20)}...</div>
-                    <div>内在：${desc.hiddenNeed.substring(0, 20)}...</div>
-                </div>
+                <div class="star-desc">${desc}</div>
             </div>
         `;
     }).join('');
@@ -462,7 +473,7 @@ function generate144Chart(inputs) {
         shiChen: result.shiChen || '未知',
         ke: result.ke || 0,
         chartId: result.chartId || Math.random().toString(36).slice(2),
-        personalityTypes: result.personalityTypes || Object.keys(window.PERSONALITY_8_TYPES || {}),
+        personalityTypes: result.personalityTypes || DRIVE_8_TYPES,
         sihua: result.sihua || {},
         mingGong: result.mingGong || {},
         fuqiGong: result.fuqiGong || {},
@@ -488,7 +499,7 @@ function generate144Chart(inputs) {
     shiChen: '午',
     ke: 0,
     chartId: `legacy-${idx}-${patternIdx}`,
-    personalityTypes: Object.keys(window.PERSONALITY_8_TYPES || {}),
+    personalityTypes: DRIVE_8_TYPES,
     sihua: {},
     mingGong: { stars: pattern.stars, desc: pattern.desc },
     fuqiGong: { stars: [] },
@@ -497,43 +508,60 @@ function generate144Chart(inputs) {
 }
 
 /**
- * generateZiweiCharacterBio：调用新人物小传生成引擎
+ * generateZiweiCharacterBio：人物小传生成引擎调度
+ * 优先走增强版（面相+词库+20问+爽点桥段+悬念手法），回退基础版
  */
 function generateZiweiCharacterBio(inputs, chart, eightAttrs, subPattern) {
-  // 优先使用新版生成器
+  var era = inputs.era || 'contemporary';
+  var characterData = {
+    name:           inputs.name || '',
+    gender:         inputs.gender || 'male',
+    age:            inputs.age   || 'youth',
+    career:         inputs.career || eightAttrs.career || '',
+    family:         inputs.family || eightAttrs.family || '',
+    personality:    inputs.personality || eightAttrs.personality || '',
+    driveType:      subPattern || '',
+    eightAttributes: eightAttrs,
+  };
+
+  // ── 优先：增强版（面相/词库/20问/爽点桥段/悬念手法全接入）──
+  if (typeof generateEnhancedCharacterBio === 'function') {
+    try {
+      var bioObj = generateEnhancedCharacterBio(chart, era, characterData);
+      if (bioObj && bioObj.fullBio) return bioObj.fullBio;
+    } catch (e) {
+      console.warn('增强版小传引擎出错，回退基础版:', e);
+    }
+  }
+
+  // ── 次选：基础版（词汇矩阵驱动）──
   if (window.CharacterBioGenerator) {
     try {
       return window.CharacterBioGenerator.generateCharacterBio({
-        attrs: {
-          name: inputs.name,
-          gender: inputs.gender,
-          age: inputs.age,
-          era: inputs.era === 'ancient' ? '古代江湖' : inputs.era === 'modern' ? '民国乱世' : '当代都市',
-          role: subPattern,
-          mbti: eightAttrs.mbti,
-          enneagram: eightAttrs.enneagram,
-          archetype: eightAttrs.archetype,
-          socialRole: eightAttrs.socialRole,
-          motivation: eightAttrs.motivation,
-          flaw: eightAttrs.flaw,
-          strength: eightAttrs.strength,
-          relationship: eightAttrs.relationship,
-        },
+        attrs: Object.assign({
+          name:      inputs.name,
+          gender:    inputs.gender,
+          age:       inputs.age,
+          era:       era === 'ancient' ? '古代江湖' : era === 'modern' ? '民国乱世' : '当代都市',
+          role:      subPattern,
+          driveType: subPattern,
+        }, eightAttrs),
         chartData: chart._fullChart || chart,
         personality: {},
       });
     } catch (e) {
-      console.warn('新小传引擎出错，回退旧逻辑:', e);
+      console.warn('基础版小传引擎出错，回退兜底:', e);
     }
   }
 
-  // 回退：简单拼接
-  const pr = inputs.gender === '男' ? '他' : '她';
-  const name = inputs.name || pr === '他' ? '男主' : '女主';
-  const stars = (chart.pattern?.stars || []).join('、') || '命主';
-  return `【人物小传：${name}】\n\n${pr}命盘主星为${stars}，${chart.pattern?.desc || ''}\n\n` +
-    `人格类型：${subPattern || '未选择'}\n\n` +
-    Object.entries(eightAttrs).filter(([,v]) => v).map(([k,v]) => `${k}：${v}`).join('\n');
+  // ── 兜底：简单拼接 ──
+  var pr = inputs.gender === '男' ? '他' : '她';
+  var name = inputs.name || (pr === '他' ? '男主' : '女主');
+  var stars = ((chart.pattern && chart.pattern.stars) || []).join('、') || '命主';
+  var desc = (chart.pattern && chart.pattern.desc) || '';
+  return '【人物小传：' + name + '】\n\n' + pr + '命盘主星为' + stars + '，' + desc + '\n\n' +
+    '驱动力：' + (subPattern || '未选择') + '\n\n' +
+    Object.entries(eightAttrs).filter(function(kv){return kv[1];}).map(function(kv){return kv[0]+'：'+kv[1];}).join('\n');
 }
 
 // ==================== 角色保存系统 ====================
