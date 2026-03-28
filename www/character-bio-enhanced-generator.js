@@ -388,7 +388,25 @@ function generateFullBio(dimensions, storyElements, era, questions20Answers = []
     if (!ziweiData.auspiciousStars) ziweiData.auspiciousStars = [];
     if (!ziweiData.malignantStars) ziweiData.malignantStars = [];
 
+    // 时代映射
+    const eraMap = { ancient: '古代', modern: '近代', contemporary: '现代' };
+    const genderMap = { male: '男', female: '女' };
+    const ageMap = { youth: '青年', middle: '中年', senior: '老年' };
+
     let bio = '';
+
+    // ── 角色档案 ──
+    bio += `# 角色档案\n\n`;
+    bio += `| 项目 | 内容 |\n`;
+    bio += `|------|------|\n`;
+    bio += `| **姓名** | ${basicInfo.name || '未命名'} |\n`;
+    bio += `| **性别** | ${genderMap[basicInfo.gender] || basicInfo.gender || '未知'} |\n`;
+    bio += `| **年龄段** | ${ageMap[basicInfo.age] || basicInfo.age || '未知'} |\n`;
+    bio += `| **所处时代** | ${eraMap[era] || era || '未知'} |\n`;
+    if (basicInfo.career) bio += `| **职业** | ${basicInfo.career} |\n`;
+    if (basicInfo.family) bio += `| **家庭背景** | ${basicInfo.family} |\n`;
+    bio += `| **命盘主星** | ${ziweiData.mainStar || '未知'} |\n`;
+    bio += '\n';
 
     // 维度1：基本设定
     bio += `## 1. 基本设定\n\n`;

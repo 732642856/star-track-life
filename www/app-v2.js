@@ -536,6 +536,8 @@ function displaySavedCharacters() {
     const list = document.getElementById('saved-characters-list');
     const compareBtn = document.getElementById('compare-btn-section');
     
+    if (!section || !list || !compareBtn) return; // 容器不存在时静默退出
+    
     if (savedCharacters.length === 0) {
         section.style.display = 'none';
         compareBtn.style.display = 'none';
