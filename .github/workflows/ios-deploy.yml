@@ -93,6 +93,14 @@ jobs:
           echo "=== 已安装的描述文件 ==="
           ls ~/Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null || echo "目录不存在"
 
+      - name: 递增 Build Number
+        run: |
+          # 用 GitHub run number 作为唯一 Build Number（从100开始避免冲突）
+          BUILD_NUM=$((100 + $GITHUB_RUN_NUMBER))
+          echo "设置 Build Number: $BUILD_NUM"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUM" ios/App/App/Info.plist
+          /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" ios/App/App/Info.plist
+
       - name: 构建并归档（不签名）
         run: |
           xcodebuild archive \

@@ -148,6 +148,50 @@ const SIHUA_TYPES = {
 // 导出全局变量
 window.SIHUA_TYPES = SIHUA_TYPES;
 
+// ==================== generate144Chart 桥接函数 ====================
+function generate144Chart(inputs) {
+    // 根据性别+年龄+时代随机选取命盘格局
+    const patternKeys = Object.keys(CHART_DATABASE);
+    // 用输入参数做简单哈希，保证同一角色每次结果一致
+    const seed = ((inputs.name || '').length + (inputs.gender === '男' ? 1 : 0) + patternKeys.length) % patternKeys.length;
+    const patternType = patternKeys[seed];
+    const patternGroup = CHART_DATABASE[patternType];
+    const patternIndex = ((inputs.name || '').length + (inputs.age || '').length) % patternGroup.patterns.length;
+    const pattern = patternGroup.patterns[patternIndex];
+
+    // 四化类型
+    const sihuaKeys = Object.keys(SIHUA_TYPES);
+    const sihuaIndex = ((inputs.name || '').charCodeAt(0) || 0) % sihuaKeys.length;
+    const sihuaType = sihuaKeys[sihuaIndex];
+
+    // 8种人格类型（用四化类型的keys作为8个细分）
+    const personalityTypes = sihuaKeys;
+
+    // 时辰（简单映射）
+    const shiChenList = ['子时', '丑时', '寅时', '卯时', '辰时', '巳时', '午时', '未时', '申时', '酉时', '戌时', '亥时'];
+    const shiChen = shiChenList[((inputs.name || '').length * 3) % shiChenList.length];
+
+    return {
+        pattern,           // { name, stars, desc }
+        patternType,       // 格局大类名称，如"杀破狼"
+        sihuaType,         // 四化类型
+        personalityTypes,  // 8种人格类型数组（用于步骤3选项）
+        shiChen,           // 时辰
+        ke: '一刻',
+        chartId: `${patternType}-${pattern.name}-${sihuaType}`
+    };
+}
+
+// 根据人格类型+星盘生成描述（供步骤3的细分卡片使用）
+function generatePersonalityDescription(type, chartData) {
+    const sihua = SIHUA_TYPES[type] || SIHUA_TYPES[Object.keys(SIHUA_TYPES)[0]];
+    return {
+        shortDesc: sihua.desc,
+        visibleTrait: sihua.mingEffect,
+        hiddenNeed: sihua.fudeEffect
+    };
+}
+
 // ==================== 初始化 ====================
 document.addEventListener('DOMContentLoaded', () => {
     showStep(1);
@@ -263,8 +307,8 @@ function matchChart() {
     document.getElementById('main-pattern-name').textContent = chartData.pattern.name;
     document.getElementById('main-pattern-desc').textContent = chartData.pattern.desc;
     document.getElementById('main-star').textContent = chartData.pattern.stars.join('、');
-    document.getElementById('pattern-type').textContent = chartData.patternType;
-    document.getElementById('era-display').textContent = {ancient:'古代', modern:'近代', contemporary:'现代'}[userInputs.era];
+    const eraEl = document.getElementById('era');
+    if (eraEl) eraEl.textContent = {ancient:'古代', modern:'近代', contemporary:'现代'}[userInputs.era] || userInputs.era;
     document.getElementById('match-score').textContent = Math.floor(85 + Math.random() * 15) + '%';
     
     // 生成8种人格类型选项
