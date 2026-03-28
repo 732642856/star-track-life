@@ -28,6 +28,15 @@ jobs:
       - name: 同步 Capacitor
         run: npx cap sync ios
 
+      - name: 检查 iOS 项目结构
+        run: |
+          echo "=== iOS 目录结构 ==="
+          ls -la ios/App/
+          echo "=== xcworkspace ==="
+          find ios -name "*.xcworkspace" -not -path "*/xcodeproj/*" 2>/dev/null && echo "找到独立 workspace" || echo "无独立 workspace，使用 project"
+          echo "=== xcodeproj ==="
+          ls -la ios/App/App.xcodeproj/
+
       - name: 解析 Swift Package 依赖
         run: |
           xcodebuild -resolvePackageDependencies \
