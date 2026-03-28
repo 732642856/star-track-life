@@ -271,14 +271,21 @@ function generateAppearanceFromLexicon(star, gender, age) {
     const genderPrefix = gender === 'male' ? '他' : '她';
     const genderDesc = gender === 'male' ? '英俊' : '美丽';
     
-    // 根据年龄调整
-    let ageDesc = '';
-    if (age < 30) {
-        ageDesc = '青春年少';
-    } else if (age < 50) {
-        ageDesc = '正值壮年';
-    } else {
-        ageDesc = '年岁渐长';
+    // 根据年龄调整（age 可能是字符串 'youth'/'middle'/'senior' 或数字）
+    const ageDescMap = {
+        'youth':  '青春年少',
+        'middle': '正值壮年',
+        'senior': '年岁渐长'
+    };
+    let ageDesc = ageDescMap[age];
+    if (!ageDesc) {
+        // 兼容数字类型
+        const ageNum = parseInt(age, 10);
+        if (!isNaN(ageNum)) {
+            ageDesc = ageNum < 30 ? '青春年少' : ageNum < 50 ? '正值壮年' : '年岁渐长';
+        } else {
+            ageDesc = '正值壮年'; // 兜底
+        }
     }
     
     appearance += `**外貌描写（基于写作词库）**\n\n`;
