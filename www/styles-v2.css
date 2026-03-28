@@ -1464,6 +1464,121 @@ body {
 }
 
 /* ========================================
+   btn-small（列表内操作按钮）
+   ======================================== */
+.btn-small {
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.btn-small.btn-outline {
+    background: transparent;
+    border-color: var(--color-border);
+    color: var(--color-text-secondary);
+}
+
+.btn-small.btn-outline:hover {
+    border-color: var(--color-text);
+    color: var(--color-text);
+}
+
+/* ========================================
+   meta-item（hero 区标签）
+   ======================================== */
+.meta-item {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    letter-spacing: 0.02em;
+}
+
+/* ========================================
+   角色对比布局
+   ======================================== */
+.compare-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+}
+
+.compare-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    background: var(--color-bg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.compare-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0 0 var(--space-2) 0;
+    padding-bottom: var(--space-2);
+    border-bottom: 2px solid var(--color-accent, #8b1a1a);
+}
+
+.compare-item {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    padding: 2px 0;
+}
+
+.compare-item strong {
+    color: var(--color-text);
+    margin-right: 4px;
+}
+
+.compare-summary {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+    padding: var(--space-2) 0;
+    border-top: 1px solid var(--color-border);
+    margin-top: var(--space-2);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+}
+
+.compare-analysis {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-5);
+    background: var(--color-bg-secondary, #f9f9f9);
+    margin-top: var(--space-4);
+}
+
+.compare-analysis h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0 0 var(--space-3) 0;
+}
+
+.compare-analysis p {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    line-height: 1.8;
+    margin: 0 0 var(--space-2) 0;
+}
+
+.compare-analysis strong {
+    color: var(--color-text);
+}
+
+/* ========================================
    打印样式 - 参照线上版
    ======================================== */
 @media print {
