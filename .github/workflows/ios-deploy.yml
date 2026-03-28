@@ -104,8 +104,12 @@ jobs:
       - name: 构建并归档
         env:
           TEAM_ID: ${{ secrets.TEAM_ID }}
-          PROVISIONING_PROFILE_NAME: ${{ secrets.PROVISIONING_PROFILE_NAME }}
         run: |
+          # 从已安装的描述文件中提取 UUID
+          PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+          PP_UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID raw -)
+          echo "使用描述文件 UUID: $PP_UUID"
+
           xcodebuild archive \
             -project ios/App/App.xcodeproj \
             -scheme App \
@@ -115,7 +119,7 @@ jobs:
             DEVELOPMENT_TEAM="$TEAM_ID" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
-            PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_NAME" \
+            PROVISIONING_PROFILE="$PP_UUID" \
             -allowProvisioningUpdates
 
       - name: 导出 IPA
