@@ -28,10 +28,11 @@ jobs:
       - name: 同步 Capacitor
         run: npx cap sync ios
 
-      - name: 安装 CocoaPods
+      - name: 解析 Swift Package 依赖
         run: |
-          cd ios/App
-          pod install --repo-update
+          xcodebuild -resolvePackageDependencies \
+            -project ios/App/App.xcodeproj \
+            -scheme App
 
       - name: 导入签名证书
         env:
@@ -61,7 +62,7 @@ jobs:
       - name: 构建并归档
         run: |
           xcodebuild archive \
-            -workspace ios/App/App.xcworkspace \
+            -project ios/App/App.xcodeproj \
             -scheme App \
             -configuration Release \
             -archivePath $RUNNER_TEMP/App.xcarchive \
