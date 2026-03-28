@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#FFFFFF">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="星轨人生">
+    <meta name="description" content="星轨人生 - 专为艺术创作者提供人物塑造辅助工具 · 576盘精细排盘系统 · 三时代人物设计工具">
+    <title>星轨人生 - 艺术创作者的人物塑造工具</title>
+    
+    <link rel="stylesheet" href="styles-v2.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- 导航栏 -->
+        <nav class="main-nav">
+            <div class="nav-container">
+                <div class="logo">
+                    <span class="logo-icon">◈</span>
+                    <span class="logo-text">星轨人生</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 主视觉区 -->
+        <header class="hero-section">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="title-line">星轨人生</span>
+                    <span class="title-line title-highlight">艺术创作者的人物塑造工具</span>
+                </h1>
+                <p class="hero-subtitle">紫微斗数 × 编剧理论 × 星盘精细排盘</p>
+                <div class="hero-meta">
+                    <span class="meta-item">14颗主星</span>
+                    <span class="meta-separator">/</span>
+                    <span class="meta-item">12维小传</span>
+                    <span class="meta-separator">/</span>
+                    <span class="meta-item">精准塑造</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- 步骤指示器 -->
+        <div class="step-indicator">
+            <div class="step active" data-step="1">
+                <div class="step-number">01</div>
+                <div class="step-label">时代背景</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step" data-step="2">
+                <div class="step-number">02</div>
+                <div class="step-label">基础信息</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step" data-step="3">
+                <div class="step-number">03</div>
+                <div class="step-label">星盘匹配</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step" data-step="4">
+                <div class="step-number">04</div>
+                <div class="step-label">8属性细化</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step" data-step="5">
+                <div class="step-number">05</div>
+                <div class="step-label">人物小传</div>
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 步骤1：时代背景 -->
+            <div class="step-content active" id="step-1">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2 class="card-title">选择时代背景</h2>
+                        <p class="card-subtitle">你的角色生活在哪个时代？这将决定社会背景和人物命运</p>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="option-grid" style="grid-template-columns: repeat(3, 1fr);">
+                            <div class="era-card" data-era="ancient">
+                                <div class="era-icon">🏯</div>
+                                <div class="era-title">古代</div>
+                                <div class="era-desc">明清以前</div>
+                                <div class="era-features">
+                                    <span class="era-feature">科举制度</span>
+                                    <span class="era-feature">宗法社会</span>
+                                    <span class="era-feature">等级森严</span>
+                                </div>
+                            </div>
+
+                            <div class="era-card" data-era="modern">
+                                <div class="era-icon">🏛️</div>
+                                <div class="era-title">近代</div>
+                                <div class="era-desc">1840-1949</div>
+                                <div class="era-features">
+                                    <span class="era-feature">变革动荡</span>
+                                    <span class="era-feature">西学东渐</span>
+                                    <span class="era-feature">救亡图存</span>
+                                </div>
+                            </div>
+
+                            <div class="era-card" data-era="contemporary">
+                                <div class="era-icon">🏢</div>
+                                <div class="era-title">现代</div>
+                                <div class="era-desc">1949年至今</div>
+                                <div class="era-features">
+                                    <span class="era-feature">科技时代</span>
+                                    <span class="era-feature">价值多元</span>
+                                    <span class="era-feature">全球视野</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <button class="btn btn-primary btn-large" onclick="confirmEra()">
+                        下一步
+                        <span class="btn-arrow">→</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 步骤2：基础信息收集 -->
+            <div class="step-content" id="step-2">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2 class="card-title">基础信息</h2>
+                        <p class="card-subtitle">根据紫微斗数十二宫位逻辑收集角色基础信息</p>
+                    </div>
+
+                    <div class="form-section">
+                        <!-- 性别 -->
+                        <div class="form-group">
+                            <label class="form-label">性别【命宫·阴阳】</label>
+                            <div class="option-grid">
+                                <div class="option-card selected" data-value="male" data-field="gender">
+                                    <div class="option-icon">👨</div>
+                                    <div class="option-title">男</div>
+                                    <div class="option-desc">阳刚、主动、进取</div>
+                                </div>
+                                <div class="option-card" data-value="female" data-field="gender">
+                                    <div class="option-icon">👩</div>
+                                    <div class="option-title">女</div>
+                                    <div class="option-desc">阴柔、内敛、温和</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 年龄 -->
+                        <div class="form-group">
+                            <label class="form-label">年龄【命宫·大运阶段】</label>
+                            <div class="option-grid">
+                                <div class="option-card" data-value="youth" data-field="age">
+                                    <div class="option-title">青年</div>
+                                    <div class="option-desc">18-30岁，起步探索期</div>
+                                </div>
+                                <div class="option-card" data-value="middle" data-field="age">
+                                    <div class="option-title">中年</div>
+                                    <div class="option-desc">30-50岁，成熟巅峰期</div>
+                                </div>
+                                <div class="option-card" data-value="senior" data-field="age">
+                                    <div class="option-title">老年</div>
+                                    <div class="option-desc">50岁以上，智慧沉淀期</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 职业 -->
+                        <div class="form-group">
+                            <label class="form-label">职业【官禄宫】</label>
+                            <div class="option-grid">
+                                <div class="option-card" data-value="political" data-field="profession">
+                                    <div class="option-title">政界</div>
+                                    <div class="option-desc">官员、政治家、公务员</div>
+                                </div>
+                                <div class="option-card" data-value="business" data-field="profession">
+                                    <div class="option-title">商界</div>
+                                    <div class="option-desc">企业家、商人、创业者</div>
+                                </div>
+                                <div class="option-card" data-value="cultural" data-field="profession">
+                                    <div class="option-title">文教</div>
+                                    <div class="option-desc">学者、教师、艺术家</div>
+                                </div>
+                                <div class="option-card" data-value="military" data-field="profession">
+                                    <div class="option-title">军警</div>
+                                    <div class="option-desc">军人、警察、保安</div>
+                                </div>
+                                <div class="option-card" data-value="technical" data-field="profession">
+                                    <div class="option-title">技术</div>
+                                    <div class="option-desc">工程师、医生、律师</div>
+                                </div>
+                                <div class="option-card" data-value="other" data-field="profession">
+                                    <div class="option-title">其他</div>
+                                    <div class="option-desc">自由职业、学生、退休</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 家庭背景 -->
+                        <div class="form-group">
+                            <label class="form-label">家庭背景【田宅宫】</label>
+                            <div class="option-grid">
+                                <div class="option-card" data-value="wealthy" data-field="family">
+                                    <div class="option-title">富贵</div>
+                                    <div class="option-desc">世家大族，权势显赫</div>
+                                </div>
+                                <div class="option-card" data-value="middle" data-field="family">
+                                    <div class="option-title">小康</div>
+                                    <div class="option-desc">中产之家，生活无忧</div>
+                                </div>
+                                <div class="option-card" data-value="poor" data-field="family">
+                                    <div class="option-title">贫寒</div>
+                                    <div class="option-desc">家境清贫，自力更生</div>
+                                </div>
+                                <div class="option-card" data-value="decline" data-field="family">
+                                    <div class="option-title">家道中落</div>
+                                    <div class="option-desc">昔日富贵，如今落魄</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 社会阶层 -->
+                        <div class="form-group">
+                            <label class="form-label">社会阶层【命宫·地位】</label>
+                            <div class="option-grid">
+                                <div class="option-card" data-value="upper" data-field="social">
+                                    <div class="option-title">上层</div>
+                                    <div class="option-desc">权贵、名流、富豪</div>
+                                </div>
+                                <div class="option-card" data-value="middle" data-field="social">
+                                    <div class="option-title">中层</div>
+                                    <div class="option-desc">知识分子、白领、小企业主</div>
+                                </div>
+                                <div class="option-card" data-value="lower" data-field="social">
+                                    <div class="option-title">下层</div>
+                                    <div class="option-desc">工人、农民、底层</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 父母关系 -->
+                        <div class="form-group">
+                            <label class="form-label">父母关系【父母宫】</label>
+                            <div class="option-grid">
+                                <div class="option-card" data-value="harmonious" data-field="parents">
+                                    <div class="option-title">和睦</div>
+                                    <div class="option-desc">关系融洽，家庭温暖</div>
+                                </div>
+                                <div class="option-card" data-value="strained" data-field="parents">
+                                    <div class="option-title">紧张</div>
+                                    <div class="option-desc">经常争吵，关系紧张</div>
+                                </div>
+                                <div class="option-card" data-value="broken" data-field="parents">
+                                    <div class="option-title">破裂</div>
+                                    <div class="option-desc">离异、失联、家庭破碎</div>
+                                </div>
+                                <div class="option-card" data-value="loss" data-field="parents">
+                                    <div class="option-title">丧亲</div>
+                                    <div class="option-desc">父母双亡或单亲</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 兄弟朋友关系 -->
+                        <div class="form-group">
+                            <label class="form-label">兄弟朋友关系【兄弟宫】</label>
+                            <div class="option-grid">
+                                <div class="option-card" data-value="close" data-field="siblings">
+                                    <div class="option-title">亲密</div>
+                                    <div class="option-desc">手足情深，朋友众多</div>
+                                </div>
+                                <div class="option-card" data-value="conflict" data-field="siblings">
+                                    <div class="option-title">冲突</div>
+                                    <div class="option-desc">兄弟阋墙，朋友背叛</div>
+                                </div>
+                                <div class="option-card" data-value="support" data-field="siblings">
+                                    <div class="option-title">扶持</div>
+                                    <div class="option-desc">互相帮助，共同进步</div>
+                                </div>
+                                <div class="option-card" data-value="alone" data-field="siblings">
+                                    <div class="option-title">孤独</div>
+                                    <div class="option-desc">独来独往，缺少朋友</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <button class="btn btn-secondary" onclick="prevStep()">
+                        <span class="btn-arrow">←</span>
+                        返回
+                    </button>
+                    <button class="btn btn-primary btn-large" onclick="confirmBasicInfo()">
+                        确认并匹配星盘
+                        <span class="btn-arrow">→</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 步骤3：星盘选择 -->
+            <div class="step-content" id="step-3">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2 class="card-title">星盘匹配</h2>
+                        <p class="card-subtitle">根据基础信息匹配到适合的主星盘，并选择细分类型</p>
+                    </div>
+
+                    <div class="chart-overview">
+                        <div class="chart-pattern">
+                            <div class="pattern-name" id="main-pattern-name">杀破狼</div>
+                            <div class="pattern-desc" id="main-pattern-desc">开创变革，勇猛果断</div>
+                        </div>
+
+                        <div class="chart-info-grid">
+                            <div class="info-item">
+                                <div class="info-label">主星</div>
+                                <div class="info-value" id="main-star">七杀</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">命宫</div>
+                                <div class="info-value" id="ming-palace">卯</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">时代</div>
+                                <div class="info-value" id="era">古代</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">匹配度</div>
+                                <div class="info-value" id="match-score">92%</div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <label class="form-label">选择细分星盘（基于四化心理动机）</label>
+                            
+                            <div class="stars-grid" id="sub-patterns-grid">
+                                <!-- 动态生成8种细分 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <button class="btn btn-secondary" onclick="prevStep()">
+                        <span class="btn-arrow">←</span>
+                        返回
+                    </button>
+                    <button class="btn btn-primary btn-large" onclick="confirmSubPattern()">
+                        确认进入8属性细化
+                        <span class="btn-arrow">→</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 步骤4：8属性细化 -->
+            <div class="step-content" id="step-4">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2 class="card-title">8属性细化</h2>
+                        <p class="card-subtitle">完善角色的8个核心维度</p>
+                    </div>
+
+                    <div class="form-section">
+                        <p style="text-align: center; color: #888; padding: 40px;">
+                            此步骤将在后续实现...
+                        </p>
+                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <button class="btn btn-secondary" onclick="prevStep()">
+                        <span class="btn-arrow">←</span>
+                        返回
+                    </button>
+                    <button class="btn btn-primary" onclick="nextStep()">
+                        下一步
+                        <span class="btn-arrow">→</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 步骤5：人物小传 -->
+            <div class="step-content" id="step-5">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2 class="card-title">人物小传</h2>
+                        <p class="card-subtitle">生成完整的人物小传</p>
+                    </div>
+
+                    <div class="result-content">
+                        <p style="text-align: center; color: #888; padding: 40px;">
+                            此步骤将在后续实现...
+                        </p>
+                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <button class="btn btn-secondary" onclick="prevStep()">
+                        <span class="btn-arrow">←</span>
+                        返回
+                    </button>
+                    <button class="btn btn-outline" onclick="resetForm()">
+                        重新开始
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- 页脚 -->
+        <footer class="main-footer">
+            <div class="footer-content">
+                <p class="footer-text">星轨人生 · 艺术创作者的人物塑造工具 · 基于紫微斗数学术体系</p>
+                <p class="footer-copyright">© 2026 星轨人生</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 脚本加载顺序很重要 -->
+    <script src="ziwei-complete.js"></script>
+    <script src="era-data.js"></script>
+    <script src="ziwei-psychology.js"></script>
+    <script src="ziwei-patterns.js"></script>
+    <script src="fine-chart-engine.js"></script>
+    <script src="character-bio-generator.js"></script>
+    <script src="character-bio-enhanced-generator.js"></script>
+    <script src="character-bio-data.js"></script>
+    <script src="writing-resources.js"></script>
+    <script src="ziwei-star-details.js"></script>
+    <script src="face-reading-generator.js"></script>
+    <script src="signature-details-generator.js"></script>
+    <script src="writing-lexicon-generator.js"></script>
+    <script src="chart-storage.js"></script>
+    <script src="character-20-questions.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
