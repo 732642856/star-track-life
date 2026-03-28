@@ -101,7 +101,10 @@ jobs:
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUM" ios/App/App/Info.plist
           /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" ios/App/App/Info.plist
 
-      - name: 构建并归档（不签名）
+      - name: 构建并归档
+        env:
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+          PROVISIONING_PROFILE_NAME: ${{ secrets.PROVISIONING_PROFILE_NAME }}
         run: |
           xcodebuild archive \
             -project ios/App/App.xcodeproj \
@@ -109,8 +112,10 @@ jobs:
             -configuration Release \
             -archivePath $RUNNER_TEMP/App.xcarchive \
             -destination 'generic/platform=iOS' \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_NAME" \
             -allowProvisioningUpdates
 
       - name: 导出 IPA
@@ -159,12 +164,18 @@ jobs:
           mkdir -p ~/.appstoreconnect/private_keys
           echo -n "$APP_STORE_CONNECT_KEY_BASE64" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
 
-          # 上传 IPA
+          # 验证 IPA 存在
+          ls -lh $RUNNER_TEMP/export/
+          IPA_PATH=$(find $RUNNER_TEMP/export -name "*.ipa" | head -1)
+          echo "上传 IPA: $IPA_PATH"
+
+          # 使用 xcrun altool 上传（Apple 官方工具，支持 API Key 认证）
           xcrun altool --upload-app \
             --type ios \
-            --file $RUNNER_TEMP/export/App.ipa \
+            --file "$IPA_PATH" \
             --apiKey "$APP_STORE_CONNECT_KEY_ID" \
-            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
+            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
+            --verbose
 
       - name: 清理 Keychain
         if: always()
