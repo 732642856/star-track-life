@@ -566,6 +566,32 @@
             </div>
         </main>
 
+        <!-- 已保存角色列表 -->
+        <div id="saved-characters-section" style="display:none; max-width:800px; margin:24px auto; padding:0 16px;">
+            <div class="content-card">
+                <div class="card-header">
+                    <h2 class="card-title">已保存的角色</h2>
+                </div>
+                <div id="saved-characters-list"></div>
+            </div>
+        </div>
+
+        <!-- 对比按钮 -->
+        <div id="compare-btn-section" style="display:none; max-width:800px; margin:0 auto 24px; padding:0 16px; text-align:center;">
+            <button class="btn btn-primary" onclick="showCompare()">对比选中的角色</button>
+        </div>
+
+        <!-- 对比结果 -->
+        <div id="compare-section" style="display:none; max-width:800px; margin:0 auto 40px; padding:0 16px;">
+            <div class="content-card">
+                <div class="card-header">
+                    <h2 class="card-title">角色对比</h2>
+                    <button class="btn btn-outline" onclick="closeCompare()" style="margin-left:auto;">关闭</button>
+                </div>
+                <div id="compare-content"></div>
+            </div>
+        </div>
+
         <!-- 页脚 -->
         <footer class="main-footer">
             <div class="footer-content">
@@ -576,21 +602,21 @@
     </div>
 
     <!-- 脚本加载顺序很重要 -->
-    <script src="ziwei-complete.js?v=4"></script>
-    <script src="era-data.js?v=4"></script>
-    <script src="ziwei-psychology.js?v=4"></script>
-    <script src="ziwei-patterns.js?v=4"></script>
-    <script src="fine-chart-engine.js?v=4"></script>
-    <script src="character-bio-generator.js?v=4"></script>
-    <script src="character-bio-enhanced-generator.js?v=4"></script>
-    <script src="character-bio-data.js?v=4"></script>
-    <script src="writing-resources.js?v=4"></script>
-    <script src="ziwei-star-details.js?v=4"></script>
-    <script src="face-reading-generator.js?v=5"></script>
-    <script src="signature-details-generator.js?v=4"></script>
-    <script src="writing-lexicon-generator.js?v=5"></script>
-    <script src="chart-storage.js?v=4"></script>
-    <script src="character-20-questions.js?v=4"></script>
-    <script src="app-v2.js?v=4"></script>
+    <script src="ziwei-complete.js?v=6"></script>
+    <script src="era-data.js?v=6"></script>
+    <script src="ziwei-psychology.js?v=6"></script>
+    <script src="ziwei-patterns.js?v=6"></script>
+    <script src="fine-chart-engine.js?v=6"></script>
+    <script src="character-bio-generator.js?v=6"></script>
+    <script src="character-bio-enhanced-generator.js?v=6"></script>
+    <script src="character-bio-data.js?v=6"></script>
+    <script src="writing-resources.js?v=6"></script>
+    <script src="ziwei-star-details.js?v=6"></script>
+    <script src="face-reading-generator.js?v=6"></script>
+    <script src="signature-details-generator.js?v=6"></script>
+    <script src="writing-lexicon-generator.js?v=6"></script>
+    <script src="chart-storage.js?v=6"></script>
+    <script src="character-20-questions.js?v=6"></script>
+    <script src="app-v2.js?v=6"></script>
 </body>
 </html>
