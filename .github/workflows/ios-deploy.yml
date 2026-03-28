@@ -84,27 +84,23 @@ jobs:
           echo "=== 已安装的描述文件 ==="
           ls ~/Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null || echo "目录不存在"
 
-      - name: 构建并归档
+      - name: 构建并归档（不签名）
         run: |
-          # 获取描述文件 UUID
-          PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
-          PP_UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID raw -)
-          echo "使用描述文件 UUID: $PP_UUID"
-          
           xcodebuild archive \
             -project ios/App/App.xcodeproj \
             -scheme App \
             -configuration Release \
             -archivePath $RUNNER_TEMP/App.xcarchive \
             -destination 'generic/platform=iOS' \
-            CODE_SIGN_STYLE=Manual \
-            PROVISIONING_PROFILE="$PP_UUID" \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
-            DEVELOPMENT_TEAM="2DM78YY6PM" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
             -allowProvisioningUpdates
 
       - name: 导出 IPA
         run: |
+          PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+          PP_UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID raw -)
+          
           cat > $RUNNER_TEMP/ExportOptions.plist << EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -113,7 +109,16 @@ jobs:
             <key>method</key>
             <string>app-store</string>
             <key>teamID</key>
-            <string>${{ secrets.TEAM_ID }}</string>
+            <string>2DM78YY6PM</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>signingCertificate</key>
+            <string>Apple Distribution</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.yinan.xingguirensheng</key>
+              <string>$PP_UUID</string>
+            </dict>
             <key>uploadBitcode</key>
             <false/>
             <key>compileBitcode</key>
