@@ -57,12 +57,25 @@ jobs:
           PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
           # 移除可能的换行符后解码
           echo "$BUILD_PROVISION_PROFILE_BASE64" | tr -d '\n' | base64 --decode > $PP_PATH
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          
+          # 提取 UUID
           PP_UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID raw -)
           echo "描述文件 UUID: $PP_UUID"
+          
+          # 安装到用户目录
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/${PP_UUID}.mobileprovision
-          echo "已安装的描述文件:"
-          ls ~/Library/MobileDevice/Provisioning\ Profiles/
+          chmod 644 ~/Library/MobileDevice/Provisioning\ Profiles/${PP_UUID}.mobileprovision
+          
+          # 同时安装到系统目录（某些 CI 环境需要）
+          sudo mkdir -p /Library/MobileDevice/Provisioning\ Profiles
+          sudo cp $PP_PATH /Library/MobileDevice/Provisioning\ Profiles/${PP_UUID}.mobileprovision
+          sudo chmod 644 /Library/MobileDevice/Provisioning\ Profiles/${PP_UUID}.mobileprovision
+          
+          echo "已安装的描述文件（用户目录）:"
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/
+          echo "已安装的描述文件（系统目录）:"
+          ls -la /Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null || echo "系统目录无权限"
 
       - name: 验证签名环境
         run: |
@@ -73,6 +86,11 @@ jobs:
 
       - name: 构建并归档
         run: |
+          # 获取描述文件 UUID
+          PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+          PP_UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID raw -)
+          echo "使用描述文件 UUID: $PP_UUID"
+          
           xcodebuild archive \
             -project ios/App/App.xcodeproj \
             -scheme App \
@@ -80,7 +98,7 @@ jobs:
             -archivePath $RUNNER_TEMP/App.xcarchive \
             -destination 'generic/platform=iOS' \
             CODE_SIGN_STYLE=Manual \
-            PROVISIONING_PROFILE_SPECIFIER="StarTrackLifeAppStore" \
+            PROVISIONING_PROFILE="$PP_UUID" \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             DEVELOPMENT_TEAM="2DM78YY6PM" \
             -allowProvisioningUpdates
