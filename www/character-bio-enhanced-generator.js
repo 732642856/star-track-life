@@ -284,7 +284,19 @@ function generateEnhancedCharacterBio(chartData, era, characterData) {
         questions20: questions20Answers,
 
         // 完整小传
-        fullBio: generateFullBio(dimensions, storyElements, era, questions20Answers)
+        fullBio: generateFullBio(dimensions, storyElements, era, questions20Answers, {
+            mainStar: mainStar,
+            auspiciousStars: [],
+            malignantStars: [],
+            pattern: chartData.pattern,
+            patternType: chartData.patternType
+        }, {
+            name: characterData.name || generateName(era, characterData.gender),
+            gender: characterData.gender,
+            age: characterData.age,
+            career: characterData.career,
+            family: characterData.family
+        })
     };
 
     return bio;
@@ -368,9 +380,13 @@ function generateStoryElements(mainStar, era) {
 /**
  * 生成完整小传文本
  */
-function generateFullBio(dimensions, storyElements, era, questions20Answers = []) {
+function generateFullBio(dimensions, storyElements, era, questions20Answers = [], ziweiData = {}, basicInfo = {}) {
     const { innerMotivation, soulWound, fear, valueConflict, externalConflict, lie, truth, characterArc } = dimensions;
     const { suangqiaoBridges, suspenseTechniques } = storyElements;
+    // 确保 ziweiData 有兜底值
+    if (!ziweiData.mainStar) ziweiData.mainStar = '紫微';
+    if (!ziweiData.auspiciousStars) ziweiData.auspiciousStars = [];
+    if (!ziweiData.malignantStars) ziweiData.malignantStars = [];
 
     let bio = '';
 
@@ -587,7 +603,7 @@ function convertEnhancedBioToMarkdown(bio) {
     md += `- 年龄：${bio.basicInfo.age}\n`;
     md += `- 职业：${bio.basicInfo.career}\n`;
     md += `- 家庭背景：${bio.basicInfo.family}\n`;
-    md += `- 性格特点：${bio.basicInfo.personality.join('、')}\n\n`;
+    md += `- 性格特点：${Array.isArray(bio.basicInfo.personality) ? bio.basicInfo.personality.join('、') : (bio.basicInfo.personality || '未知')}\n\n`;
 
     md += `**命盘信息**\n`;
     md += `- 主星：${bio.ziweiData.mainStar}\n`;
