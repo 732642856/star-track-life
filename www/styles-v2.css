@@ -1383,6 +1383,87 @@ body {
 }
 
 /* ========================================
+   已保存角色列表
+   ======================================== */
+#saved-characters-section {
+    margin-top: var(--space-6);
+}
+
+.saved-character-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-3);
+    background: var(--color-bg);
+}
+
+.character-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.character-name-display {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.character-meta {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.character-actions {
+    display: flex;
+    gap: var(--space-2);
+    flex-shrink: 0;
+}
+
+.compare-checkbox {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    accent-color: var(--color-accent);
+}
+
+/* ========================================
+   小传表格样式
+   ======================================== */
+.bio-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: var(--space-4);
+    font-size: 0.9rem;
+}
+
+.bio-table th,
+.bio-table td {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    text-align: left;
+    vertical-align: top;
+    line-height: 1.6;
+}
+
+.bio-table th {
+    background: var(--color-bg-secondary, #f5f5f5);
+    font-weight: 600;
+    color: var(--color-text);
+    width: 30%;
+}
+
+.bio-table td {
+    color: var(--color-text-secondary);
+}
+
+/* ========================================
    打印样式 - 参照线上版
    ======================================== */
 @media print {

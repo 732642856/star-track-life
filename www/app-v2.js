@@ -413,31 +413,98 @@ function generateFinalBio() {
 
 // ==================== Markdown渲染器 ====================
 function renderMarkdown(markdown) {
-    let html = markdown;
-    
-    // 标题
-    html = html.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
-    html = html.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
-    html = html.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
-    
-    // 粗体
-    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
-    // 分割线
-    html = html.replace(/^---$/gm, '<hr>');
-    
-    // 段落
-    html = html.split('\n\n').map(para => {
-        if (para.startsWith('<h') || para.startsWith('<hr')) {
-            return para;
+    if (!markdown) return '';
+    var lines = markdown.split('\n');
+    var html = '';
+    var i = 0;
+
+    while (i < lines.length) {
+        var line = lines[i];
+
+        // 标题
+        if (/^### (.+)/.test(line)) {
+            html += '<h3>' + line.replace(/^### /, '') + '</h3>';
+            i++; continue;
         }
-        return `<p>${para}</p>`;
-    }).join('');
-    
-    // 换行
-    html = html.replace(/\n/g, '<br>');
-    
+        if (/^## (.+)/.test(line)) {
+            html += '<h2>' + line.replace(/^## /, '') + '</h2>';
+            i++; continue;
+        }
+        if (/^# (.+)/.test(line)) {
+            html += '<h1>' + line.replace(/^# /, '') + '</h1>';
+            i++; continue;
+        }
+
+        // 分割线
+        if (/^---$/.test(line.trim())) {
+            html += '<hr>';
+            i++; continue;
+        }
+
+        // 表格（连续 | 开头的行）
+        if (/^\|/.test(line)) {
+            var tableLines = [];
+            while (i < lines.length && /^\|/.test(lines[i])) {
+                tableLines.push(lines[i]);
+                i++;
+            }
+            // 过滤掉分隔行 |---|---|
+            var dataRows = tableLines.filter(function(l) { return !/^\|[-| :]+\|$/.test(l.trim()); });
+            html += '<table class="bio-table">';
+            dataRows.forEach(function(row, idx) {
+                var cells = row.split('|').filter(function(c, ci) { return ci > 0 && ci < row.split('|').length - 1; });
+                var tag = idx === 0 ? 'th' : 'td';
+                html += '<tr>' + cells.map(function(c) {
+                    return '<' + tag + '>' + renderInline(c.trim()) + '</' + tag + '>';
+                }).join('') + '</tr>';
+            });
+            html += '</table>';
+            continue;
+        }
+
+        // 无序列表
+        if (/^- (.+)/.test(line)) {
+            html += '<ul>';
+            while (i < lines.length && /^- (.+)/.test(lines[i])) {
+                html += '<li>' + renderInline(lines[i].replace(/^- /, '')) + '</li>';
+                i++;
+            }
+            html += '</ul>';
+            continue;
+        }
+
+        // 有序列表
+        if (/^\d+\. (.+)/.test(line)) {
+            html += '<ol>';
+            while (i < lines.length && /^\d+\. (.+)/.test(lines[i])) {
+                html += '<li>' + renderInline(lines[i].replace(/^\d+\. /, '')) + '</li>';
+                i++;
+            }
+            html += '</ol>';
+            continue;
+        }
+
+        // 空行
+        if (line.trim() === '') {
+            i++; continue;
+        }
+
+        // 普通段落
+        html += '<p>' + renderInline(line) + '</p>';
+        i++;
+    }
+
     return html;
+}
+
+function renderInline(text) {
+    // 粗体
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    // 斜体
+    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    // 行内代码
+    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+    return text;
 }
 
 // ==================== 桥接新排盘引擎 ====================
