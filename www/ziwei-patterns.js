@@ -3,7 +3,7 @@
  * 基于紫微斗数角色设计skill的chart_patterns.md
  */
 
-const CHART_PATTERNS = {
+var CHART_PATTERNS = {
     // 杀破狼格局系列
     '七杀独坐': {
         category: '杀破狼',

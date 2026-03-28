@@ -584,7 +584,7 @@ const SIX_AUSPICIOUS_STARS = ['文昌', '文曲', '左辅', '右弼', '天魁', 
 const SIX_MALIGNANT_STARS = ['擎羊', '陀罗', '火星', '铃星', '地空', '地劫'];
 
 // 四化象
-const FOUR_TRANSFORMATIONS = {
+var FOUR_TRANSFORMATIONS = {
     化禄: { meaning: '福禄', effect: '财缘、顺利、增加' },
     化权: { meaning: '权力', effect: '掌控、强势、竞争' },
     化科: { meaning: '贵人', effect: '名声、科甲、缓和' },

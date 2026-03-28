@@ -10,7 +10,7 @@
  * 命盘格局类型定义
  * 根据主星、四化、宫位组合定义人物基调
  */
-const CHART_PATTERNS = {
+var CHART_PATTERNS = {
     // 权威稳重型
     AUTHORITY: {
         name: '权威稳重型',
