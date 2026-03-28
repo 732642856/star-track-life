@@ -238,11 +238,22 @@ const STAR_TO_SCREENWRITING_MAP = {
  * 根据命盘生成增强版人物小传
  */
 function generateEnhancedCharacterBio(chartData, era, characterData) {
-    // 获取主星
-    const mainStar = chartData.mainStars[0] || '紫微';
+    // ── 从 _fullChart 提取真实命盘坐标 ──
+    const fc = chartData._fullChart || chartData;
+    // mainStars 兼容多种数据结构
+    const mainStarsArr = chartData.mainStars
+        || (fc.mingGong && fc.mingGong.stars)
+        || (chartData.pattern && chartData.pattern.stars)
+        || [];
+    const mainStar = mainStarsArr[0] || '紫微';
     const starMapping = STAR_TO_SCREENWRITING_MAP[mainStar] || STAR_TO_SCREENWRITING_MAP['紫微'];
 
-    // 生成编剧理论维度
+    // 把命盘坐标挂到 chartData 上，供 generateScreenwritingDimensions 使用
+    chartData._fullChart = fc;
+    chartData.name   = characterData.name || '';
+    chartData.gender = characterData.gender || '';
+
+    // 生成编剧理论维度（已接入 sihuaType/mingDizhi/确定性选词）
     const dimensions = generateScreenwritingDimensions(mainStar, chartData, era);
 
     // 生成爽点桥段和悬念手法
@@ -302,47 +313,108 @@ function generateEnhancedCharacterBio(chartData, era, characterData) {
     return bio;
 }
 
+// ============================================
+// 四化类型 → 价值观冲突 映射（8种四化各有专属冲突）
+// ============================================
+var SIHUA_VALUE_CONFLICT_MAP = {
+    '化禄格': 'love_duty',         // 得禄者：爱情与责任的张力
+    '化权格': 'individual_collective', // 掌权者：个人意志 vs 集体规则
+    '化科格': 'tradition_innovation',  // 化科：守旧知识体系 vs 新知突破
+    '化忌格': 'truth_loyalty',     // 化忌入命：说真话 vs 忠于关系
+    '禄权叠加': 'self_others',      // 禄权双全：自我野心 vs 照顾他人
+    '权忌冲突': 'revenge_forgiveness', // 权忌相克：报仇 vs 放下
+    '科忌矛盾': 'past_future',      // 科忌：活在证明 vs 活在当下
+    '禄忌纠缠': 'safety_growth',   // 禄忌：守住已有 vs 冒险成长
+};
+
+// 宫位地支 → 外部冲突 映射（12地支各有倾向）
+var DIZHI_EXTERNAL_CONFLICT_MAP = {
+    '子': 'antagonist',  // 子水：直接对抗
+    '丑': 'society',     // 丑土：与规范体制冲突
+    '寅': 'nature',      // 寅木：与环境/自然博弈
+    '卯': 'society',     // 卯木：与流言礼教冲突
+    '辰': 'fate',        // 辰土：对抗命运
+    '巳': 'supernatural',// 巳火：神秘宿命
+    '午': 'antagonist',  // 午火：激烈正面对决
+    '未': 'self',        // 未土：最大的战场在自己内部
+    '申': 'technology',  // 申金：与规则/机器/体制冲突
+    '酉': 'society',     // 酉金：与权威正统冲突
+    '戌': 'fate',        // 戌土：不可逆的命运齿轮
+    '亥': 'time',        // 亥水：与时间/遗忘博弈
+};
+
 /**
  * 生成编剧理论维度
+ * chartData 里取：sihuaType / mingIdx / mingDizhi / name / gender
  */
 function generateScreenwritingDimensions(mainStar, chartData, era) {
     const starMapping = STAR_TO_SCREENWRITING_MAP[mainStar] || STAR_TO_SCREENWRITING_MAP['紫微'];
 
-    // 内在动机
-    const motivation = randomPick(SCREENWRITING_DIMENSIONS.innerMotivation.filter(m =>
-        starMapping.innerMotivations.includes(m.id)
-    ), SCREENWRITING_DIMENSIONS.innerMotivation);
+    // ── 提取命盘坐标 ──
+    const fc = chartData._fullChart || chartData;
+    const sihuaType = fc.sihuaType || chartData.sihuaType || '';
+    const mingDizhi = fc.mingDizhi || chartData.mingDizhi || '';
+    const mingIdx   = fc.mingIdx !== undefined ? String(fc.mingIdx) : '';
+    const nameSeed  = (chartData.name || '') + (chartData.gender || '');
 
-    // 灵魂创伤
-    const wound = randomPick(SCREENWRITING_DIMENSIONS.soulWound.filter(w =>
-        starMapping.soulWounds.includes(w.id)
-    ), SCREENWRITING_DIMENSIONS.soulWound);
+    // ── 确定性种子 = 主星+宫位+四化+名字 ──
+    const baseSeed = mainStar + mingIdx + sihuaType + nameSeed;
 
-    // 恐惧
-    const fear = randomPick(SCREENWRITING_DIMENSIONS.fear.filter(f =>
-        starMapping.fears.includes(f.id)
-    ), SCREENWRITING_DIMENSIONS.fear);
+    // 内在动机（主星驱动）
+    const motivation = deterministicPick(
+        SCREENWRITING_DIMENSIONS.innerMotivation.filter(m => starMapping.innerMotivations.includes(m.id)),
+        SCREENWRITING_DIMENSIONS.innerMotivation,
+        baseSeed + 'motivation'
+    );
 
-    // 价值观冲突
-    const valueConflict = randomPick(SCREENWRITING_DIMENSIONS.valueConflict, SCREENWRITING_DIMENSIONS.valueConflict);
+    // 灵魂创伤（主星+宫位驱动）
+    const wound = deterministicPick(
+        SCREENWRITING_DIMENSIONS.soulWound.filter(w => starMapping.soulWounds.includes(w.id)),
+        SCREENWRITING_DIMENSIONS.soulWound,
+        baseSeed + 'wound'
+    );
 
-    // 外部冲突
-    const externalConflict = randomPick(SCREENWRITING_DIMENSIONS.externalConflict, SCREENWRITING_DIMENSIONS.externalConflict);
+    // 恐惧（主星驱动）
+    const fear = deterministicPick(
+        SCREENWRITING_DIMENSIONS.fear.filter(f => starMapping.fears.includes(f.id)),
+        SCREENWRITING_DIMENSIONS.fear,
+        baseSeed + 'fear'
+    );
 
-    // 谎言
-    const lie = randomPick(SCREENWRITING_DIMENSIONS.lie.filter(l =>
-        starMapping.lies.includes(l.id)
-    ), SCREENWRITING_DIMENSIONS.lie);
+    // 价值观冲突（四化类型驱动）
+    var vcId = SIHUA_VALUE_CONFLICT_MAP[sihuaType] || null;
+    var vcPool = vcId
+        ? SCREENWRITING_DIMENSIONS.valueConflict.filter(v => v.id === vcId)
+        : SCREENWRITING_DIMENSIONS.valueConflict;
+    const valueConflict = deterministicPick(vcPool, SCREENWRITING_DIMENSIONS.valueConflict, baseSeed + 'vc');
 
-    // 真理
-    const truth = randomPick(SCREENWRITING_DIMENSIONS.truth.filter(t =>
-        starMapping.truths.includes(t.id)
-    ), SCREENWRITING_DIMENSIONS.truth);
+    // 外部冲突（宫位地支驱动）
+    var ecId = DIZHI_EXTERNAL_CONFLICT_MAP[mingDizhi] || null;
+    var ecPool = ecId
+        ? SCREENWRITING_DIMENSIONS.externalConflict.filter(e => e.id === ecId)
+        : SCREENWRITING_DIMENSIONS.externalConflict;
+    const externalConflict = deterministicPick(ecPool, SCREENWRITING_DIMENSIONS.externalConflict, baseSeed + 'ec');
 
-    // 人物弧光
-    const arc = randomPick(SCREENWRITING_DIMENSIONS.characterArc.filter(a =>
-        starMapping.arcTypes.includes(a.id)
-    ), SCREENWRITING_DIMENSIONS.characterArc);
+    // 谎言（主星驱动）
+    const lie = deterministicPick(
+        SCREENWRITING_DIMENSIONS.lie.filter(l => starMapping.lies.includes(l.id)),
+        SCREENWRITING_DIMENSIONS.lie,
+        baseSeed + 'lie'
+    );
+
+    // 真理（主星驱动）
+    const truth = deterministicPick(
+        SCREENWRITING_DIMENSIONS.truth.filter(t => starMapping.truths.includes(t.id)),
+        SCREENWRITING_DIMENSIONS.truth,
+        baseSeed + 'truth'
+    );
+
+    // 人物弧光（主星+四化驱动）
+    const arc = deterministicPick(
+        SCREENWRITING_DIMENSIONS.characterArc.filter(a => starMapping.arcTypes.includes(a.id)),
+        SCREENWRITING_DIMENSIONS.characterArc,
+        baseSeed + 'arc'
+    );
 
     return {
         innerMotivation: motivation,
@@ -352,7 +424,10 @@ function generateScreenwritingDimensions(mainStar, chartData, era) {
         externalConflict: externalConflict,
         lie: lie,
         truth: truth,
-        characterArc: arc
+        characterArc: arc,
+        // 透传命盘坐标给 fullBio 使用
+        _sihuaType: sihuaType,
+        _mingDizhi: mingDizhi,
     };
 }
 
@@ -381,7 +456,8 @@ function generateStoryElements(mainStar, era) {
  * 生成完整小传文本
  */
 function generateFullBio(dimensions, storyElements, era, questions20Answers = [], ziweiData = {}, basicInfo = {}) {
-    const { innerMotivation, soulWound, fear, valueConflict, externalConflict, lie, truth, characterArc } = dimensions;
+    const { innerMotivation, soulWound, fear, valueConflict, externalConflict, lie, truth, characterArc,
+            _sihuaType, _mingDizhi } = dimensions;
     const { suangqiaoBridges, suspenseTechniques } = storyElements;
     // 确保 ziweiData 有兜底值
     if (!ziweiData.mainStar) ziweiData.mainStar = '紫微';
@@ -393,7 +469,7 @@ function generateFullBio(dimensions, storyElements, era, questions20Answers = []
     const genderMap = { male: '男', female: '女' };
     const ageMap = { youth: '青年', middle: '中年', senior: '老年' };
 
-    let bio = '';
+        let bio = '';
 
     // ── 角色档案 ──
     bio += `# 角色档案\n\n`;
@@ -403,6 +479,35 @@ function generateFullBio(dimensions, storyElements, era, questions20Answers = []
     bio += `| **性别** | ${genderMap[basicInfo.gender] || basicInfo.gender || '未知'} |\n`;
     bio += `| **年龄段** | ${ageMap[basicInfo.age] || basicInfo.age || '未知'} |\n`;
     bio += `| **所处时代** | ${eraMap[era] || era || '未知'} |\n`;
+    // 命盘坐标转化为性格化语言（不含命理术语）
+    var sihuaReadableMap = {
+        '化禄格':   '顺势而为，贵人常在，但容易依赖外部推力',
+        '化权格':   '天生主导欲强，凡事要拿主动，代价是难以放手',
+        '化科格':   '才华外显，渴望被看见，但也容易陷入证明自己的循环',
+        '化忌格':   '多思多虑，执念深，凡事容易卡在某个解不开的死结里',
+        '禄权叠加': '野心与好运并行，能量强大，但边界感常常缺失',
+        '权忌冲突': '越想掌控越失控，最大的战场在自己内部',
+        '科忌矛盾': '越清醒越痛苦，智识是把双刃剑',
+        '禄忌纠缠': '得到的怕失去，放不下的偏偏要放，一生在取舍里打转',
+    };
+    var dizhiReadableMap = {
+        '子': '深沉内敛，善于藏锋，平静时最危险',
+        '丑': '厚重稳健，不轻易出手，但一动就是大动静',
+        '寅': '有开创气，天生往前冲，停下来反而难受',
+        '卯': '外柔内刚，感知敏锐，被忽视时比被攻击时更受伤',
+        '辰': '复杂多面，让人难以一眼读穿，自己也常常读不穿自己',
+        '巳': '聚焦深邃，有种烈火内敛的质感，冷静外表下情绪滚烫',
+        '午': '热烈直接，情绪藏不住，进一个房间就能改变气氛',
+        '未': '温和表面下心思细密，比任何人都更会观察却不轻易说出口',
+        '申': '行动力极强，反应快，但有时候快到跳过了该停下来想的那一步',
+        '酉': '标准高、细节控，对自己和别人都容易苛刻到难以接近',
+        '戌': '忠义执念深，背负比别人更重的东西，但从不声张',
+        '亥': '宽广包容，难以被真正读懂，连自己也常常摸不清自己的边界',
+    };
+    var sihuaReadable = sihuaReadableMap[_sihuaType] || '';
+    var dizhiReadable = dizhiReadableMap[_mingDizhi] || '';
+    if (sihuaReadable) bio += `| **命运底色** | ${sihuaReadable} |\\n`;
+    if (dizhiReadable) bio += `| **性格底调** | ${dizhiReadable} |\\n`;
     if (basicInfo.career) bio += `| **职业** | ${basicInfo.career} |\n`;
     if (basicInfo.family) bio += `| **家庭背景** | ${basicInfo.family} |\n`;
     bio += `| **命盘主星** | ${ziweiData.mainStar || '未知'} |\n`;
@@ -597,16 +702,32 @@ function generateNickname(era, gender) {
 }
 
 /**
- * 随机选择一个元素
+ * 随机选择一个元素（仅用于无法确定性选择的场景）
  */
 function randomPick(array, fallbackArray) {
     if (!array || array.length === 0) {
-        // 空数组时用 fallbackArray（整个大数组）兜底；如果都没有就返回空对象
         const src = (fallbackArray && fallbackArray.length > 0) ? fallbackArray : null;
         if (!src) return { id: 'fallback', name: '未知', desc: '——' };
         return src[Math.floor(Math.random() * src.length)];
     }
     return array[Math.floor(Math.random() * array.length)];
+}
+
+/**
+ * 确定性选词：同一种子永远选同一个结果
+ * seed: 字符串种子（由主星+宫位+四化类型+名字等拼接）
+ */
+function deterministicPick(array, fallbackArray, seed) {
+    const src = (array && array.length > 0) ? array : ((fallbackArray && fallbackArray.length > 0) ? fallbackArray : null);
+    if (!src) return { id: 'fallback', name: '未知', desc: '——' };
+    // djb2 哈希
+    let hash = 5381;
+    const s = String(seed || '');
+    for (let i = 0; i < s.length; i++) {
+        hash = ((hash << 5) + hash) + s.charCodeAt(i);
+        hash = hash & hash; // 转int32
+    }
+    return src[Math.abs(hash) % src.length];
 }
 
 /**
