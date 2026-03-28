@@ -464,10 +464,18 @@ function generateFullBio(dimensions, storyElements, era, questions20Answers = []
     if (!ziweiData.auspiciousStars) ziweiData.auspiciousStars = [];
     if (!ziweiData.malignantStars) ziweiData.malignantStars = [];
 
-    // 时代映射
+    // 时代映射（兼容英文 key 和中文直接传入）
     const eraMap = { ancient: '古代', modern: '近代', contemporary: '现代' };
-    const genderMap = { male: '男', female: '女' };
-    const ageMap = { youth: '青年', middle: '中年', senior: '老年' };
+    const genderMap = { male: '男', female: '女', 男: '男', 女: '女' };
+    const ageMap = { youth: '青年', middle: '中年', senior: '老年', 青年: '青年', 中年: '中年', 老年: '老年' };
+    // 步骤4 eightAttributes 字段名 → 中文标签
+    const attrLabelMap = {
+        appearance: '外貌特征', speech: '说话方式', behavior: '行为习惯',
+        emotion: '情感表达', social: '社交风格', response: '应对危机',
+        learning: '学习适应', growth: '成长方向',
+        career: '职业', family: '家庭背景', marriage: '婚恋状态',
+        wealth: '财富状态', personality: '性格底色',
+    };
 
         let bio = '';
 
@@ -475,10 +483,24 @@ function generateFullBio(dimensions, storyElements, era, questions20Answers = []
     bio += `# 角色档案\n\n`;
     bio += `| 项目 | 内容 |\n`;
     bio += `|------|------|\n`;
-    bio += `| **姓名** | ${basicInfo.name || '未命名'} |\n`;
-    bio += `| **性别** | ${genderMap[basicInfo.gender] || basicInfo.gender || '未知'} |\n`;
-    bio += `| **年龄段** | ${ageMap[basicInfo.age] || basicInfo.age || '未知'} |\n`;
+    var _bi = basicInfo || {};
+    var _ea = (_bi.eightAttributes || {});
+    bio += `| **姓名** | ${_bi.name || '未命名'} |\n`;
+    bio += `| **性别** | ${genderMap[_bi.gender] || _bi.gender || '未知'} |\n`;
+    bio += `| **年龄段** | ${ageMap[_bi.age] || _bi.age || '未知'} |\n`;
     bio += `| **所处时代** | ${eraMap[era] || era || '未知'} |\n`;
+    // 职业/家庭/婚恋/事业/财富（若填了就显示）
+    var extraFields = ['career','family','marriage','wealth','personality'];
+    extraFields.forEach(function(k) {
+        var v = _bi[k] || _ea[k];
+        if (v) bio += '| **' + (attrLabelMap[k] || k) + '** | ' + v + ' |\n';
+    });
+    // 步骤4 eightAttributes 各项（外貌/说话/行为/情感/社交/危机/学习/成长）
+    var eaFields = ['appearance','speech','behavior','emotion','social','response','learning','growth'];
+    eaFields.forEach(function(k) {
+        var v = _ea[k];
+        if (v) bio += '| **' + (attrLabelMap[k] || k) + '** | ' + v + ' |\n';
+    });
     // 命盘坐标转化为性格化语言（不含命理术语）
     var sihuaReadableMap = {
         '化禄格':   '运气这件事对他来说真实存在，但也因此容易等着被推着走，而不是自己发动',
@@ -508,8 +530,6 @@ function generateFullBio(dimensions, storyElements, era, questions20Answers = []
     var dizhiReadable = dizhiReadableMap[_mingDizhi] || '';
     if (sihuaReadable) bio += `| **命运底色** | ${sihuaReadable} |\n`;
     if (dizhiReadable) bio += `| **性格底调** | ${dizhiReadable} |\n`;
-    if (basicInfo.career) bio += `| **职业** | ${basicInfo.career} |\n`;
-    if (basicInfo.family) bio += `| **家庭背景** | ${basicInfo.family} |\n`;
     bio += `| **命盘主星** | ${ziweiData.mainStar || '未知'} |\n`;
     bio += '\n';
 
@@ -738,10 +758,11 @@ function convertEnhancedBioToMarkdown(bio) {
 
     md += `**基本信息**\n`;
     md += `- 姓名：${bio.basicInfo.name}（${bio.basicInfo.nickname}）\n`;
-    md += `- 性别：${bio.basicInfo.gender === 'male' ? '男' : '女'}\n`;
-    md += `- 年龄：${bio.basicInfo.age}\n`;
-    md += `- 职业：${bio.basicInfo.career}\n`;
-    md += `- 家庭背景：${bio.basicInfo.family}\n`;
+    var _gStr = bio.basicInfo.gender;
+    md += `- 性别：${(_gStr === 'male' || _gStr === '男') ? '男' : (_gStr === 'female' || _gStr === '女') ? '女' : (_gStr || '未知')}\n`;
+    md += `- 年龄：${bio.basicInfo.age || '未知'}\n`;
+    md += `- 职业：${bio.basicInfo.career || '未填'}\n`;
+    md += `- 家庭背景：${bio.basicInfo.family || '未填'}\n`;
     md += `- 性格特点：${Array.isArray(bio.basicInfo.personality) ? bio.basicInfo.personality.join('、') : (bio.basicInfo.personality || '未知')}\n\n`;
 
     md += `**命盘信息**\n`;
