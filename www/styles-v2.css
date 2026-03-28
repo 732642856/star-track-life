@@ -1471,3 +1471,46 @@ body {
     padding: var(--space-12) 0;
     font-size: var(--text-lg);
 }
+
+/* ==================== 步骤4：8属性细化 ==================== */
+.attribute-group {
+    margin-bottom: var(--space-6, 24px);
+}
+
+.attribute-label {
+    font-size: var(--text-base, 16px);
+    font-weight: 600;
+    color: var(--color-text-primary, #1a1a2e);
+    margin-bottom: var(--space-3, 12px);
+}
+
+.attribute-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.attribute-option {
+    padding: 8px 16px;
+    border: 1.5px solid var(--color-border, #e0e0e0);
+    border-radius: 20px;
+    font-size: var(--text-sm, 14px);
+    color: var(--color-text-secondary, #555);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: var(--color-surface, #fff);
+    user-select: none;
+}
+
+.attribute-option:hover {
+    border-color: var(--color-accent, #6c63ff);
+    color: var(--color-accent, #6c63ff);
+    background: rgba(108, 99, 255, 0.05);
+}
+
+.attribute-option.selected {
+    border-color: var(--color-accent, #6c63ff);
+    background: var(--color-accent, #6c63ff);
+    color: #fff;
+    font-weight: 600;
+}

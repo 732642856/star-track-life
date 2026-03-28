@@ -1,15 +1,30 @@
 /**
- * 紫微斗数角色设计工具 - Service Worker
+ * 星轨人生 - Service Worker
  * 支持离线使用
  */
 
-const CACHE_NAME = 'ziwei-character-design-v1';
+const CACHE_NAME = 'xinggui-rensheng-v2';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/styles.css',
-  '/app.js',
-  '/manifest.json'
+  '/styles-v2.css',
+  '/app-v2.js',
+  '/manifest.json',
+  '/ziwei-complete.js',
+  '/era-data.js',
+  '/ziwei-psychology.js',
+  '/ziwei-patterns.js',
+  '/fine-chart-engine.js',
+  '/character-bio-generator.js',
+  '/character-bio-enhanced-generator.js',
+  '/character-bio-data.js',
+  '/writing-resources.js',
+  '/ziwei-star-details.js',
+  '/face-reading-generator.js',
+  '/signature-details-generator.js',
+  '/writing-lexicon-generator.js',
+  '/chart-storage.js',
+  '/character-20-questions.js'
 ];
 
 // 安装时缓存资源
