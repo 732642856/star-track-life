@@ -148,50 +148,6 @@ const SIHUA_TYPES = {
 // 导出全局变量
 window.SIHUA_TYPES = SIHUA_TYPES;
 
-// ==================== generate144Chart 桥接函数 ====================
-function generate144Chart(inputs) {
-    // 根据性别+年龄+时代随机选取命盘格局
-    const patternKeys = Object.keys(CHART_DATABASE);
-    // 用输入参数做简单哈希，保证同一角色每次结果一致
-    const seed = ((inputs.name || '').length + (inputs.gender === '男' ? 1 : 0) + patternKeys.length) % patternKeys.length;
-    const patternType = patternKeys[seed];
-    const patternGroup = CHART_DATABASE[patternType];
-    const patternIndex = ((inputs.name || '').length + (inputs.age || '').length) % patternGroup.patterns.length;
-    const pattern = patternGroup.patterns[patternIndex];
-
-    // 四化类型
-    const sihuaKeys = Object.keys(SIHUA_TYPES);
-    const sihuaIndex = ((inputs.name || '').charCodeAt(0) || 0) % sihuaKeys.length;
-    const sihuaType = sihuaKeys[sihuaIndex];
-
-    // 8种人格类型（用四化类型的keys作为8个细分）
-    const personalityTypes = sihuaKeys;
-
-    // 时辰（简单映射）
-    const shiChenList = ['子时', '丑时', '寅时', '卯时', '辰时', '巳时', '午时', '未时', '申时', '酉时', '戌时', '亥时'];
-    const shiChen = shiChenList[((inputs.name || '').length * 3) % shiChenList.length];
-
-    return {
-        pattern,           // { name, stars, desc }
-        patternType,       // 格局大类名称，如"杀破狼"
-        sihuaType,         // 四化类型
-        personalityTypes,  // 8种人格类型数组（用于步骤3选项）
-        shiChen,           // 时辰
-        ke: '一刻',
-        chartId: `${patternType}-${pattern.name}-${sihuaType}`
-    };
-}
-
-// 根据人格类型+星盘生成描述（供步骤3的细分卡片使用）
-function generatePersonalityDescription(type, chartData) {
-    const sihua = SIHUA_TYPES[type] || SIHUA_TYPES[Object.keys(SIHUA_TYPES)[0]];
-    return {
-        shortDesc: sihua.desc,
-        visibleTrait: sihua.mingEffect,
-        hiddenNeed: sihua.fudeEffect
-    };
-}
-
 // ==================== 初始化 ====================
 document.addEventListener('DOMContentLoaded', () => {
     showStep(1);
@@ -289,29 +245,22 @@ function confirmBasicInfo() {
 
 // ==================== 步骤3: 星盘匹配 ====================
 function matchChart() {
-    // 内部生成144盘×8刻的精准匹配
-    const chartData = generate144Chart(userInputs);
+    // 首次进入步骤3，keIdx默认0（后续用户选子类型时会更新）
+    const chartData = generate144Chart({ ...userInputs, keIdx: userInputs.keIdx || 0 });
     
-    // 保存到全局
-    selectedChart = {
-        name: chartData.pattern.name,
-        stars: chartData.pattern.stars,
-        desc: chartData.pattern.desc,
-        type: chartData.patternType,
-        shiChen: chartData.shiChen,
-        ke: chartData.ke,
-        chartId: chartData.chartId
-    };
+    // 保存到全局（使用统一代理结构）
+    selectedChart = buildChartProxy(chartData);
     
     // 更新显示
-    document.getElementById('main-pattern-name').textContent = chartData.pattern.name;
-    document.getElementById('main-pattern-desc').textContent = chartData.pattern.desc;
-    document.getElementById('main-star').textContent = chartData.pattern.stars.join('、');
-    const eraEl = document.getElementById('era');
-    if (eraEl) eraEl.textContent = {ancient:'古代', modern:'近代', contemporary:'现代'}[userInputs.era] || userInputs.era;
-    document.getElementById('match-score').textContent = Math.floor(85 + Math.random() * 15) + '%';
+    var _setEl = function(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; };
+    _setEl('main-pattern-name', chartData.pattern.name);
+    _setEl('main-pattern-desc', chartData.pattern.desc);
+    _setEl('main-star', (chartData.pattern.stars || []).join('、'));
+    _setEl('pattern-type', chartData.patternType);
+    _setEl('era-display', ({ancient:'古代', modern:'近代', contemporary:'现代'}[userInputs.era] || userInputs.era));
+    _setEl('match-score', Math.floor(85 + Math.random() * 15) + '%');
     
-    // 生成8种人格类型选项
+    // 生成8种人格类型选项（每项=一个时辰刻坐标）
     generate8PersonalityTypes(chartData);
 }
 
@@ -319,13 +268,16 @@ function generate8PersonalityTypes(chartData) {
     const grid = document.getElementById('sub-patterns-grid');
     if (!grid) return;
     
-    const personalityTypes = chartData.personalityTypes || Object.keys(window.PERSONALITY_8_TYPES);
+    const personalityTypes = chartData.personalityTypes || [];
     
     grid.innerHTML = personalityTypes.map((type, i) => {
-        const desc = generatePersonalityDescription(type, chartData);
+        // 兼容新版（对象含keIdx）和旧版（字符串）
+        const label = (typeof type === 'object') ? type.label : type;
+        const keIdx = (typeof type === 'object') ? type.keIdx : i;
+        const desc = generatePersonalityDescription(label, chartData);
         return `
-            <div class="star-card ${i === 0 ? 'selected' : ''}" data-personality="${type}">
-                <div class="star-name">${type}</div>
+            <div class="star-card ${i === 0 ? 'selected' : ''}" data-personality="${label}" data-ke-idx="${keIdx}">
+                <div class="star-name">${label}</div>
                 <div class="star-desc">${desc.shortDesc}</div>
                 <div style="margin-top: 8px; font-size: 11px; color: #666;">
                     <div>外在：${desc.visibleTrait.substring(0, 20)}...</div>
@@ -335,16 +287,40 @@ function generate8PersonalityTypes(chartData) {
         `;
     }).join('');
     
-    // 绑定点击事件
+    // 绑定点击事件：选中即锁定keIdx，重新精确排盘
     grid.querySelectorAll('.star-card').forEach(card => {
         card.addEventListener('click', () => {
             grid.querySelectorAll('.star-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
             selectedSubPattern = card.dataset.personality;
+            
+            // 把keIdx存入userInputs，锁定时辰刻 → 精确到1152分之一的命盘
+            const keIdx = parseInt(card.dataset.keIdx || '0');
+            userInputs.keIdx = keIdx;
+            
+            // 用keIdx重新排出精确命盘，更新selectedChart
+            const refined = generate144Chart({ ...userInputs, keIdx });
+            selectedChart = buildChartProxy(refined);
         });
     });
     
-    selectedSubPattern = personalityTypes[0];
+    // 默认选第0个
+    const firstType = personalityTypes[0];
+    selectedSubPattern = (typeof firstType === 'object') ? firstType.label : (firstType || '');
+    userInputs.keIdx = 0;
+}
+
+/** 把排盘结果包装为selectedChart格式（兼容旧UI字段） */
+function buildChartProxy(chartData) {
+    return {
+        ...chartData,
+        name: chartData.pattern.name,
+        stars: chartData.pattern.stars,
+        desc: chartData.pattern.desc,
+        type: chartData.patternType,
+        chartId: chartData.chartUid || chartData.chartId,
+        _fullChart: chartData,
+    };
 }
 
 function generateSubPatterns() {
@@ -410,34 +386,12 @@ function generateFinalBio() {
             return;
         }
         
-        // 构造 generateCharacterBio 需要的 chartData 格式
-        const chartDataForBio = {
-            mainStars: selectedChart.mainStars || (selectedChart.stars ? Object.fromEntries((selectedChart.stars).map(s => [s, true])) : { '紫微': true }),
-            fourTransformations: selectedSubPattern || {},
-            pattern: { name: selectedChart.name, desc: selectedChart.desc }
-        };
-        // 职业/家庭/年龄中文映射
-        const careerMap = { political:'从政官员', business:'商界人士', cultural:'文化创作者', military:'军警人员', technical:'技术专家', other:'普通人' };
-        const familyMap = { wealthy:'豪门权贵', middle:'书香中产', poor:'寒门草根', decline:'落魄世家' };
-        const ageMap2 = { youth:'青年', middle:'中年', senior:'老年' };
-
-        // 构造 profile（character-bio-generator.js 期望的字段）
-        const profileForBio = {
-            name: userInputs.name || '未命名',
-            gender: userInputs.gender || 'male',
-            age: ageMap2[userInputs.age] || userInputs.age || '青年',
-            career: careerMap[userInputs.profession] || userInputs.profession || '普通人',
-            familyBackground: familyMap[userInputs.family] || userInputs.family || '普通家庭',
-            era: selectedEra || 'contemporary',
-            personality: eightAttributes
-        };
-        // 调用正确的生成函数
-        const bioText = generateCharacterBio(chartDataForBio, profileForBio);
-        currentCharacterBio = bioText;
+        const bio = generateZiweiCharacterBio(userInputs, selectedChart, eightAttributes, selectedSubPattern);
+        currentCharacterBio = bio;
         
         // 使用Markdown渲染
         const resultDiv = document.getElementById('result-content');
-        resultDiv.innerHTML = renderMarkdown(bioText);
+        resultDiv.innerHTML = renderMarkdown(bio);
         
         showStep(5);
     } catch (error) {
@@ -473,6 +427,113 @@ function renderMarkdown(markdown) {
     html = html.replace(/\n/g, '<br>');
     
     return html;
+}
+
+// ==================== 桥接新排盘引擎 ====================
+
+/**
+ * generate144Chart：调用 FineChartEngine（新排盘引擎）生成精准命盘
+ * 向后兼容旧版 CHART_DATABASE 数据结构
+ */
+function generate144Chart(inputs) {
+  // 优先使用新排盘引擎
+  if (window.FineChartEngine) {
+    try {
+      const engine = window.FineChartEngine;
+      const result = engine.generateChart({
+        birthYear: inputs.birthYear || new Date().getFullYear() - (parseInt(inputs.age) || 25),
+        birthMonth: inputs.birthMonth || 6,
+        birthDay: inputs.birthDay || 15,
+        birthHour: inputs.birthHour || 12,
+        gender: inputs.gender || '男',
+        era: inputs.era || '当代都市',
+      });
+
+      // 适配旧版数据结构
+      const mainStars = result.mingGong?.stars || [];
+      const patternName = mainStars.join('') || '命主格局';
+      return {
+        pattern: {
+          name: patternName,
+          stars: mainStars,
+          desc: result.mingGong?.desc || '命盘格局独特',
+        },
+        patternType: result.patternType || '主星格',
+        shiChen: result.shiChen || '未知',
+        ke: result.ke || 0,
+        chartId: result.chartId || Math.random().toString(36).slice(2),
+        personalityTypes: result.personalityTypes || Object.keys(window.PERSONALITY_8_TYPES || {}),
+        sihua: result.sihua || {},
+        mingGong: result.mingGong || {},
+        fuqiGong: result.fuqiGong || {},
+        _fullChart: result,
+      };
+    } catch (e) {
+      console.warn('新排盘引擎出错，回退旧逻辑:', e);
+    }
+  }
+
+  // 回退：使用旧版 CHART_DATABASE
+  const typeKeys = Object.keys(CHART_DATABASE);
+  const idx = Math.abs((inputs.name || '').charCodeAt(0) || 0) % typeKeys.length;
+  const typeKey = typeKeys[idx];
+  const typeData = CHART_DATABASE[typeKey];
+  const patterns = typeData.patterns;
+  const patternIdx = Math.floor(Math.random() * patterns.length);
+  const pattern = patterns[patternIdx];
+
+  return {
+    pattern,
+    patternType: typeKey,
+    shiChen: '午',
+    ke: 0,
+    chartId: `legacy-${idx}-${patternIdx}`,
+    personalityTypes: Object.keys(window.PERSONALITY_8_TYPES || {}),
+    sihua: {},
+    mingGong: { stars: pattern.stars, desc: pattern.desc },
+    fuqiGong: { stars: [] },
+    _fullChart: null,
+  };
+}
+
+/**
+ * generateZiweiCharacterBio：调用新人物小传生成引擎
+ */
+function generateZiweiCharacterBio(inputs, chart, eightAttrs, subPattern) {
+  // 优先使用新版生成器
+  if (window.CharacterBioGenerator) {
+    try {
+      return window.CharacterBioGenerator.generateCharacterBio({
+        attrs: {
+          name: inputs.name,
+          gender: inputs.gender,
+          age: inputs.age,
+          era: inputs.era === 'ancient' ? '古代江湖' : inputs.era === 'modern' ? '民国乱世' : '当代都市',
+          role: subPattern,
+          mbti: eightAttrs.mbti,
+          enneagram: eightAttrs.enneagram,
+          archetype: eightAttrs.archetype,
+          socialRole: eightAttrs.socialRole,
+          motivation: eightAttrs.motivation,
+          flaw: eightAttrs.flaw,
+          strength: eightAttrs.strength,
+          relationship: eightAttrs.relationship,
+        },
+        chartData: chart._fullChart || chart,
+        personality: {},
+      });
+    } catch (e) {
+      console.warn('新小传引擎出错，回退旧逻辑:', e);
+    }
+  }
+
+  // 回退：简单拼接
+  const pr = inputs.gender === '男' ? '他' : '她';
+  const name = inputs.name || pr === '他' ? '男主' : '女主';
+  const stars = (chart.pattern?.stars || []).join('、') || '命主';
+  return `【人物小传：${name}】\n\n${pr}命盘主星为${stars}，${chart.pattern?.desc || ''}\n\n` +
+    `人格类型：${subPattern || '未选择'}\n\n` +
+    Object.entries(eightAttrs).filter(([,v]) => v).map(([k,v]) => `${k}：${v}`).join('\n');
 }
 
 // ==================== 角色保存系统 ====================
@@ -539,8 +600,6 @@ function displaySavedCharacters() {
     const section = document.getElementById('saved-characters-section');
     const list = document.getElementById('saved-characters-list');
     const compareBtn = document.getElementById('compare-btn-section');
-    
-    if (!section || !list || !compareBtn) return; // 容器不存在时静默退出
     
     if (savedCharacters.length === 0) {
         section.style.display = 'none';
