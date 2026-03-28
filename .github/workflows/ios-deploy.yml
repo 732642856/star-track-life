@@ -49,13 +49,14 @@ jobs:
 
           # 导入证书
           CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
-          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
+          echo "$BUILD_CERTIFICATE_BASE64" | tr -d '\n' | base64 --decode > $CERTIFICATE_PATH
           security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
           security list-keychain -d user -s $KEYCHAIN_PATH
 
           # 安装描述文件（使用 UUID 命名，Xcode 才能识别）
           PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
-          echo -n "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode -o $PP_PATH
+          # 移除可能的换行符后解码
+          echo "$BUILD_PROVISION_PROFILE_BASE64" | tr -d '\n' | base64 --decode > $PP_PATH
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           PP_UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID raw -)
           echo "描述文件 UUID: $PP_UUID"
