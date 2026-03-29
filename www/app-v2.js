@@ -508,18 +508,56 @@ function generateFinalBio() {
             showToast('💡 ' + missingAttrs.length + ' 项未选择，对应内容将以模糊风格呈现');
         }
 
-        const bio = generateZiweiCharacterBio(userInputs, selectedChart, eightAttributes, selectedSubPattern);
-        currentCharacterBio = bio;
-        
-        // 使用Markdown渲染
-        const resultDiv = document.getElementById('result-content');
-        resultDiv.innerHTML = renderMarkdown(bio);
-        
+        // ── 先跳到步骤5，显示loading动效 ──
         showStep(5);
+        var resultDiv = document.getElementById('result-content');
+        resultDiv.innerHTML = _buildLoadingHTML();
+
+        // ── 延迟一帧再生成，让loading动效先渲染出来 ──
+        setTimeout(function() {
+            try {
+                var bio = generateZiweiCharacterBio(userInputs, selectedChart, eightAttributes, selectedSubPattern);
+                currentCharacterBio = bio;
+                resultDiv.innerHTML = renderMarkdown(bio);
+            } catch (err) {
+                resultDiv.innerHTML = '';
+                showToast('生成出错，请重试（' + err.message + '）');
+            }
+        }, 80);
+
     } catch (error) {
         console.error('生成人物小传时出错:', error);
         showToast('生成出错，请重试（' + error.message + '）');
     }
+}
+
+function _buildLoadingHTML() {
+    return '<div id="bio-loading" style="' +
+        'display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+        'padding:60px 20px;gap:20px;">' +
+
+        // 星盘旋转图
+        '<div style="position:relative;width:80px;height:80px;">' +
+            '<div style="position:absolute;inset:0;border-radius:50%;border:3px solid rgba(108,99,255,0.15);"></div>' +
+            '<div style="position:absolute;inset:0;border-radius:50%;border:3px solid transparent;' +
+                'border-top-color:#6c63ff;animation:bioSpinOuter 1.1s linear infinite;"></div>' +
+            '<div style="position:absolute;inset:12px;border-radius:50%;border:2px solid transparent;' +
+                'border-bottom-color:#a78bfa;animation:bioSpinInner 0.8s linear infinite reverse;"></div>' +
+            '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;' +
+                'font-size:26px;">✦</div>' +
+        '</div>' +
+
+        // 文字动效
+        '<div id="bio-loading-text" style="' +
+            'font-size:15px;color:#6c63ff;font-weight:500;letter-spacing:0.05em;' +
+            'animation:bioTextPulse 1.4s ease-in-out infinite;">推算命盘星曜中…</div>' +
+
+        '<style>' +
+            '@keyframes bioSpinOuter{to{transform:rotate(360deg)}}' +
+            '@keyframes bioSpinInner{to{transform:rotate(360deg)}}' +
+            '@keyframes bioTextPulse{0%,100%{opacity:0.5}50%{opacity:1}}' +
+        '</style>' +
+    '</div>';
 }
 
 // ==================== Markdown渲染器 ====================
@@ -1004,14 +1042,96 @@ function generateComparison(chars) {
         '</div>';
     }).join('');
 
+    // ── 相性评分（2人时显示）──
+    var compatHtml = '';
+    if (chars.length === 2) {
+        compatHtml = '<div class="cmp-compat">' + _calcCompat(chars[0], chars[1]) + '</div>';
+    }
+
     return (
         '<div class="cmp-summary-bar">' + summaryItems + '</div>' +
         '<div class="cmp-analysis">' +
             '<p><strong>四化类型：</strong>' + sihuaList.join(' vs ') + '　<strong>戏剧关系：</strong>' + relationDesc + '</p>' +
             '<p><strong>背景处境：</strong>' + contextNote + '</p>' +
         '</div>' +
+        compatHtml +
         '<div class="cmp-bio-columns">' + colsHtml + '</div>'
     );
+}
+
+// ── 相性计算 ──
+function _calcCompat(charA, charB) {
+    var sihuaA = charA.sihua || '';
+    var sihuaB = charB.sihua || '';
+    var eraA   = charA.inputs.era || '';
+    var eraB   = charB.inputs.era || '';
+    var genA   = charA.inputs.gender || '';
+    var genB   = charB.inputs.gender || '';
+    var ageA   = charA.inputs.age || '';
+    var ageB   = charB.inputs.age || '';
+
+    // 基础分：60
+    var score = 60;
+    var reasons = [];
+
+    // 四化匹配：禄权 / 科忌 / 禄科 / 权科 正向；忌×2负向；忌vs禄冲突最大
+    var sihuaScoreMap = {
+        '化禄型_化权型': [+12, '禄权相辅，一方给力一方掌局，合作有天然驱动力'],
+        '化权型_化禄型': [+12, '禄权相辅，一方给力一方掌局，合作有天然驱动力'],
+        '化禄型_化科型': [+10, '禄科组合，务实与理想相得益彰，互相成就'],
+        '化科型_化禄型': [+10, '禄科组合，务实与理想相得益彰，互相成就'],
+        '化权型_化科型': [+8,  '权科并立，一方主导一方疏通，运转顺畅'],
+        '化科型_化权型': [+8,  '权科并立，一方主导一方疏通，运转顺畅'],
+        '化忌型_化忌型': [-15, '双忌叠加，两人执念互相放大，容易陷入消耗战'],
+        '化禄型_化忌型': [+5,  '禄忌对撞，一方给予一方执念，张力十足但易耗尽'],
+        '化忌型_化禄型': [+5,  '禄忌对撞，一方给予一方执念，张力十足但易耗尽'],
+        '化权型_化忌型': [-5,  '权忌相遇，掌控欲对执念，双方都不愿妥协'],
+        '化忌型_化权型': [-5,  '权忌相遇，掌控欲对执念，双方都不愿妥协'],
+        '化科型_化忌型': [+3,  '科忌之间有微妙拉力，理性试图理解执念，难以稳定'],
+        '化忌型_化科型': [+3,  '科忌之间有微妙拉力，理性试图理解执念，难以稳定'],
+    };
+    var sihuaKey = sihuaA + '_' + sihuaB;
+    var sihuaResult = sihuaScoreMap[sihuaKey];
+    if (sihuaResult) { score += sihuaResult[0]; reasons.push(sihuaResult[1]); }
+    else { reasons.push('四化类型各异，关系走向取决于二人的磨合意愿'); }
+
+    // 时代：同代+8，跨代-5
+    if (eraA && eraB) {
+        if (eraA === eraB) { score += 8; reasons.push('同一时代，共同语境让理解成本低'); }
+        else               { score -= 5; reasons.push('跨时代背景，需要额外的叙事设计来支撑同框'); }
+    }
+
+    // 年龄：同段+5，相差一段0，相差两段-5
+    var ageOrder = {youth:0, middle:1, senior:2};
+    var ageDiff = Math.abs((ageOrder[ageA]||0) - (ageOrder[ageB]||0));
+    if (ageDiff === 0) { score += 5; reasons.push('年龄相近，处境相似，共鸣感强'); }
+    else if (ageDiff === 2) { score -= 5; reasons.push('年龄差距大，人生阶段错位，需设计代际关系'); }
+
+    // 性别异同
+    if (genA !== genB) { score += 5; reasons.push('性别互补，在任何时代都能产生天然叙事张力'); }
+
+    // 限制在0-100
+    score = Math.max(0, Math.min(100, score));
+
+    // 评语
+    var label = score >= 85 ? '高度契合' : score >= 70 ? '关系良好' : score >= 50 ? '张力显著' : '冲突型组合';
+    var labelColor = score >= 85 ? '#27ae60' : score >= 70 ? '#2980b9' : score >= 50 ? '#e67e22' : '#e74c3c';
+
+    var barFill = '<div style="height:8px;border-radius:4px;background:linear-gradient(90deg,' + labelColor + ',rgba(108,99,255,0.3));' +
+        'width:' + score + '%;transition:width 0.6s ease;"></div>';
+
+    return '<div style="margin-bottom:2px;">' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">' +
+            '<span style="font-size:13px;font-weight:600;color:#333;">命盘相性</span>' +
+            '<span style="font-size:22px;font-weight:700;color:' + labelColor + ';">' + score + '</span>' +
+            '<span style="font-size:12px;color:' + labelColor + ';font-weight:600;padding:2px 8px;' +
+                'background:' + labelColor + '22;border-radius:10px;">' + label + '</span>' +
+        '</div>' +
+        '<div style="background:#f0f0f0;border-radius:4px;overflow:hidden;margin-bottom:8px;">' + barFill + '</div>' +
+        '<ul style="margin:0;padding-left:16px;list-style:disc;">' +
+            reasons.map(function(r){ return '<li style="font-size:12px;color:#555;margin-bottom:3px;">' + r + '</li>'; }).join('') +
+        '</ul>' +
+    '</div>';
 }
 
 function closeCompare() {

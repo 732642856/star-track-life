@@ -1684,6 +1684,14 @@ body {
     color: var(--color-text);
 }
 
+/* 相性评分条 */
+.cmp-compat {
+    padding: 10px 16px;
+    background: #fff;
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+}
+
 /* 三列小传容器 */
 .cmp-bio-columns {
     display: flex;
