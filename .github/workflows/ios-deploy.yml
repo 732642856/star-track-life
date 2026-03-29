@@ -112,13 +112,13 @@ jobs:
           /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" ios/App/App/Info.plist
 
       - name: 构建并归档
-        env:
-          TEAM_ID: ${{ secrets.TEAM_ID }}
         run: |
-          # 从已安装的描述文件中提取 UUID
+          # 从已安装的描述文件中提取 UUID 和 Team ID
           PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
           PP_UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID raw -)
+          PP_TEAM_ID=$(security cms -D -i $PP_PATH | plutil -extract TeamIdentifier.0 raw -)
           echo "使用描述文件 UUID: $PP_UUID"
+          echo "描述文件 Team ID: $PP_TEAM_ID"
 
           xcodebuild archive \
             -project ios/App/App.xcodeproj \
@@ -126,9 +126,9 @@ jobs:
             -configuration Release \
             -archivePath $RUNNER_TEMP/App.xcarchive \
             -destination 'generic/platform=iOS' \
-            DEVELOPMENT_TEAM="$TEAM_ID" \
+            DEVELOPMENT_TEAM="$PP_TEAM_ID" \
             CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
+            CODE_SIGN_IDENTITY="iPhone Distribution" \
             PROVISIONING_PROFILE="$PP_UUID" \
             -allowProvisioningUpdates
 
@@ -136,6 +136,8 @@ jobs:
         run: |
           PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
           PP_UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID raw -)
+          PP_TEAM_ID=$(security cms -D -i $PP_PATH | plutil -extract TeamIdentifier.0 raw -)
+          echo "导出用 UUID: $PP_UUID, Team: $PP_TEAM_ID"
           
           cat > $RUNNER_TEMP/ExportOptions.plist << EOF
           <?xml version="1.0" encoding="UTF-8"?>
@@ -145,7 +147,7 @@ jobs:
             <key>method</key>
             <string>app-store</string>
             <key>teamID</key>
-            <string>2DM78YY6PM</string>
+            <string>$PP_TEAM_ID</string>
             <key>signingStyle</key>
             <string>manual</string>
             <key>signingCertificate</key>
