@@ -211,10 +211,25 @@ function showStep(step) {
     document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
     
-    document.getElementById(`step-${step}`).classList.add('active');
-    document.querySelector(`.step[data-step="${step}"]`).classList.add('active');
+    document.getElementById('step-' + step).classList.add('active');
+    document.querySelector('.step[data-step="' + step + '"]').classList.add('active');
     
     currentStep = step;
+
+    // 切换到步骤3时，自动滚到「选择细分星盘」区块顶部
+    if (step === 3) {
+        requestAnimationFrame(function() {
+            var el = document.getElementById('step-3');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }
+    // 切换到步骤5时，自动滚到顶部（确保loading动效可见）
+    if (step === 5) {
+        requestAnimationFrame(function() {
+            var el = document.getElementById('step-5');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }
 }
 
 function nextStep() {
@@ -834,8 +849,8 @@ function _guessPatternType(stars) {
 
 // ==================== 角色保存系统 ====================
 function saveCharacter() {
-    if (savedCharacters.length >= 5) {
-        showToast('最多只能保存5个角色，请先删除一些');
+    if (savedCharacters.length >= 10) {
+        showToast('最多只能保存10个角色，请先删除一些');
         return;
     }
     
@@ -856,7 +871,7 @@ function saveCharacter() {
     savedCharacters.push(character);
     localStorage.setItem('starTrackCharacters', JSON.stringify(savedCharacters));
     
-    showToast('「' + name + '」已保存 (' + savedCharacters.length + '/5)', 'success');
+    showToast('「' + name + '」已保存 (' + savedCharacters.length + '/10)', 'success');
     displaySavedCharacters();
 }
 
@@ -939,25 +954,30 @@ function loadCharacter(id) {
 }
 
 function deleteCharacter(id) {
-    console.log('删除角色ID:', id);
-    
-    if (!confirm('确定要删除这个角色吗？')) {
-        console.log('用户取消删除');
+    // iOS WKWebView 会屏蔽 confirm()，改用 Toast + 内联二次确认
+    var char = savedCharacters.find(function(c) { return c.id === id; });
+    var name = char ? char.name : '该角色';
+
+    // 若已有待确认提示，直接执行删除
+    if (window._pendingDeleteId === id) {
+        window._pendingDeleteId = null;
+        savedCharacters = savedCharacters.filter(function(c) { return c.id !== id; });
+        localStorage.setItem('starTrackCharacters', JSON.stringify(savedCharacters));
+        displaySavedCharacters();
+        if (savedCharacters.length === 0) {
+            document.getElementById('saved-characters-section').style.display = 'none';
+        }
+        showToast('「' + name + '」已删除', 'success');
         return;
     }
-    
-    console.log('删除前角色数量:', savedCharacters.length);
-    savedCharacters = savedCharacters.filter(c => c.id !== id);
-    console.log('删除后角色数量:', savedCharacters.length);
-    
-    localStorage.setItem('starTrackCharacters', JSON.stringify(savedCharacters));
-    displaySavedCharacters();
-    
-    if (savedCharacters.length === 0) {
-        document.getElementById('saved-characters-section').style.display = 'none';
-    }
-    
-    showToast('角色已删除', 'success');
+
+    // 第一次点击：标记待确认，提示用户再点一次
+    window._pendingDeleteId = id;
+    showToast('再次点击「删除」确认删除「' + name + '」');
+    // 3秒后清除待确认状态
+    setTimeout(function() {
+        if (window._pendingDeleteId === id) window._pendingDeleteId = null;
+    }, 3000);
 }
 
 function showCompare() {
