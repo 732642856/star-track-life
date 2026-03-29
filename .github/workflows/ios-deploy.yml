@@ -170,17 +170,18 @@ jobs:
             -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist \
             -exportPath $RUNNER_TEMP/export
 
+      - name: 保存 IPA 为 Artifact（上传失败也可手动用 Transporter 传）
+        uses: actions/upload-artifact@v4
+        with:
+          name: App-${{ github.run_number }}.ipa
+          path: ${{ runner.temp }}/export/*.ipa
+          retention-days: 7
+
       - name: 上传到 App Store Connect
         env:
-          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          APP_STORE_CONNECT_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_KEY_BASE64 }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
         run: |
-          # 写入 API Key 文件（去掉换行符再解码）
-          mkdir -p ~/.appstoreconnect/private_keys
-          echo "$APP_STORE_CONNECT_KEY_BASE64" | tr -d '\n' | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
-          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
-
           # 验证 IPA 存在
           echo "=== export 目录内容 ==="
           ls -lh $RUNNER_TEMP/export/
@@ -191,12 +192,12 @@ jobs:
           fi
           echo "✅ 上传 IPA: $IPA_PATH"
 
-          # 使用 xcrun altool 上传（支持 API Key 认证）
+          # 使用 Apple ID + 应用专用密码上传
           xcrun altool --upload-app \
             --type ios \
             --file "$IPA_PATH" \
-            --apiKey "$APP_STORE_CONNECT_KEY_ID" \
-            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" 2>&1
+            --username "$APPLE_ID" \
+            --password "$APPLE_ID_PASSWORD" 2>&1
 
       - name: 清理 Keychain
         if: always()
