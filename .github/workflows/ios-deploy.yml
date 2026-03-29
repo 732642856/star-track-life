@@ -17,7 +17,7 @@ jobs:
       - name: 安装 Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
 
       - name: 安装依赖
         run: npm install
@@ -25,15 +25,23 @@ jobs:
       - name: 构建前端
         run: npm run build
 
-      - name: 同步 Capacitor
-        run: npx cap sync ios
+      - name: 同步 Capacitor（拷贝 www 到 iOS）
+        run: |
+          npx cap copy ios
+          echo "=== www 同步完成 ==="
+          ls ios/App/App/public/ | head -10
 
       - name: 检查 iOS 项目结构
         run: |
           echo "=== iOS 目录结构 ==="
           ls -la ios/App/
           echo "=== xcworkspace ==="
-          find ios -name "*.xcworkspace" -not -path "*/xcodeproj/*" 2>/dev/null && echo "找到独立 workspace" || echo "无独立 workspace，使用 project"
+          WORKSPACE=$(find ios -name "*.xcworkspace" -not -path "*/xcodeproj/*" 2>/dev/null | head -1)
+          if [ -n "$WORKSPACE" ]; then
+            echo "找到 workspace: $WORKSPACE"
+          else
+            echo "无独立 workspace，使用 xcodeproj"
+          fi
           echo "=== xcodeproj ==="
           ls -la ios/App/App.xcodeproj/
 
@@ -41,7 +49,9 @@ jobs:
         run: |
           xcodebuild -resolvePackageDependencies \
             -project ios/App/App.xcodeproj \
-            -scheme App
+            -scheme App \
+            -onlyUsePackageVersionsFromResolvedFile 2>&1 | tail -5 || true
+          echo "依赖解析完成"
 
       - name: 导入签名证书
         env:
@@ -164,22 +174,28 @@ jobs:
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_KEY_BASE64 }}
         run: |
-          # 写入 API Key 文件
+          # 写入 API Key 文件（去掉换行符再解码）
           mkdir -p ~/.appstoreconnect/private_keys
-          echo -n "$APP_STORE_CONNECT_KEY_BASE64" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
+          echo "$APP_STORE_CONNECT_KEY_BASE64" | tr -d '\n' | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
+          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
 
           # 验证 IPA 存在
+          echo "=== export 目录内容 ==="
           ls -lh $RUNNER_TEMP/export/
           IPA_PATH=$(find $RUNNER_TEMP/export -name "*.ipa" | head -1)
-          echo "上传 IPA: $IPA_PATH"
+          if [ -z "$IPA_PATH" ]; then
+            echo "❌ 未找到 IPA 文件！"
+            exit 1
+          fi
+          echo "✅ 上传 IPA: $IPA_PATH"
 
-          # 使用 xcrun altool 上传（Apple 官方工具，支持 API Key 认证）
+          # 使用 xcrun altool 上传（支持 API Key 认证）
           xcrun altool --upload-app \
             --type ios \
             --file "$IPA_PATH" \
             --apiKey "$APP_STORE_CONNECT_KEY_ID" \
             --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
-            --verbose
+            --verbose 2>&1
 
       - name: 清理 Keychain
         if: always()
