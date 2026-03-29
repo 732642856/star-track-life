@@ -154,7 +154,7 @@ jobs:
             <string>Apple Distribution</string>
             <key>provisioningProfiles</key>
             <dict>
-              <key>com.yinan.xingguirensheng</key>
+              <key>com.yinan.xinggui0</key>
               <string>$PP_UUID</string>
             </dict>
             <key>uploadBitcode</key>
@@ -177,27 +177,10 @@ jobs:
           path: ${{ runner.temp }}/export/*.ipa
           retention-days: 7
 
-      - name: 上传到 App Store Connect
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+      - name: 提示手动上传
         run: |
-          # 验证 IPA 存在
-          echo "=== export 目录内容 ==="
-          ls -lh $RUNNER_TEMP/export/
-          IPA_PATH=$(find $RUNNER_TEMP/export -name "*.ipa" | head -1)
-          if [ -z "$IPA_PATH" ]; then
-            echo "❌ 未找到 IPA 文件！"
-            exit 1
-          fi
-          echo "✅ 上传 IPA: $IPA_PATH"
-
-          # 使用 Apple ID + 应用专用密码上传
-          xcrun altool --upload-app \
-            --type ios \
-            --file "$IPA_PATH" \
-            --username "$APPLE_ID" \
-            --password "$APPLE_ID_PASSWORD" 2>&1
+          echo "✅ IPA 已保存为 Artifact，请下载后用 Transporter 手动上传到 App Store Connect"
+          echo "下载地址：GitHub Actions → 本次 Run → Artifacts"
 
       - name: 清理 Keychain
         if: always()

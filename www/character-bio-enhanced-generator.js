@@ -454,12 +454,13 @@ function generateStoryElements(mainStar, era) {
 }
 
 /**
- * 生成完整小传文本
+ * 生成完整小传文本（8大模块，2400字+）
+ * 需求文档版：基础设定 / 显性人格 / 潜意识底色 / 亲密关系 / 四化心理 / 空间交互 / 灵魂伤痕 / 剧作功能
  */
 function generateFullBio(dimensions, storyElements, era, questions20Answers = [], ziweiData = {}, basicInfo = {}) {
     const { innerMotivation, soulWound, fear, valueConflict, externalConflict, lie, truth, characterArc,
             _sihuaType, _mingDizhi } = dimensions;
-    const { suangqiaoBridges, suspenseTechniques } = storyElements;
+    const { suangqiaoBridges, suspenseTechniques } = storyElements || {};
     // 确保 ziweiData 有兜底值
     if (!ziweiData.mainStar) ziweiData.mainStar = '紫微';
     if (!ziweiData.auspiciousStars) ziweiData.auspiciousStars = [];
