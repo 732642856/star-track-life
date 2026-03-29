@@ -13,6 +13,43 @@ let selectedSubPattern = null;
 let currentCharacterBio = '';
 let savedCharacters = [];
 
+// ==================== 全局 Toast 提示 ====================
+function showToast(msg, type) {
+    var bg = (type === 'success') ? 'rgba(39,174,96,0.92)' : 'rgba(220,50,50,0.92)';
+    var icon = (type === 'success') ? '✅ ' : '⚠️ ';
+    var t = document.createElement('div');
+    t.textContent = icon + msg;
+    t.style.cssText = [
+        'position:fixed',
+        'top:50%',
+        'left:50%',
+        'transform:translate(-50%,-50%) scale(0.8)',
+        'background:' + bg,
+        'color:#fff',
+        'padding:14px 28px',
+        'border-radius:14px',
+        'font-size:16px',
+        'z-index:99999',
+        'pointer-events:none',
+        'box-shadow:0 6px 30px rgba(0,0,0,0.35)',
+        'transition:transform 0.18s ease,opacity 0.18s ease',
+        'max-width:80vw',
+        'text-align:center',
+        'line-height:1.5'
+    ].join(';');
+    document.body.appendChild(t);
+    // 弹入
+    requestAnimationFrame(function() {
+        t.style.transform = 'translate(-50%,-50%) scale(1)';
+    });
+    // 弹出
+    setTimeout(function() {
+        t.style.opacity = '0';
+        t.style.transform = 'translate(-50%,-50%) scale(0.8)';
+        setTimeout(function() { if (t.parentNode) t.remove(); }, 200);
+    }, type === 'success' ? 2000 : 2500);
+}
+
 // ==================== 8种人物驱动力 ====================
 // 每个选项是小传差异化的核心触发器，选哪个决定角色叙事方向
 var DRIVE_8_TYPES = [
@@ -213,7 +250,7 @@ function initEraCards() {
 
 function confirmEra() {
     if (!selectedEra) {
-        alert('请选择一个时代背景');
+        showToast('请选择一个时代背景');
         return;
     }
     userInputs.era = selectedEra;
@@ -237,20 +274,87 @@ function initOptionCards() {
 }
 
 function confirmBasicInfo() {
-    const name = document.getElementById('character-name').value.trim();
+    var name = document.getElementById('character-name').value.trim();
+
+    // --- inline 提示工具函数 ---
+    function showFieldError(elId, msg) {
+        var errEl = document.getElementById(elId);
+        var inputEl = document.getElementById('character-name');
+        if (errEl) {
+            errEl.textContent = '⚠️ ' + msg;
+            errEl.style.display = 'inline-block';
+            setTimeout(function() { errEl.style.display = 'none'; }, 4000);
+        }
+        // 滚动到提示处
+        var target = errEl || inputEl;
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function showToast(msg) {
+        var t = document.createElement('div');
+        t.textContent = msg;
+        t.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(220,50,50,0.92);color:#fff;padding:14px 28px;border-radius:12px;font-size:16px;z-index:9999;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.3)';
+        document.body.appendChild(t);
+        setTimeout(function() { t.remove(); }, 2500);
+    }
+
     if (!name) {
-        alert('请输入角色名字');
+        showFieldError('name-error', '请填写角色名字');
+        var inp = document.getElementById('character-name');
+        if (inp) {
+            inp.focus();
+            inp.style.borderColor = '#e74c3c';
+            inp.style.boxShadow = '0 0 0 3px rgba(231,76,60,0.25)';
+            setTimeout(function() {
+                inp.style.borderColor = '';
+                inp.style.boxShadow = '';
+            }, 3000);
+        }
         return;
     }
     if (!userInputs.gender) {
-        alert('请选择性别');
+        showToast('⚠️ 请选择性别');
+        var genderEl = document.querySelector('[data-field="gender"]');
+        if (genderEl) genderEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
     if (!userInputs.age) {
-        alert('请选择年龄');
+        showToast('⚠️ 请选择年龄段');
+        var ageEl = document.querySelector('[data-field="age"]');
+        if (ageEl) ageEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
-    
+    if (!userInputs.profession) {
+        showToast('⚠️ 请选择职业');
+        var profEl = document.querySelector('[data-field="profession"]');
+        if (profEl) profEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+    if (!userInputs.family) {
+        showToast('⚠️ 请选择家庭背景');
+        var famEl = document.querySelector('[data-field="family"]');
+        if (famEl) famEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+    if (!userInputs.social) {
+        showToast('⚠️ 请选择社会地位');
+        var socEl = document.querySelector('[data-field="social"]');
+        if (socEl) socEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+    if (!userInputs.parents) {
+        showToast('⚠️ 请选择父母关系');
+        var parEl = document.querySelector('[data-field="parents"]');
+        if (parEl) parEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+    if (!userInputs.siblings) {
+        showToast('⚠️ 请选择手足关系');
+        var sibEl = document.querySelector('[data-field="siblings"]');
+        if (sibEl) sibEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+
     userInputs.name = name;
     matchChart();
     showStep(3);
@@ -354,7 +458,7 @@ function initEightAttributes() {
         { id: 'behavior', name: '行为习惯', options: ['雷厉风行', '深思熟虑', '随性而为', '谨慎小心', '有条不紊', '自由散漫'] },
         { id: 'emotion', name: '情感表达', options: ['外露直白', '内敛含蓄', '丰富多变', '稳定平和', '理性克制', '感性冲动'] },
         { id: 'social', name: '社交风格', options: ['主动热情', '被动等待', '理性交往', '感性相交', '圆滑世故', '直率真诚'] },
-        { id: 'response', name: '应对危机', options: ['冷静分析', '果断行动', '寻求帮助', '逃避回避', '慌乱无措', '坚定抵抗'] },
+        { id: 'crisis', name: '应对危机', options: ['冷静分析', '果断行动', '寻求帮助', '逃避回避', '慌乱无措', '坚定抵抗'] },
         { id: 'learning', name: '学习适应', options: ['快速学习', '稳步积累', '依赖经验', '善于应变', '固执己见', '灵活调整'] },
         { id: 'growth', name: '成长方向', options: ['追求成功', '追求自由', '追求安稳', '追求真理', '追求情感', '追求平衡'] }
     ];
@@ -387,16 +491,23 @@ function initEightAttributes() {
 function generateFinalBio() {
     try {
         if (!selectedChart) {
-            alert('请先完成星盘匹配');
+            showToast('请先完成星盘匹配');
             showStep(3);
             return;
         }
         if (!selectedSubPattern) {
-            alert('请选择四化类型');
+            showToast('请选择四化类型');
             showStep(3);
             return;
         }
-        
+
+        // 8属性软处理：漏选的用主星推导，不拦截，只轻提示
+        var missingAttrs = ['appearance','speech','behavior','emotion','social','crisis','learning','growth']
+            .filter(function(id) { return !eightAttributes[id]; });
+        if (missingAttrs.length > 0 && missingAttrs.length < 8) {
+            showToast('💡 ' + missingAttrs.length + ' 项未选择，对应内容将以模糊风格呈现');
+        }
+
         const bio = generateZiweiCharacterBio(userInputs, selectedChart, eightAttributes, selectedSubPattern);
         currentCharacterBio = bio;
         
@@ -407,7 +518,7 @@ function generateFinalBio() {
         showStep(5);
     } catch (error) {
         console.error('生成人物小传时出错:', error);
-        alert('生成人物小传时出错: ' + error.message);
+        showToast('生成出错，请重试（' + error.message + '）');
     }
 }
 
@@ -587,7 +698,11 @@ function generateZiweiCharacterBio(inputs, chart, eightAttrs, subPattern) {
         gender:     inputs.gender || 'male',
         era:        inputs.era || 'contemporary',
         age:        inputs.age || 'youth',
-        profession: inputs.career || inputs.profession || 'other'
+        profession: inputs.career || inputs.profession || 'other',
+        family:     inputs.family   || '',
+        socialClass:inputs.social   || '',   // 注意：步骤2的"社会地位"叫social，8属性里的"社交风格"也叫social，这里用socialClass区分
+        parents:    inputs.parents  || '',
+        siblings:   inputs.siblings || ''
       };
       // 解析四化类型：subPattern 可能是驱动力名称，需映射到四化
       var sihuaType = _resolveSihuaType(subPattern, chart);
@@ -678,7 +793,7 @@ function _guessPatternType(stars) {
 // ==================== 角色保存系统 ====================
 function saveCharacter() {
     if (savedCharacters.length >= 5) {
-        alert('最多只能保存5个角色进行对比，请先删除一些角色');
+        showToast('最多只能保存5个角色，请先删除一些');
         return;
     }
     
@@ -699,13 +814,13 @@ function saveCharacter() {
     savedCharacters.push(character);
     localStorage.setItem('starTrackCharacters', JSON.stringify(savedCharacters));
     
-    alert(`角色 "${name}" 已保存！(${savedCharacters.length}/5)`);
+    showToast('「' + name + '」已保存 (' + savedCharacters.length + '/5)', 'success');
     displaySavedCharacters();
 }
 
 function copyCharacterBio() {
     if (!currentCharacterBio) {
-        alert('请先生成人物小传');
+        showToast('请先生成人物小传');
         return;
     }
     
@@ -718,10 +833,10 @@ function copyCharacterBio() {
         .replace(/^---$/gm, '\n' + '='.repeat(50) + '\n');  // 分割线
     
     navigator.clipboard.writeText(plainText).then(() => {
-        alert('人物小传已复制到剪贴板！');
+        showToast('已复制到剪贴板', 'success');
     }).catch(err => {
         console.error('复制失败:', err);
-        alert('复制失败，请手动选择文本复制');
+        showToast('复制失败，请手动长按选择');
     });
 }
 
@@ -800,7 +915,7 @@ function deleteCharacter(id) {
         document.getElementById('saved-characters-section').style.display = 'none';
     }
     
-    alert('角色已删除！');
+    showToast('角色已删除', 'success');
 }
 
 function showCompare() {
@@ -808,12 +923,12 @@ function showCompare() {
     const selectedIds = Array.from(checkboxes).map(cb => parseInt(cb.dataset.id));
     
     if (selectedIds.length < 2) {
-        alert('请至少选择2个角色进行对比');
+        showToast('请至少选择2个角色进行对比');
         return;
     }
     
     if (selectedIds.length > 3) {
-        alert('最多只能对比3个角色');
+        showToast('最多对比3个角色');
         return;
     }
     
@@ -827,7 +942,13 @@ function showCompare() {
 }
 
 function generateComparison(chars) {
-    let html = '<div class="compare-grid">';
+    // 把当前对比的角色 id 列表存起来，供覆盖层使用
+    window._compareCharIds = chars.map(function(c){ return c.id; });
+
+    let html = '<div style="margin-bottom:12px;">';
+    html += '<button class="btn" onclick="showBioCompare()">展开完整小传对比</button>';
+    html += '</div>';
+    html += '<div class="compare-grid">';
     
     chars.forEach(char => {
         html += `
@@ -854,7 +975,6 @@ function generateComparison(chars) {
             <div class="compare-summary">
                 ${char.bio.substring(0, 200)}...
             </div>
-            <button class="btn btn-small" onclick="loadCharacter(${char.id})">查看完整小传</button>
         </div>
         `;
     });
@@ -911,4 +1031,66 @@ function generateComparison(chars) {
 
 function closeCompare() {
     document.getElementById('compare-section').style.display = 'none';
+}
+
+// ==================== 全屏小传对比覆盖层 ====================
+function showBioCompare() {
+    var ids = window._compareCharIds || [];
+    if (ids.length === 0) {
+        showToast('没有对比角色数据');
+        return;
+    }
+    var chars = ids.map(function(id){ return savedCharacters.find(function(c){ return c.id === id; }); }).filter(Boolean);
+    if (chars.length === 0) {
+        showToast('角色数据已失效，请重新选择');
+        return;
+    }
+
+    // 构建覆盖层 HTML
+    var eraMap = {ancient:'古代', modern:'近代', contemporary:'现代'};
+    var ageMap = {youth:'青年', middle:'中年', senior:'老年'};
+
+    var colsHtml = chars.map(function(char) {
+        var meta = [
+            eraMap[char.inputs.era] || '',
+            char.inputs.gender === 'female' ? '女' : '男',
+            ageMap[char.inputs.age] || '',
+            char.chart.name || ''
+        ].filter(Boolean).join(' · ');
+
+        return '<div class="bio-compare-col">' +
+            '<div class="bio-compare-col-header">' +
+                '<p class="col-char-name">' + (char.name || '角色') + '</p>' +
+                '<p class="col-char-meta">' + meta + '</p>' +
+            '</div>' +
+            '<div class="bio-compare-col-body">' +
+                renderMarkdown(char.bio) +
+            '</div>' +
+        '</div>';
+    }).join('');
+
+    var overlay = document.getElementById('bio-compare-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'bio-compare-overlay';
+        overlay.className = 'bio-compare-overlay';
+        document.body.appendChild(overlay);
+    }
+
+    overlay.innerHTML =
+        '<div class="bio-compare-header">' +
+            '<h2>完整小传对比（' + chars.length + '个角色）</h2>' +
+            '<button class="bio-compare-close" onclick="closeBioCompare()">关闭</button>' +
+        '</div>' +
+        '<div class="bio-compare-columns">' + colsHtml + '</div>';
+
+    overlay.classList.add('active');
+    // 锁定 body 滚动
+    document.body.style.overflow = 'hidden';
+}
+
+function closeBioCompare() {
+    var overlay = document.getElementById('bio-compare-overlay');
+    if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
 }
