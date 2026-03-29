@@ -638,6 +638,312 @@ var STAR_RIVAL_STYLE = {
     '破军':  { '杀破狼':'最激烈的同类对决——谁打破谁，谁就占据主动', '紫府廉武相':'用打破体制的方式让守护者慌乱，让最稳固的结构出现裂缝', '机月同梁':'用彻底的变动逼出保守者的极限反应，让对手暴露出平时藏起来的部分', '巨日':'用无可救药的行动感打破语言权，让说得好的对手哑口无言' }
 };
 
+// ==================== 叙事化辅助函数（所有用户输入字段→真实融入小传）====================
+
+/**
+ * 家庭背景叙事化
+ * family: wealthy(富裕) / middle(中等) / poor(贫困) / decline(没落)
+ */
+function _narrateFamily(family, era, mainStar) {
+    var eraLabel = {ancient:'古代',modern:'近代',contemporary:'现代'}[era] || '现代';
+    var starTone = {
+        '紫微':'这份家世成为他日后对「尊贵与秩序」执念的起点',
+        '天机':'这样的家境催生了他以智谋换取优势的生存本能',
+        '太阳':'这段出身让他的理想主义有了最初的土壤',
+        '武曲':'家境铸就了他对金钱和实际成果的本能敏感',
+        '天同':'这样的家庭氛围，是他随遇而安性格的最初温床',
+        '廉贞':'原生家庭是他情感复杂性的第一个练习场',
+        '天府':'家境对他的积累意识和安全感需求有直接的塑造',
+        '太阴':'成长环境里的情感质地，几乎决定了他一生的审美底色',
+        '贪狼':'家庭带给他对「更多」的最初渴望',
+        '巨门':'原生家庭里的信息与言语模式，塑造了他的沟通本能',
+        '天相':'家庭赋予他对公正与秩序最早的感知',
+        '天梁':'出身奠定了他护人与被护的命运底色',
+        '七杀':'家庭是他第一个需要证明自己的战场',
+        '破军':'家庭是他日后打破一切的第一个参照系'
+    };
+    var tone = starTone[mainStar] || '这段家世在他身上留下了深刻的印记';
+    var map = {
+        wealthy: eraLabel === '古代'   ? '出身钟鸣鼎食之家，幼时锦衣玉食，对「理所当然的优越」有根深蒂固的认知。' + tone + '。'
+                : eraLabel === '近代'   ? '家族曾是一方富贾，幼年的优渥生活在乱世中成了最脆弱的泡沫，那种「拥有—失去」的记忆伴随一生。' + tone + '。'
+                : '成长于物质条件充裕的中产偏上家庭，从未真正体验过匮乏，但也因此对「真实的失去」缺乏免疫力。' + tone + '。',
+        middle: eraLabel === '古代'   ? '出身耕读之家，不富不贫，家里的规矩比财富更值钱——那种「自力更生的体面」在他血液里流动至今。' + tone + '。'
+                : eraLabel === '近代'   ? '普通市民家庭出身，乱世中父母竭力维持着一份平淡的安稳。那种「用普通对抗动荡」的姿态，深刻影响了他的价值取向。' + tone + '。'
+                : '中等收入家庭，不愁温饱但也从未宽裕，父母的辛劳是他最早看到的「生活本质」。' + tone + '。',
+        poor:   eraLabel === '古代'   ? '幼时家境贫寒，吃过苦、受过冷眼，但也因此磨出了一副对权贵虚伪有本能洞察的眼睛。' + tone + '。'
+                : eraLabel === '近代'   ? '贫困家庭出身，童年记忆里充满了物质的拮据与尊严的维护之间的张力——那种「穷但不能丢脸」的价值观刻入骨髓。' + tone + '。'
+                : '经济拮据的家庭环境，让他很早就明白「钱」和「稳定」不是理所当然的。匮乏感作为底色，影响了他对安全感的终生追求。' + tone + '。',
+        decline: eraLabel === '古代'  ? '家族曾显赫一时，如今门庭日落。他既有大户人家的见识与骄傲，又背负着「重振门楣」的无形枷锁。' + tone + '。'
+                : eraLabel === '近代'   ? '没落世家出身——爷爷辈的荣耀变成了父亲的包袱，再变成他的起点。那种「我们曾经不同」的自我认知，是驱动力，也是阻碍。' + tone + '。'
+                : '家道中落的背景给了他一种独特的处境：既有精英家庭的文化底色，又有平民奋斗者的实际处境。那种「上不上下不下」的撕裂感，塑造了他的复杂性。' + tone + '。'
+    };
+    return map[family] || '';
+}
+
+/**
+ * 社会阶层叙事化
+ * social（即socialClass）: upper / middle / lower
+ */
+function _narrateSocialClass(socialClass, profession, mainStar) {
+    var profLabel = {political:'政界',business:'商界',cultural:'文教界',military:'军警系统',technical:'技术领域',other:'各行各业'}[profession] || '所在领域';
+    var map = {
+        upper: '在' + profLabel + '中处于上层地位，习惯了被仰视和被服务的视角——这带来了眼界，也带来了对「低处」的某种隔阂。他的社会资本是真实存在的资产，也是一道把他与大多数人隔开的玻璃。',
+        middle: '在' + profLabel + '中属于中坚阶层，不是权力核心也不是边缘人，这个位置让他既能看到规则是怎么运转的，又保留着被规则影响的真实感受。一种实用主义的清醒，是他的生存哲学。',
+        lower: '在' + profLabel + '中处于弱势位置，对「不被看见」有切肤的体会——但这也给了他一个旁观者的视角，看得到系统的裂缝，也发展出了底层人特有的韧性与变通。'
+    };
+    return map[socialClass] || '';
+}
+
+/**
+ * 父母关系叙事化
+ * parents: harmonious / strained / broken / loss
+ */
+function _narrateParents(parents, mainStar) {
+    var starNeed = {
+        '紫微':'对权威的认同与超越',   '天机':'信任感的建立与怀疑',
+        '太阳':'被看见与被认可的渴望', '武曲':'独立与依靠的张力',
+        '天同':'安全感的构建底层',     '廉贞':'情感模式的最初蓝图',
+        '天府':'秩序感与积累意识的来源','太阴':'情感表达方式的原始模板',
+        '贪狼':'被关注与被喜爱的渴望', '巨门':'表达与沉默的第一个战场',
+        '天相':'公正感的最初校准',     '天梁':'责任与照顾的原始设定',
+        '七杀':'证明自我价值的第一动机','破军':'打破与重建冲动的最初根源'
+    };
+    var need = starNeed[mainStar] || '内心深处的安全感底层';
+    var map = {
+        harmonious: '父母关系和睦，家庭氛围温暖而稳定。这份底色给了他面对世界的基本安全感——但也可能让他对「现实的粗糙」准备不足。' + need + '，在一个没有大裂缝的原生家庭里得到了相对完整的浇灌。',
+        strained:   '父母关系长期紧张，家里的气氛像一根绷紧的弦。他从小就是家庭情绪的感应器，练就了察言观色的本能。' + need + '，在这种环境里遭遇了最早的挑战，也因此发展出了别人没有的某种敏感或防御。',
+        broken:     '父母关系破裂（离婚或长期分离），他在「不完整」的家庭结构里学会了自我安慰和独立支撑。' + need + '，在缺少稳定参照的成长环境里，被迫发展出了一套自己的逻辑。',
+        loss:       '早年失去了父母一方或双方（离世/长期缺席），那种「本该在而不在」的空洞，成了他内心最深处的底色。' + need + '，在缺失中被强行成熟，这份沉甸甸的经历让他比同龄人更早见过某些真相。'
+    };
+    return map[parents] || '';
+}
+
+/**
+ * 兄弟关系叙事化
+ * siblings: close / conflict / support / alone
+ */
+function _narrateSiblings(siblings, mainStar) {
+    var map = {
+        close:    '与兄弟姐妹关系亲密，手足之间的羁绊在他的情感地图里占据重要位置。这份横向的情感纽带，给了他一种「我有人」的底气，也是他面对世界时最真实的后盾。',
+        conflict: '与兄弟姐妹之间存在长期的竞争或矛盾，那种「在最亲近的地方被对立」的体验，塑造了他对关系中权力与依赖的独特敏感。比起陌生人，他更懂得如何与「熟悉的威胁」周旋。',
+        support:  '虽与兄弟姐妹不算亲密，但在关键时刻彼此支撑。这种「不说话但你还在」的手足情谊，给了他一种不依赖频繁互动的安全感，也影响了他在深层关系里的相处模式。',
+        alone:    '独生子女或实际上的独立成长，从小没有横向的手足参照——他既享受了独子的专注与资源，也在无人可比较的孤独里，过早地把自己当成了一个完整的单位。'
+    };
+    return map[siblings] || '';
+}
+
+/**
+ * 职业×时代 叙事化（不只是贴标签，而是描述他在这个职业中的处境）
+ */
+function _narrateProfession(profession, era, mainStar) {
+    var eraLabel = {ancient:'古代',modern:'近代',contemporary:'现代'}[era] || '现代';
+    var profMap = {
+        political: {
+            ancient:     '身处权力体制内，每一步都是在博弈与制衡的棋盘上落子。仕途即命途，升迁与被弃之间的距离不过一场政治风向的转向。',
+            modern:      '乱世中的政治参与从来不只是理想，更是生死抉择。站在什么位置、支持什么力量，影响的不只是前途，更是身家性命。',
+            contemporary:'在官僚体系中浮沉，需要在规则与现实之间找到生存缝隙。体制内的逻辑有时与他内心的逻辑平行，从不相交。'
+        },
+        business: {
+            ancient:     '商贾身份在这个时代意味着有钱却无势——财富在手，但在文人士大夫面前仍矮了一截。他的野心不止于此。',
+            modern:      '乱世中的商业需要的不只是眼光，更是在各方势力之间保持平衡的手腕。他的财富是用胆识和妥协换来的。',
+            contemporary:'市场经济的逻辑清晰而冷酷：没有什么「理所当然」，今天的成功是明天继续博弈的资本。他在这个游戏里找到了自己的节奏。'
+        },
+        cultural: {
+            ancient:     '文人的笔是剑，也是最脆弱的盾。在这个以文取仕的时代，思想的传播与压制始终并行。他用文字构建了一个外人很难进入的内心世界。',
+            modern:      '在思想激荡的年代，文化人既是启蒙者，也是最先被时代消耗的那批人。他手中的笔承载着比个人命运更重的东西。',
+            contemporary:'在内容变成流量的时代，坚持表达的「意义」本身就是一种选择。他在娱乐化浪潮里寻找自己真正想说的话。'
+        },
+        military: {
+            ancient:     '手握刀剑的人，在这个时代是最靠近权力核心的那批人，也是最先暴露在死亡面前的人。荣耀与危险从来是连体的。',
+            modern:      '战场上活下来的人，对「活着」的理解都不同于普通人。他见过的东西，不是所有人都有资格见。那些经历的重量，在他身上看得出来。',
+            contemporary:'在和平年代，军警的存在感以另一种方式呈现——不是枪炮，而是纪律、服从与那种刻进骨髓的责任感。他的处事方式带着一种普通人没有的确定性。'
+        },
+        technical: {
+            ancient:     '工匠、医者或术数之人，在等级森严的社会里处于特殊的位置——有用，但不贵。他的价值被需要，他的地位却不被认可。这种错位，成了他观察世界的独特视角。',
+            modern:      '技术在乱世中的价值是实用的，不是精神的。他的一技之长在某些时候救了命，在某些时候却是被利用的理由。',
+            contemporary:'在这个知识变现的时代，技术人掌握着真正重要的事情如何运转的秘密。但「懂」和「被尊重」并不总是同一回事，这是他需要接受的现实。'
+        },
+        other: {
+            ancient:     '在社会的缝隙中寻找自己的位置，不入主流，但也因此拥有了主流人看不到的视角。',
+            modern:      '乱世中身份模糊的人反而有时能活得更灵活，不被任何一方完全定义，也不被任何一方完全信任。',
+            contemporary:'游走在各种身份之间，他对「你是做什么的」这个问题始终有一点说不清楚的抗拒——因为他知道，一个标签框不住他真正的面貌。'
+        }
+    };
+    var p = profMap[profession] || profMap.other;
+    return p[era] || p.contemporary || '';
+}
+
+/**
+ * 年龄段×时代×格局 叙事化（不只贴标签，而是描述人生处境）
+ */
+function _narrateAge(age, era, patternType, genderCN) {
+    var pronoun = genderCN === '女' ? '她' : '他';
+    var eraLabel = {ancient:'古代',modern:'近代',contemporary:'现代'}[era] || '现代';
+    var ageMap = {
+        youth: {
+            ancient:     pronoun + '正当年少，血气方刚。在一个凭才华和胆气尚能搏出一条路的年代，' + pronoun + '的年轻既是资本，也是容易被长辈看轻的理由。成与败，往往就在这几年的关键选择里。',
+            modern:      '青年时代与乱世撞上——这一代人的成长课程不是课本，是时局。' + pronoun + '对这个世界有未被磨损的热情，也承担着比这个年纪本该承担更多的重量。',
+            contemporary:pronoun + '正值二十到三十岁的当口，面对的是一个充满机会也充满不确定的时代。学历与阶层的天花板开始变得真实，' + pronoun + '需要在「想要什么」和「能得到什么」之间找到自己的答案。'
+        },
+        middle: {
+            ancient:     '人到中年，在这个时代已是经过千锤百炼的人。' + pronoun + '对权力的游戏规则了然于心，对人性的复杂也有足够的容量——年少的冲劲已经沉淀成某种更难对付的东西。',
+            modern:      '中年经历了这个时代最激荡的部分。' + pronoun + '见过的比说出口的多，失去的比拥有的更能定义' + pronoun + '是谁。在这个年纪，每一个选择都带着不可逆的重量。',
+            contemporary:'三十到五十岁，是这个时代最难平衡的阶段：事业、家庭、父母、自我，每一项都是实实在在的重量。' + pronoun + '不再相信「两全其美」，但还没放弃在各种压力中找到一条自己的路。'
+        },
+        senior: {
+            ancient:     '年岁已长，在这个时代意味着资历即权威。' + pronoun + '的每一句话都带着时间给的分量，' + pronoun + '看到的结局是别人还没走到的地方——这是力量，也是寂寞。',
+            modern:      '经历了这个动荡世纪的大半，' + pronoun + '的人生本身就是一部历史。那些活下来的人，每一个都是一本别人读不完的书。',
+            contemporary:'五十岁往上，' + pronoun + '开始更清楚地知道什么是真正重要的——代价是也更清楚地知道有些事情再也来不及了。那种成熟与遗憾并存的底色，是' + pronoun + '这个年纪最真实的东西。'
+        }
+    };
+    var ag = ageMap[age] || ageMap.youth;
+    return ag[era] || ag.contemporary || '';
+}
+
+/**
+ * 8属性叙事化（不只是贴关键词，而是展开成角色行为模式描述）
+ */
+function _narrateSpeech(speech, mainStar) {
+    var starQuality = {
+        '紫微':'他的话天然带有一种不容质疑的重量，',
+        '天机':'他说话之前已经在脑子里过了三遍，',
+        '太阳':'他讲话时有一种开放式的感染力，',
+        '武曲':'他不说废话，',
+        '天同':'他的语气让人放松，',
+        '廉贞':'他的每一句话都有多个层次，',
+        '天府':'他措辞稳重，',
+        '太阴':'他说话轻柔，',
+        '贪狼':'他说话带着天然的吸引力，',
+        '巨门':'他的语言直接而精准，',
+        '天相':'他讲话有分寸，',
+        '天梁':'他说话慢，',
+        '七杀':'他言简意赅，',
+        '破军':'他说话不按套路，'
+    };
+    var prefix = starQuality[mainStar] || '';
+    var map = {
+        '简洁有力': prefix + '习惯用最少的字表达最多的意思。长篇大论在他那里是思维不清晰的表现，能用三个字说清楚的事，他绝不说四个字。',
+        '温和委婉': prefix + '从不直接说「不」，而是用一种让对方感觉还有余地的方式表达拒绝。这种委婉背后，有时是体贴，有时是不想面对冲突的回避。',
+        '热情洋溢': prefix + '说话时整个人都是投入的——眼神、语速、肢体语言一起上。这种热情是真实的，但也让他有时说出去的话比本意更用力。',
+        '沉稳冷静': prefix + '即使在情绪激动的情况下，嘴上也很少走漏风声。这种克制有时是真正的稳定，有时是他不让别人知道他也会慌。',
+        '幽默风趣': prefix + '用幽默处理很多严肃的事——这既是一种天赋，也是一种防御：让人发笑的时候，最难被戳到真正痛的地方。',
+        '寡言少语': prefix + '开口的时候都是因为有话要说。沉默对他来说不是尴尬，而是一种舒适的状态。但这也容易让人误解他的真实想法。'
+    };
+    return map[speech] || (prefix + (speech || '话语是他与世界互动的主要介面之一，自有一套独特的表达逻辑'));
+}
+
+function _narrateBehavior(behavior, mainStar) {
+    var map = {
+        '雷厉风行': '决策之后立刻行动，不给自己反悔的机会，也不给对方反应的时间。这种节奏在高压环境下是优势，但有时也会在「行动」和「准备好了再行动」之间少了一个缓冲。',
+        '深思熟虑': '在行动之前会花大量时间在脑子里演练各种可能。别人以为他在犹豫，但其实他在等一个内心确定的信号。一旦出手，基本不会走错。',
+        '随性而为': '他的行动模式接近本能反应——感觉对了就动，不太依赖事先计划。这带来了自由感，但也意味着他的路上偶尔会出现「刚才那步为什么要那么做」的困惑。',
+        '谨慎小心': '习惯性地检查风险，确认退路，再做决定。这种谨慎让他极少犯可以预见的错误，但有时也让他在该出手的时刻慢了半拍。',
+        '有条不紊': '无论外部多混乱，他自己总是有一套排序系统在运行。这种秩序感给他周围的人带来稳定，也让他在面对「无法分类的事」时会比较不舒服。',
+        '自由散漫': '他的行为模式对外看起来没有规律，但其实他只是遵循着一套别人看不到的逻辑。不束缚于习惯的代价，是有时候他自己也不确定下一步在哪里。'
+    };
+    return map[behavior] || behavior || '行为模式灵活多变，难以用单一标签定义';
+}
+
+function _narrateEmotion(emotion, mainStar, genderCN) {
+    var pronoun = genderCN === '女' ? '她' : '他';
+    var starBase = {
+        '紫微':'骨子里的骄傲让他很少在外人面前展示软弱，',
+        '天机':'情感在他那里经常被理性第一时间拦截，',
+        '太阳':'情感对他来说是向外流动的，',
+        '武曲':'情感在他的世界里是行动的一部分，',
+        '天同':'他的情感状态比较稳定，很少大起大落，',
+        '廉贞':'他的情感世界比外表看起来复杂得多，',
+        '天府':'他的情感流动是缓慢而深水的，',
+        '太阴':'他的情感世界细腻到有时连他自己都觉得负担，',
+        '贪狼':'他对情感的感知非常灵敏，',
+        '巨门':'他的情感常常通过言语寻找出口，',
+        '天相':'他处理情感的方式偏向照顾他人多于表达自我，',
+        '天梁':'他对他人情感的感知比对自身情感的感知更敏锐，',
+        '七杀':'他的情感在外表的强硬之下压着，',
+        '破军':'他的情感是不稳定的，浪潮式的，'
+    };
+    var base = starBase[mainStar] || '';
+    var map = {
+        '外露直白': base + '感受到什么几乎立刻就写在脸上，不太会藏。这种透明让人觉得真实，但也让' + pronoun + '在某些需要克制的场合显得容易被看穿。',
+        '内敛含蓄': base + '情绪的大部分都发生在内部，不会主动分享，也不需要别人的情感回应来确认自己的感受。深沟是真实的，但旁人很难探到底。',
+        '丰富多变': base + '情感世界的幅度很大，从热烈到冷静的切换可以在一天之内发生多次。这种丰富是创造力的来源，但也让身边的人有时难以跟上' + pronoun + '的节奏。',
+        '稳定平和': base + '对大多数情绪都保持一种等距的态度——不被喜悦淹没，也不被悲伤击倒。这种平和是真正的稳定，不是压抑，但也让' + pronoun + '偶尔显得对事情缺乏热情。',
+        '理性克制': base + '对情感有强烈的管理冲动——觉得情绪是需要被驾驭的东西，而不是被体验的东西。这套机制很有效，直到某个超出处理能力的情感冲破防线。',
+        '感性冲动': base + '情感在' + pronoun + '这里不走大脑直接进行动，有时候一个触动点就能让' + pronoun + '做出事后要花很长时间处理后果的选择。这是' + pronoun + '的热烈，也是' + pronoun + '需要面对的风险。'
+    };
+    return map[emotion] || emotion || '情感表达方式独特，内外有别';
+}
+
+function _narrateSocial(social, mainStar) {
+    var map = {
+        '主动热情': '他是那种走进任何地方都能找到共同话题的人——不是刻意表演，而是真的对人好奇。这种热情是磁场，但也消耗能量，他需要有独处来充电。',
+        '被动等待': '他不主动建立关系，但当别人靠近时会是真实的回应者。这种「等待」不是冷漠，而是他筛选关系的方式——他不需要所有人，只需要值得的那一些。',
+        '理性交往': '他与人的互动有一种内在的目的感——不是算计，而是效率。无意义的社交让他疲惫，真正的连接让他恢复能量。',
+        '感性相交': '他建立关系靠的是感觉，而不是分析。一段关系好不好，他在第一次见面就能感知到，后来的时间只是在验证那个最初的感受。',
+        '圆滑世故': '他知道在不同的人面前应该呈现自己的哪个侧面——这不是虚伪，而是他在社会规则里找到的生存艺术。代价是，他有时不确定自己最真实的一面是什么。',
+        '直率真诚': '他说什么就是什么，这让人觉得安全，但在复杂的社会场合也偶尔让他付出代价。他接受这个代价，因为他无法做到在人前和人后是两套逻辑。'
+    };
+    return map[social] || social || '社交方式有其独特的节奏，不随大流';
+}
+
+function _narrateCrisis(crisis, mainStar, sihuaType) {
+    var sihuaColor = {
+        '化禄型':'天赋直觉往往在危机关头发挥作用，',
+        '化权型':'压力反而激活了掌控本能，',
+        '化科型':'会本能地先管理「形象受损」的部分，',
+        '化忌型':'执念会在危机中被放大，',
+        '化禄':'天赋直觉往往在危机关头发挥作用，',
+        '化权':'压力反而激活了掌控本能，',
+        '化科':'会本能地先管理「形象受损」的部分，',
+        '化忌':'执念会在危机中被放大，'
+    };
+    var sc = sihuaColor[sihuaType] || '';
+    var map = {
+        '冷静分析': sc + '面对危机时，他是少数能在情绪激动的现场保持清醒的人。不是没有感受，而是他能把感受暂时「放到一边」先做该做的事，之后再处理情绪。',
+        '果断行动': sc + '危机来临时，他的本能是立刻动起来。行动本身是他对不确定性的最有效回应——停下来想反而会让他更焦虑。',
+        '寻求帮助': sc + '他知道一个人扛不是勇气，是莽撞。在最需要的时候开口求助，是他在多次经历后学到的智慧。难的不是知道要求助，而是知道找谁。',
+        '逃避回避': sc + '面对超出承受范围的危机，他的第一反应是让自己不在场——这不总是懦弱，有时是为了之后有力气回来面对。但这个模式如果习惯化，就会成为他真正的阻碍。',
+        '慌乱无措': sc + '危机状态下的他比平时更难找到重心——不是没有能力，而是那种「感觉地面消失了」的瞬间会让他短暂失去方向。他需要一个人或一件事把他拉回来。',
+        '坚定抵抗': sc + '越是被压，他越不后退。这种在极限状态下的坚持是他最真实的底色——但也需要警惕那条「坚持」和「硬撑」之间的线。'
+    };
+    return map[crisis] || crisis || '危机中展现出独特的应对方式';
+}
+
+function _narrateLearning(learning, mainStar) {
+    var map = {
+        '快速学习': '他有一种接触新信息后迅速找到核心脉络的能力——不是所有细节都要掌握，而是先把框架建起来，再往里填内容。这种效率让他能在短时间内进入新领域，但有时深度会是代价。',
+        '稳步积累': '他的学习是慢工出细活式的——每一步都要踩实了再往前。这种方式让他的知识底座极为扎实，也让他在熟悉的领域有一种别人没有的厚度。代价是节奏慢，不适合快速变化的场合。',
+        '依赖经验': '他的学习路径是「从做里面学」——理论对他意义有限，但一次真实的经历抵得上十本书。他的判断力建立在亲身积累的案例库上，有时难以迁移到从未经历过的情境。',
+        '善于应变': '他的学习本质上是即时适应——每一个新情境都会触发一次快速的「读取-调整-行动」循环。这让他在陌生环境里极为灵活，但有时缺乏系统性，知识是碎片化的。',
+        '固执己见': '他对已经建立的认知体系有强烈的保护意识——新的信息首先要通过他内部的筛选，才能被纳入。这保护了他不被信息轰炸改变立场，但也让他有时忽略了真正有价值的新观点。',
+        '灵活调整': '他的认知系统是动态的——结论从来不是固定的，而是随着新信息的到来在不断修正中。这种开放性是智识上的成熟，但也需要一个稳定的核心，不然容易被各种理论带着跑。'
+    };
+    return map[learning] || learning || '在实践中不断调整和深化自己的认知体系';
+}
+
+function _narrateGrowth(growth, mainStar, sihuaType) {
+    var sihuaFinal = {
+        '化禄型':'让天赋真正服务于更大的意义，',
+        '化权型':'学会在掌控与放手之间找到平衡，',
+        '化科型':'从「被人看见」到「真正看见自己」，',
+        '化忌型':'将执念转化为真正驱动成长的力量，',
+        '化禄':'让天赋真正服务于更大的意义，',
+        '化权':'学会在掌控与放手之间找到平衡，',
+        '化科':'从「被人看见」到「真正看见自己」，',
+        '化忌':'将执念转化为真正驱动成长的力量，'
+    };
+    var sc = sihuaFinal[sihuaType] || '';
+    var map = {
+        '追求成功': sc + '他的成长方向是「向上」的——不断证明自己，不断突破上限。但真正的成熟往往在他开始问「成功是为了什么」的时候才开始。',
+        '追求自由': sc + '他向往的是一种无论外部条件如何，都能保持内心自由的状态。他的成长路径是逐渐学会在任何处境里都找到自己的主权。',
+        '追求安稳': sc + '他需要的不是最高点，而是一个能扎根的地方。他的成长是学会在「足够好」和「还可以更好」之间，选择那个真正让他安心的答案。',
+        '追求真理': sc + '他不会为了安慰自己而接受一个说不通的解释。他的成长路径是通过不断质疑和求证，建立一套真正经得起检验的世界观。',
+        '追求情感': sc + '深度的连接是他最重要的成长动力——被真正理解、真正爱与被爱，这对他来说不是锦上添花，而是活着的底色。他的成长是学会既向往又能承受关系带来的全部重量。',
+        '追求平衡': sc + '他的成长是在各种张力之间找到一个可持续的重心——不是妥协，而是一种更高层次的整合。最终让他成熟的，往往是那些逼他在两种重要的东西之间做选择的时刻。'
+    };
+    return map[growth] || growth || '在不断地探索与自我对话中寻找成长的方向';
+}
+
 function _getSihuaAbbr(sihua) {
     return (sihua || '').replace('型', '');
 }
@@ -795,7 +1101,7 @@ function _generateSoulWound(era, patternType, mainStar) {
 // ==================== 核心生成函数：8模块 2400字+ ====================
 /**
  * generateZiweiCharacterBio
- * @param {object} userData   - { name, gender, era, age, profession }
+ * @param {object} userData   - { name, gender, era, age, profession, family, socialClass, parents, siblings }
  * @param {object} chart      - { stars:[], type:'杀破狼', name:'七杀独坐', desc:'...', mainStar }
  * @param {object} attributes - 8维度属性 { appearance, speech, behavior, emotion, social, crisis, learning, growth }
  * @param {string} sihuaType  - '化禄型' / '化权型' / '化科型' / '化忌型'
@@ -814,7 +1120,14 @@ function generateZiweiCharacterBio(userData, chart, attributes, sihuaType) {
     var eraCN       = {ancient:'古代', modern:'近代', contemporary:'现代'}[eraRaw] || eraRaw;
     var ageRaw      = userData.age || 'youth';
     var ageCN       = {youth:'青年（18-30岁）', middle:'中年（30-50岁）', senior:'老年（50岁以上）'}[ageRaw] || ageRaw;
-    var profession  = _getProfessionLabel(userData.profession);
+    var profRaw     = userData.profession || 'other';
+    var profLabel   = _getProfessionLabel(profRaw);
+
+    // ── 家庭背景字段（步骤2输入）──
+    var familyRaw      = userData.family      || '';
+    var socialClassRaw = userData.socialClass || '';
+    var parentsRaw     = userData.parents     || '';
+    var siblingsRaw    = userData.siblings    || '';
 
     var mainStar    = (chart.stars && chart.stars[0]) || chart.mainStar || '紫微';
     var patternType = chart.type  || '杀破狼';
@@ -823,18 +1136,32 @@ function generateZiweiCharacterBio(userData, chart, attributes, sihuaType) {
 
     // ── 流年流时：差异化随机种子 ──
     var gz = _getCurrentTimeGanzhi();
-    // 用 seed（0-55）从各数组里取元素，保证同主星同四化也有 56 种细节变化
     var starStateList = SHI_STAR_STATE[mainStar] || ['此刻气机平稳，按照自己的节奏运转'];
     var curState      = starStateList[gz.seed % starStateList.length];
 
-    // 从现有数据库取格局数据（兜底）
+    // ── 叙事化处理所有用户输入字段 ──
+    var narrateAge_text    = _narrateAge(ageRaw, eraRaw, patternType, genderCN);
+    var narrateProf_text   = _narrateProfession(profRaw, eraRaw, mainStar);
+    var narrateFamily_text = familyRaw      ? _narrateFamily(familyRaw, eraRaw, mainStar)         : '';
+    var narrateSocCl_text  = socialClassRaw ? _narrateSocialClass(socialClassRaw, profRaw, mainStar) : '';
+    var narrateParents_text= parentsRaw     ? _narrateParents(parentsRaw, mainStar)               : '';
+    var narrateSiblings_text= siblingsRaw   ? _narrateSiblings(siblingsRaw, mainStar)             : '';
+
+    var speech_text   = attributes.speech   ? _narrateSpeech(attributes.speech, mainStar)                   : '言辞有力，惜字如金，说话前先想好每一句';
+    var behavior_text = attributes.behavior ? _narrateBehavior(attributes.behavior, mainStar)               : '根据情境灵活切换，既能强硬果断，也能温和迂回';
+    var emotion_text  = attributes.emotion  ? _narrateEmotion(attributes.emotion, mainStar, genderCN)       : pronoun + '的情感内敛含蓄，不轻易在人前展示脆弱';
+    var social_text   = attributes.social   ? _narrateSocial(attributes.social, mainStar)                   : '朋友不多但深交，对陌生人保持适度距离';
+    var crisis_text   = attributes.crisis   ? _narrateCrisis(attributes.crisis, mainStar, sihuaType)        : '在极限压力下，防御崩塌，真实的内心才会浮出水面';
+    var learning_text = attributes.learning ? _narrateLearning(attributes.learning, mainStar)               : '在实战中学习，拒绝纸上谈兵，每一次失败都是最好的课堂';
+    var growth_text   = attributes.growth   ? _narrateGrowth(attributes.growth, mainStar, sihuaType)        : '在探索与自我对话中寻找成长的方向';
+
+    // 从现有数据库取格局数据
     var patternData = (window.CHART_DATABASE && window.CHART_DATABASE[patternType]) || {
         traits: { positive: ['勇敢', '果断', '开创'], negative: ['冲动', '急躁'], psychology: '追求突破' }
     };
-    // 从现有数据库取四化数据
-    var sihuaKey    = sihuaType.replace('型', ''); // '化禄'
-    var sihuaData   = (window.SIHUA_TYPES && window.SIHUA_TYPES[sihuaType]) ||
-                      (window.SIHUA_TYPES && window.SIHUA_TYPES[sihuaKey])  || {
+    var sihuaKey  = sihuaType.replace('型', '');
+    var sihuaData = (window.SIHUA_TYPES && window.SIHUA_TYPES[sihuaType]) ||
+                    (window.SIHUA_TYPES && window.SIHUA_TYPES[sihuaKey])  || {
         desc: '独特的心理特质', mingEffect: '在命宫有独特表现',
         fudeEffect: '内心世界丰富', fuqiEffect: '感情模式独特',
         traits: ['深刻', '独特']
@@ -844,7 +1171,6 @@ function generateZiweiCharacterBio(userData, chart, attributes, sihuaType) {
         chemistry: '与志同道合的人有强烈共鸣', growth: '需要学会在关系中保持自我'
     };
 
-    // 主星 & 四化深度库
     var starDetails  = STAR_DETAILED_DESCRIPTIONS[mainStar] || {
         personality: _getStarPersonality(mainStar), psychology: '内心有独特的心理世界',
         relationship: '感情模式独特', growth: '在挑战中持续成长',
@@ -852,15 +1178,16 @@ function generateZiweiCharacterBio(userData, chart, attributes, sihuaType) {
     };
     var sihuaDetails = SIHUA_DEEP_DESCRIPTIONS[sihuaType] || SIHUA_DEEP_DESCRIPTIONS['化禄型'];
 
-    var appearance = _generateAppearanceByStar(mainStar, attributes.appearance);
-    var signature  = _generateSignatureByStar(mainStar);
-
-    // ── 主星×四化 交叉取值 ──
-    var sihuaKeyFull = sihuaType; // '化禄型' 等
+    var appearance    = _generateAppearanceByStar(mainStar, attributes.appearance);
+    var signature     = _generateSignatureByStar(mainStar);
+    var sihuaKeyFull  = sihuaType;
     var crossDefense  = ((STAR_SIHUA_DEFENSE[mainStar]  || {})[sihuaKeyFull]) || _getDefenseMechanism(sihuaType);
     var crossTurning  = ((STAR_SIHUA_TURNING[mainStar]  || {})[sihuaKeyFull]) || '某个打破防御的关键事件迫使' + pronoun + '重新审视自己';
     var crossDramatic = ((STAR_SIHUA_DRAMATIC[mainStar] || {})[sihuaKeyFull]) || _getDramaticRole(patternType);
     var crossRival    = ((STAR_RIVAL_STYLE[mainStar]    || {})[patternType])  || '以独特方式应对对手';
+
+    var posTraits = (patternData.traits.positive || []).slice(0, 3).join('、');
+    var negTraits = (patternData.traits.negative || []).slice(0, 2).join('、');
 
     // ===== 开始拼接8模块 =====
     var bio = '';
@@ -868,18 +1195,23 @@ function generateZiweiCharacterBio(userData, chart, attributes, sihuaType) {
     // ── 一、基础设定 ──
     bio += `# 一、基础设定\n\n`;
     bio += `**角色名字：** ${name}\n\n`;
-    bio += `**标签：** ${ageCN}，${genderCN}性，${profession}\n\n`;
+    bio += `**标签：** ${ageCN}，${genderCN}性，${profLabel}\n\n`;
     bio += `**时代背景：** ${eraCN}\n\n`;
     bio += `**命盘格局：** ${patternName}${patternDesc ? '（' + patternDesc + '）' : ''}\n\n`;
     bio += `**主星：** ${(chart.stars || [mainStar]).join('、')}\n\n`;
     bio += `**外貌特征：** ${appearance}\n\n`;
     bio += `**标志性细节：** ${signature}\n\n`;
     bio += `**此刻状态（${gz.yearGan}${gz.yearZhi}年·${gz.shiZhi}时）：** ${curState}\n\n`;
+
+    // 职业处境（叙事化）
+    bio += `**职业处境：** ${narrateProf_text}\n\n`;
+
+    // 人生阶段（叙事化，年龄×时代）
+    bio += `**人生阶段：** ${narrateAge_text}\n\n`;
+
     bio += `---\n\n`;
 
     // ── 二、显性人格——命宫心理学 ──
-    var posTraits = (patternData.traits.positive || []).slice(0, 3).join('、');
-    var negTraits = (patternData.traits.negative || []).slice(0, 2).join('、');
     bio += `# 二、显性人格——命宫心理学\n\n`;
     bio += `**核心公式：** 命宫${mainStar} + ${sihuaType}\n\n`;
     bio += `**显性人格：** ${starDetails.personality}\n\n`;
@@ -887,8 +1219,8 @@ function generateZiweiCharacterBio(userData, chart, attributes, sihuaType) {
     bio += `**核心特质：** ${posTraits}，也带有${negTraits}的倾向\n\n`;
     bio += `**心理机制：** ${starDetails.psychology}\n\n`;
     bio += `**心理防御：** ${crossDefense}\n\n`;
-    bio += `**行为模式：** ${attributes.behavior || '根据情境灵活切换，既能强硬果断，也能温和迂回'}\n\n`;
-    bio += `**说话方式：** ${attributes.speech || '言辞有力，惜字如金，说话前先想好每一句'}\n\n`;
+    bio += `**行为模式：** ${behavior_text}\n\n`;
+    bio += `**说话方式：** ${speech_text}\n\n`;
     bio += `---\n\n`;
 
     // ── 三、潜意识底色——福德宫心理学 ──
@@ -897,7 +1229,7 @@ function generateZiweiCharacterBio(userData, chart, attributes, sihuaType) {
     bio += `**精神需求：** ${_getStarSpiritualNeed(mainStar)}\n\n`;
     bio += `**内心世界：** ${starDetails.psychology}\n\n`;
     bio += `**阴影面：** ${starDetails.shadow}\n\n`;
-    bio += `**情感表达：** ${attributes.emotion || '内敛含蓄，不轻易在人前展示脆弱'}\n\n`;
+    bio += `**情感表达：** ${emotion_text}\n\n`;
     bio += `---\n\n`;
 
     // ── 四、亲密关系需求——夫妻宫心理学 ──
@@ -909,7 +1241,7 @@ function generateZiweiCharacterBio(userData, chart, attributes, sihuaType) {
     bio += `**化学反应：** ${cpData.chemistry || cpData.idealPartner}\n\n`;
     bio += `**冲突模式：** ${cpData.conflict}\n\n`;
     bio += `**关系成长：** ${cpData.growth}\n\n`;
-    bio += `**社交风格：** ${attributes.social || '朋友不多但深交，对陌生人保持适度距离'}\n\n`;
+    bio += `**社交风格：** ${social_text}\n\n`;
     bio += `---\n\n`;
 
     // ── 五、四化心理动机深度解析 ──
@@ -932,12 +1264,22 @@ function generateZiweiCharacterBio(userData, chart, attributes, sihuaType) {
     // ── 七、灵魂伤痕与成长弧光 ──
     bio += `# 七、灵魂伤痕与成长弧光\n\n`;
     bio += _generateSoulWound(eraRaw, patternType, mainStar);
+
+    // 原生家庭完整叙事（只有填了才输出，没填不留空白）
+    if (narrateFamily_text || narrateParents_text || narrateSiblings_text || narrateSocCl_text) {
+        bio += `**原生家庭：**\n\n`;
+        if (narrateFamily_text)    bio += narrateFamily_text + '\n\n';
+        if (narrateParents_text)   bio += narrateParents_text + '\n\n';
+        if (narrateSiblings_text)  bio += narrateSiblings_text + '\n\n';
+        if (narrateSocCl_text)     bio += narrateSocCl_text + '\n\n';
+    }
+
     bio += `**成长弧光：**\n\n`;
     bio += `- **起点：** ${pronoun}带着${sihuaType}的心理特征，${crossDefense.split('，')[0]}，以此面对世界\n\n`;
     bio += `- **认知缺陷：** 相信只有${_getSihuaCognitiveFlaw(sihuaType)}才能获得真正的安全——但这是一个谎言\n\n`;
     bio += `- **转折事件：** ${crossTurning}\n\n`;
     bio += `- **学到的真相：** ${starDetails.growth}\n\n`;
-    bio += `- **危机应对：** ${attributes.crisis || '在极限压力下，防御崩塌，真实的内心才会浮出水面'}\n\n`;
+    bio += `- **危机应对：** ${crisis_text}\n\n`;
     bio += `---\n\n`;
 
     // ── 八、剧作功能与社会关系 ──
@@ -948,8 +1290,8 @@ function generateZiweiCharacterBio(userData, chart, attributes, sihuaType) {
     bio += `- **对朋友：** ${pronoun}的圈子小但稳固，每段关系都经过时间的考验\n\n`;
     bio += `- **对对手：** ${crossRival}\n\n`;
     bio += `**流年运势（${gz.yearGan}${gz.yearZhi}年·流月${gz.monthZhi}·流日${gz.dayZhi}）：** ${gz.shiTrait}——${curState.replace('此刻', '当下').replace('他', pronoun).replace('她', pronoun)}\n\n`;
-    bio += `**学习与成长模式：** ${attributes.learning || '在实战中学习，拒绝纸上谈兵，每一次失败都是最好的课堂'}\n\n`;
-    bio += `**人物弧光总结：** 从${sihuaDetails.psychology.slice(0, 20)}……出发，经历「${crossTurning.slice(0, 25)}……」的核心转折，最终走向${starDetails.growth.slice(0, 30)}……的蜕变之路。\n\n`;
+    bio += `**学习与成长模式：** ${learning_text}\n\n`;
+    bio += `**人物弧光总结：** 从${sihuaDetails.psychology.slice(0, 20)}……出发，经历「${crossTurning.slice(0, 25)}……」的核心转折，最终走向——${growth_text.slice(0, 40)}……\n\n`;
 
     return bio;
 }
