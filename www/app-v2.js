@@ -1032,21 +1032,7 @@ function generateComparison(chars) {
         contextNote = '背景相近（' + eraList[0] + '，' + ageList[0] + '），关系张力主要来自内在驱动力与价值观差异，适合设计同类相斥的竞争。';
     }
 
-    // ── 三列完整小传 ──
-    var colsHtml = chars.map(function(char) {
-        var meta = [eraMap[char.inputs.era]||'', char.inputs.gender==='female'?'女':'男', ageMap[char.inputs.age]||'', char.chart.name||''].filter(Boolean).join(' · ');
-        return '<div class="cmp-bio-col">' +
-            '<div class="cmp-bio-col-header">' +
-                '<p class="cmp-bio-name">' + (char.name||'角色') + '</p>' +
-                '<p class="cmp-bio-meta">' + meta + '</p>' +
-            '</div>' +
-            '<div class="cmp-bio-col-body">' +
-                renderMarkdown(char.bio) +
-            '</div>' +
-        '</div>';
-    }).join('');
-
-    // ── 相性评分（2人/3人均显示，两两配对）──
+    // ── 相性评分 HTML（2人/3人均显示，两两配对）──
     var compatHtml = '';
     if (chars.length >= 2) {
         var pairs = [];
@@ -1066,16 +1052,28 @@ function generateComparison(chars) {
         compatHtml = '<div class="cmp-compat">' + pairHtmls + '</div>';
     }
 
+    // ── 三列完整小传（相性评分追加到每列末尾，随列滚动可见）──
+    var colsHtml = chars.map(function(char) {
+        var meta = [eraMap[char.inputs.era]||'', char.inputs.gender==='female'?'女':'男', ageMap[char.inputs.age]||'', char.chart.name||''].filter(Boolean).join(' · ');
+        return '<div class="cmp-bio-col">' +
+            '<div class="cmp-bio-col-header">' +
+                '<p class="cmp-bio-name">' + (char.name||'角色') + '</p>' +
+                '<p class="cmp-bio-meta">' + meta + '</p>' +
+            '</div>' +
+            '<div class="cmp-bio-col-body">' +
+                renderMarkdown(char.bio) +
+                compatHtml +
+            '</div>' +
+        '</div>';
+    }).join('');
+
     return (
         '<div class="cmp-summary-bar">' + summaryItems + '</div>' +
         '<div class="cmp-analysis">' +
             '<p><strong>四化类型：</strong>' + sihuaList.join(' vs ') + '　<strong>戏剧关系：</strong>' + relationDesc + '</p>' +
             '<p><strong>背景处境：</strong>' + contextNote + '</p>' +
         '</div>' +
-        '<div class="cmp-body-scroll">' +
-            '<div class="cmp-bio-columns">' + colsHtml + '</div>' +
-            compatHtml +
-        '</div>'
+        '<div class="cmp-bio-columns">' + colsHtml + '</div>'
     );
 }
 
