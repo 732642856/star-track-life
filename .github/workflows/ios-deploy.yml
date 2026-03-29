@@ -196,8 +196,7 @@ jobs:
             --type ios \
             --file "$IPA_PATH" \
             --apiKey "$APP_STORE_CONNECT_KEY_ID" \
-            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
-            --verbose 2>&1
+            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" 2>&1
 
       - name: 清理 Keychain
         if: always()
