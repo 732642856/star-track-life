@@ -27,33 +27,37 @@ jobs:
           npm install
           npm install @capacitor/android
 
-      - name: 添加 Android 平台
+      - name: 同步 www 内容到 Android
         run: |
-          # 同步 www 内容
-          npx cap copy
-          # 添加 android 平台（如已存在则跳过）
-          if [ ! -d "android" ]; then
-            npx cap add android
-          else
-            echo "android 目录已存在，跳过 add"
-          fi
+          npx cap copy android
           npx cap sync android
-          echo "=== Android 目录结构 ==="
-          ls -la android/
+          echo "=== Android assets 目录 ==="
+          ls android/app/src/main/assets/public/ | head -5
 
       - name: 设置 Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: 构建 Release APK（未签名）
+      - name: 构建 Release APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tail -50
+          # 完整输出，不截断，方便排查
+          ./gradlew assembleRelease --no-daemon 2>&1
+          echo "=== 构建完成，查找 APK ==="
+          find . -name "*.apk" 2>/dev/null
 
-      - name: 对 APK 进行 zipalign + 签名（自签名，可直接安装）
+      - name: 签名 APK
         run: |
-          APK_PATH=$(find android/app/build/outputs/apk/release -name "*.apk" | head -1)
-          echo "原始 APK: $APK_PATH"
+          # 找到生成的 APK（release 目录下未签名或已签名均可）
+          APK_PATH=$(find android -name "*.apk" | grep -v "unsigned" | head -1)
+          if [ -z "$APK_PATH" ]; then
+            APK_PATH=$(find android -name "*.apk" | head -1)
+          fi
+          echo "找到 APK: $APK_PATH"
+          if [ -z "$APK_PATH" ]; then
+            echo "ERROR: 未找到任何 APK，构建失败"
+            exit 1
+          fi
 
           # 生成自签名 keystore
           keytool -genkeypair -v \
@@ -63,27 +67,30 @@ jobs:
             -validity 9125 \
             -storepass xinggui2026 \
             -keypass xinggui2026 \
-            -dname "CN=YiNan, OU=StarTrack, O=XingGui, L=Beijing, ST=Beijing, C=CN" 2>&1
+            -dname "CN=YiNan, OU=StarTrack, O=XingGui, L=Beijing, ST=Beijing, C=CN"
+
+          BUILD_TOOLS=$(ls ${ANDROID_HOME}/build-tools/ | sort -V | tail -1)
+          echo "使用 build-tools: $BUILD_TOOLS"
 
           # zipalign
-          ${ANDROID_HOME}/build-tools/$(ls ${ANDROID_HOME}/build-tools/ | sort -V | tail -1)/zipalign \
-            -v 4 "$APK_PATH" /tmp/xinggui-aligned.apk || cp "$APK_PATH" /tmp/xinggui-aligned.apk
+          ${ANDROID_HOME}/build-tools/${BUILD_TOOLS}/zipalign \
+            -v 4 "$APK_PATH" /tmp/xinggui-aligned.apk
 
-          # apksigner 签名
-          ${ANDROID_HOME}/build-tools/$(ls ${ANDROID_HOME}/build-tools/ | sort -V | tail -1)/apksigner sign \
+          # apksigner 签名（输出文件名用 ASCII，避免路径问题）
+          ${ANDROID_HOME}/build-tools/${BUILD_TOOLS}/apksigner sign \
             --ks /tmp/xinggui.keystore \
             --ks-key-alias xinggui \
             --ks-pass pass:xinggui2026 \
             --key-pass pass:xinggui2026 \
-            --out /tmp/星轨人生-v1.0.apk \
+            --out /tmp/XingGuiRensheng-v1.0.apk \
             /tmp/xinggui-aligned.apk
 
           echo "=== 签名完成 ==="
-          ls -lh /tmp/星轨人生-v1.0.apk
+          ls -lh /tmp/XingGuiRensheng-v1.0.apk
 
       - name: 上传 APK 为 Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: 星轨人生-v1.0-Android
-          path: /tmp/星轨人生-v1.0.apk
+          name: XingGuiRensheng-v1.0-Android
+          path: /tmp/XingGuiRensheng-v1.0.apk
           retention-days: 30
