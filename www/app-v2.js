@@ -1072,8 +1072,10 @@ function generateComparison(chars) {
             '<p><strong>四化类型：</strong>' + sihuaList.join(' vs ') + '　<strong>戏剧关系：</strong>' + relationDesc + '</p>' +
             '<p><strong>背景处境：</strong>' + contextNote + '</p>' +
         '</div>' +
-        compatHtml +
-        '<div class="cmp-bio-columns">' + colsHtml + '</div>'
+        '<div class="cmp-body-scroll">' +
+            '<div class="cmp-bio-columns">' + colsHtml + '</div>' +
+            compatHtml +
+        '</div>'
     );
 }
 
