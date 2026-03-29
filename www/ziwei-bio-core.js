@@ -1507,9 +1507,17 @@ function generateZiweiCharacterBio(userData, chart, attributes, sihuaType) {
     bio += `- **对主角：** 可能是推动者，也可能是隐藏对立面——两者皆因${mainStar}的${sihuaKeyFull}特质而充满张力\n\n`;
     bio += `- **对朋友：** ${pronoun}的圈子小但稳固，每段关系都经过时间的考验\n\n`;
     bio += `- **对对手：** ${crossRival}\n\n`;
-    bio += `**流年运势（${gz.yearGan}${gz.yearZhi}年·流月${gz.monthZhi}·流日${gz.dayZhi}）：** ${gz.shiTrait}——${curState.replace(/此刻/g, '当下').replace(/他/g, pronoun).replace(/她/g, pronoun)}\n\n`;
+    bio += `**流年运势（${gz.yearGan}${gz.yearZhi}年·流月${gz.monthZhi}·流日${gz.dayZhi}）：** ${gz.shiTrait}——${curState.replace(/此刻/g, '当下')}\n\n`;
     bio += `**学习与成长模式：** ${learning_text}\n\n`;
     bio += `**人物弧光总结：** 从${sihuaDetails.psychology.slice(0, 20)}……出发，经历「${crossTurning.slice(0, 25)}……」的核心转折，最终走向——${growth_text.slice(0, 40)}……\n\n`;
+
+    // ── 全局代词统一（最终兜底）──
+    // 先把所有「他」/「她」统一还原成「他」，再按性别替换
+    // 这样无论哪个数据函数用了什么代词，最终都正确
+    if (pronoun === '她') {
+        bio = bio.replace(/他/g, '她');
+    }
+    // 男性不需要额外处理，数据库本身写的是「他」
 
     return bio;
 }

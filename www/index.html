@@ -582,15 +582,13 @@
             <button class="btn btn-primary" onclick="showCompare()">对比选中的角色</button>
         </div>
 
-        <!-- 对比结果 -->
-        <div id="compare-section" style="display:none; max-width:800px; margin:0 auto 40px; padding:0 16px;">
-            <div class="content-card">
-                <div class="card-header">
-                    <h2 class="card-title">角色对比</h2>
-                    <button class="btn btn-outline" onclick="closeCompare()" style="margin-left:auto;">关闭</button>
-                </div>
-                <div id="compare-content"></div>
+        <!-- 对比结果（全屏覆盖层，样式由 CSS #compare-section 控制） -->
+        <div id="compare-section">
+            <div class="cmp-top-bar">
+                <span class="cmp-top-title">角色对比</span>
+                <button class="cmp-close-btn" onclick="closeCompare()">关闭</button>
             </div>
+            <div id="compare-content" style="display:contents;"></div>
         </div>
 
         <!-- 页脚 -->

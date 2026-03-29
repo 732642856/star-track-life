@@ -937,160 +937,88 @@ function showCompare() {
     const compareContent = document.getElementById('compare-content');
     compareContent.innerHTML = generateComparison(selectedChars);
     
-    document.getElementById('compare-section').style.display = 'block';
-    document.getElementById('compare-section').scrollIntoView({ behavior: 'smooth' });
+    var section = document.getElementById('compare-section');
+    section.style.display = 'flex';
+    // 全屏：锁定 body 滚动
+    document.body.style.overflow = 'hidden';
 }
 
 function generateComparison(chars) {
-    // 把当前对比的角色 id 列表存起来，供覆盖层使用
-    window._compareCharIds = chars.map(function(c){ return c.id; });
-
-    let html = '<div style="margin-bottom:12px;">';
-    html += '<button class="btn" onclick="showBioCompare()">展开完整小传对比</button>';
-    html += '</div>';
-    html += '<div class="compare-grid">';
-    
-    chars.forEach(char => {
-        html += `
-        <div class="compare-card">
-            <h3 class="compare-name">${char.name}</h3>
-            <div class="compare-item">
-                <strong>格局：</strong>${char.chart.name}
-            </div>
-            <div class="compare-item">
-                <strong>四化：</strong>${char.sihua}
-            </div>
-            <div class="compare-item">
-                <strong>主星：</strong>${char.chart.stars.join('、')}
-            </div>
-            <div class="compare-item">
-                <strong>时代：</strong>${{ancient:'古代', modern:'近代', contemporary:'现代'}[char.inputs.era]}
-            </div>
-            <div class="compare-item">
-                <strong>性别：</strong>${char.inputs.gender === 'female' ? '女' : '男'}
-            </div>
-            <div class="compare-item">
-                <strong>年龄：</strong>${{youth:'青年', middle:'中年', senior:'老年'}[char.inputs.age]}
-            </div>
-            <div class="compare-summary">
-                ${char.bio.substring(0, 200)}...
-            </div>
-        </div>
-        `;
-    });
-    
-    html += '</div>';
-    
-    // 添加对比分析
-    var sihuaList = chars.map(function(c) { return c.sihua || '未知'; });
-    var genderList = chars.map(function(c) { return c.inputs.gender === 'female' ? '女' : '男'; });
-    var ageMap2 = {youth:'青年', middle:'中年', senior:'老年'};
-    var ageList  = chars.map(function(c) { return ageMap2[c.inputs.age] || c.inputs.age || '未知'; });
-    var eraMap2  = {ancient:'古代', modern:'近代', contemporary:'现代'};
-    var eraList  = chars.map(function(c) { return eraMap2[c.inputs.era] || c.inputs.era || '未知'; });
-    var nameList = chars.map(function(c) { return c.name || '角色'; });
-
-    // 根据四化组合推断戏剧关系
-    var relationMap = {
-        '野心者_执念者': '两人都是目标导向型，容易在同一条路上形成竞争，甚至互为镜像——一个代表外向扩张，一个代表内向执着，放在同一场戏里张力极强。',
-        '执念者_野心者': '两人都是目标导向型，容易在同一条路上形成竞争，甚至互为镜像——一个代表外向扩张，一个代表内向执着，放在同一场戏里张力极强。',
-        '野心者_隐忍者': '一个主动出击，一个蓄力待发。表面上是强弱关系，实际上隐忍者的爆发往往比野心者更彻底。适合设计一段从依附到反转的关系弧。',
-        '隐忍者_野心者': '一个主动出击，一个蓄力待发。表面上是强弱关系，实际上隐忍者的爆发往往比野心者更彻底。适合设计一段从依附到反转的关系弧。',
-        '谋局者_执念者': '一个算计全局，一个死磕一点。前者容易把后者当棋子，后者往往是最后翻盘的变量。适合设计利用与被利用、最终失控的关系。',
-        '执念者_谋局者': '一个算计全局，一个死磕一点。前者容易把后者当棋子，后者往往是最后翻盘的变量。适合设计利用与被利用、最终失控的关系。',
-        '隐忍者_执念者': '两人都有强烈的内驱力，但一个向内消化，一个向外固着。这种组合放在亲密关系里尤其有戏——彼此理解却互相消耗。',
-        '执念者_隐忍者': '两人都有强烈的内驱力，但一个向内消化，一个向外固着。这种组合放在亲密关系里尤其有戏——彼此理解却互相消耗。',
-    };
-    var sihuaKey = sihuaList[0] + '_' + sihuaList[1];
-    var relationDesc = relationMap[sihuaKey] || '这两种类型并置，核心戏剧张力来自各自核心动机的碰撞——当两人的目标出现交叉，冲突自然产生，合作也会带着裂缝。';
-
-    // 时代/年龄差异分析
-    var contextNote = '';
-    if (eraList[0] !== eraList[1]) {
-        contextNote = `两人处于不同时代（${eraList.join(' / ')}），若需同框，需要设计跨时代叙事结构或平行时间线。`;
-    } else if (ageList[0] !== ageList[1]) {
-        contextNote = `年龄段不同（${nameList[0]}${ageList[0]}，${nameList[1]}${ageList[1]}），适合设计代际关系：传承、对抗、或同一段历史的不同切面。`;
-    } else if (genderList[0] !== genderList[1]) {
-        contextNote = `一男一女，${eraList[0]}背景下${ageList[0]}阶段，性别带来的社会处境差异本身就是戏剧资源。`;
-    } else {
-        contextNote = `背景相近（${eraList[0]}，${ageList[0]}），关系张力主要来自内在驱动力和价值观的差异，适合设计同类相斥的竞争或镜像关系。`;
-    }
-
-    html += `
-    <div class="compare-analysis">
-        <h3>对比分析</h3>
-        <p><strong>命盘差异：</strong>${chars.map(function(c){ return (c.name||'角色') + '（' + (c.chart.pattern && c.chart.pattern.name || c.chart.name || '未知格局') + '）'; }).join(' vs ')}</p>
-        <p><strong>四化类型：</strong>${sihuaList.join(' vs ')}</p>
-        <p><strong>两人之间的戏剧关系：</strong>${relationDesc}</p>
-        <p><strong>背景处境：</strong>${contextNote}</p>
-    </div>
-    `;
-    
-    return html;
-}
-
-function closeCompare() {
-    document.getElementById('compare-section').style.display = 'none';
-}
-
-// ==================== 全屏小传对比覆盖层 ====================
-function showBioCompare() {
-    var ids = window._compareCharIds || [];
-    if (ids.length === 0) {
-        showToast('没有对比角色数据');
-        return;
-    }
-    var chars = ids.map(function(id){ return savedCharacters.find(function(c){ return c.id === id; }); }).filter(Boolean);
-    if (chars.length === 0) {
-        showToast('角色数据已失效，请重新选择');
-        return;
-    }
-
-    // 构建覆盖层 HTML
     var eraMap = {ancient:'古代', modern:'近代', contemporary:'现代'};
     var ageMap = {youth:'青年', middle:'中年', senior:'老年'};
 
-    var colsHtml = chars.map(function(char) {
-        var meta = [
-            eraMap[char.inputs.era] || '',
-            char.inputs.gender === 'female' ? '女' : '男',
-            ageMap[char.inputs.age] || '',
-            char.chart.name || ''
-        ].filter(Boolean).join(' · ');
+    // ── 顶部摘要条 ──
+    var summaryItems = chars.map(function(char) {
+        var sihua = char.sihua || '';
+        var era   = eraMap[char.inputs.era] || '';
+        var gender = char.inputs.gender === 'female' ? '女' : '男';
+        var age   = ageMap[char.inputs.age] || '';
+        return '<div class="cmp-summary-item">' +
+            '<span class="cmp-summary-name">' + (char.name || '角色') + '</span>' +
+            '<span class="cmp-summary-meta">' + era + ' · ' + gender + ' · ' + age + ' · ' + sihua + '</span>' +
+        '</div>';
+    }).join('');
 
-        return '<div class="bio-compare-col">' +
-            '<div class="bio-compare-col-header">' +
-                '<p class="col-char-name">' + (char.name || '角色') + '</p>' +
-                '<p class="col-char-meta">' + meta + '</p>' +
+    // ── 戏剧关系分析 ──
+    var sihuaList = chars.map(function(c) { return c.sihua || '未知'; });
+    var genderList = chars.map(function(c) { return c.inputs.gender === 'female' ? '女' : '男'; });
+    var ageList  = chars.map(function(c) { return ageMap[c.inputs.age] || c.inputs.age || '未知'; });
+    var eraList  = chars.map(function(c) { return eraMap[c.inputs.era] || c.inputs.era || '未知'; });
+    var nameList = chars.map(function(c) { return c.name || '角色'; });
+
+    var relationMap = {
+        '野心者_执念者': '两人都是目标导向型，容易在同一条路上竞争，甚至互为镜像——外向扩张对内向执着，张力极强。',
+        '执念者_野心者': '两人都是目标导向型，容易在同一条路上竞争，甚至互为镜像——外向扩张对内向执着，张力极强。',
+        '野心者_隐忍者': '一个主动出击，一个蓄力待发。表面强弱，实则隐忍者的爆发往往比野心者更彻底。适合设计从依附到反转的关系弧。',
+        '隐忍者_野心者': '一个主动出击，一个蓄力待发。表面强弱，实则隐忍者的爆发往往比野心者更彻底。适合设计从依附到反转的关系弧。',
+        '谋局者_执念者': '一个算计全局，一个死磕一点。前者容易把后者当棋子，后者往往是最后翻盘的变量。适合设计利用与被利用、最终失控的关系。',
+        '执念者_谋局者': '一个算计全局，一个死磕一点。前者容易把后者当棋子，后者往往是最后翻盘的变量。适合设计利用与被利用、最终失控的关系。',
+        '隐忍者_执念者': '两人都有强烈内驱力，一个向内消化，一个向外固着。放在亲密关系里尤其有戏——彼此理解却互相消耗。',
+        '执念者_隐忍者': '两人都有强烈内驱力，一个向内消化，一个向外固着。放在亲密关系里尤其有戏——彼此理解却互相消耗。',
+    };
+    var sihuaKey = sihuaList[0] + '_' + sihuaList[1];
+    var relationDesc = relationMap[sihuaKey] || '这几种类型并置，核心戏剧张力来自各自动机的碰撞——目标交叉时冲突自然产生，合作也带着裂缝。';
+
+    var contextNote = '';
+    if (eraList.some(function(e){ return e !== eraList[0]; })) {
+        contextNote = '角色处于不同时代（' + eraList.join(' / ') + '），若需同框需设计跨时代叙事结构。';
+    } else if (ageList.some(function(a){ return a !== ageList[0]; })) {
+        contextNote = '年龄段不同（' + nameList.map(function(n,i){ return n + ageList[i]; }).join('、') + '），适合设计代际传承或对抗关系。';
+    } else if (genderList.some(function(g){ return g !== genderList[0]; })) {
+        contextNote = '性别构成混合，' + eraList[0] + '背景下，性别带来的社会处境差异本身就是戏剧资源。';
+    } else {
+        contextNote = '背景相近（' + eraList[0] + '，' + ageList[0] + '），关系张力主要来自内在驱动力与价值观差异，适合设计同类相斥的竞争。';
+    }
+
+    // ── 三列完整小传 ──
+    var colsHtml = chars.map(function(char) {
+        var meta = [eraMap[char.inputs.era]||'', char.inputs.gender==='female'?'女':'男', ageMap[char.inputs.age]||'', char.chart.name||''].filter(Boolean).join(' · ');
+        return '<div class="cmp-bio-col">' +
+            '<div class="cmp-bio-col-header">' +
+                '<p class="cmp-bio-name">' + (char.name||'角色') + '</p>' +
+                '<p class="cmp-bio-meta">' + meta + '</p>' +
             '</div>' +
-            '<div class="bio-compare-col-body">' +
+            '<div class="cmp-bio-col-body">' +
                 renderMarkdown(char.bio) +
             '</div>' +
         '</div>';
     }).join('');
 
-    var overlay = document.getElementById('bio-compare-overlay');
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'bio-compare-overlay';
-        overlay.className = 'bio-compare-overlay';
-        document.body.appendChild(overlay);
-    }
-
-    overlay.innerHTML =
-        '<div class="bio-compare-header">' +
-            '<h2>完整小传对比（' + chars.length + '个角色）</h2>' +
-            '<button class="bio-compare-close" onclick="closeBioCompare()">关闭</button>' +
+    return (
+        '<div class="cmp-summary-bar">' + summaryItems + '</div>' +
+        '<div class="cmp-analysis">' +
+            '<p><strong>四化类型：</strong>' + sihuaList.join(' vs ') + '　<strong>戏剧关系：</strong>' + relationDesc + '</p>' +
+            '<p><strong>背景处境：</strong>' + contextNote + '</p>' +
         '</div>' +
-        '<div class="bio-compare-columns">' + colsHtml + '</div>';
-
-    overlay.classList.add('active');
-    // 锁定 body 滚动
-    document.body.style.overflow = 'hidden';
+        '<div class="cmp-bio-columns">' + colsHtml + '</div>'
+    );
 }
 
-function closeBioCompare() {
-    var overlay = document.getElementById('bio-compare-overlay');
-    if (overlay) overlay.classList.remove('active');
+function closeCompare() {
+    document.getElementById('compare-section').style.display = 'none';
     document.body.style.overflow = '';
 }
+
+// showBioCompare / closeBioCompare 已并入新版 generateComparison，保留空实现以防旧引用
+function showBioCompare() {}
+function closeBioCompare() {}
