@@ -638,14 +638,151 @@ var STAR_RIVAL_STYLE = {
     '破军':  { '杀破狼':'最激烈的同类对决——谁打破谁，谁就占据主动', '紫府廉武相':'用打破体制的方式让守护者慌乱，让最稳固的结构出现裂缝', '机月同梁':'用彻底的变动逼出保守者的极限反应，让对手暴露出平时藏起来的部分', '巨日':'用无可救药的行动感打破语言权，让说得好的对手哑口无言' }
 };
 
+// ==================== 宫位星曜辅助查询 ====================
+
+/**
+ * 从chart对象中取得指定宫位（以命宫为0的偏移量）的14主星列表
+ * 偏移对应：0=命宫,1=兄弟宫,2=夫妻宫,3=子女宫,4=财帛宫,5=疾厄宫,
+ *           6=迁移宫,7=交友宫,8=官禄宫,9=田宅宫,10=福德宫,11=父母宫
+ */
+function _getPalaceStars(chart, offset) {
+    if (!chart || !chart.mainStars || chart.mingIdx === undefined) return [];
+    var targetIdx = (chart.mingIdx + offset + 12) % 12;
+    return Object.entries(chart.mainStars)
+        .filter(function(e){ return e[1] === targetIdx; })
+        .map(function(e){ return e[0]; });
+}
+
+/**
+ * 判断某宫位是否有四化（化禄/权/科/忌）落入
+ */
+function _getPalaceSihua(chart, offset) {
+    if (!chart || !chart.fourTrans || chart.mingIdx === undefined) return [];
+    var targetIdx = (chart.mingIdx + offset + 12) % 12;
+    return Object.entries(chart.fourTrans)
+        .filter(function(e){ return e[1] && e[1].palaceIdx === targetIdx; })
+        .map(function(e){ return e[0]; });
+}
+
+/**
+ * 根据宫位星曜+四化，生成该宫的命盘注脚（嵌入叙事里，让读者感受到命盘是真实推理过的）
+ */
+function _palaceNote(stars, sihua, palaceName) {
+    var hasJi   = sihua.indexOf('化忌') >= 0;
+    var hasLu   = sihua.indexOf('化禄') >= 0;
+    var hasQuan = sihua.indexOf('化权') >= 0;
+    var hasKe   = sihua.indexOf('化科') >= 0;
+    // 各主星对该宫位的能量解读
+    var starMeaning = {
+        田宅宫: {
+            '紫微':'田宅宫紫微——祖业厚实，家门有贵气，物质根基稳固',
+            '天机':'田宅宫天机——家庭格局变动频繁，居所随缘聚散',
+            '太阳':'田宅宫太阳——家宅开阔明亮，但阳光过盛反而缺少私密庇护',
+            '武曲':'田宅宫武曲——田产可自力积累，靠手腕和实干置业',
+            '天同':'田宅宫天同——家宅安逸平和，祖业薄但生活舒适',
+            '廉贞':'田宅宫廉贞——家宅风波暗藏，情欲或权争渗入家庭空间',
+            '天府':'田宅宫天府——祖业厚实，田产丰饶，守成有力',
+            '太阴':'田宅宫太阴——家宅阴柔细腻，财富偏向积累而非显赫',
+            '贪狼':'田宅宫贪狼——家宅聚散无常，得而复失是常态',
+            '巨门':'田宅宫巨门——家宅多口舌是非，田产难聚',
+            '天相':'田宅宫天相——家宅有规矩有秩序，田产可维持',
+            '天梁':'田宅宫天梁——祖业有庇荫色彩，但负重也随之而来',
+            '七杀':'田宅宫七杀——家宅冲突激烈，田产易破不易守',
+            '破军':'田宅宫破军——祖业破败后重建，居所动荡是命中注定的起点'
+        },
+        父母宫: {
+            '紫微':'父母宫紫微——父母有地位或权威，亲子间有尊重也有距离',
+            '天机':'父母宫天机——父母聪慧灵动，但缘分聚散，早年分离可能性高',
+            '太阳':'父母宫太阳——父亲形象强大，被看见与被认可的渴望从此而来',
+            '武曲':'父母宫武曲——父母务实刚硬，情感表达少但行动有力',
+            '天同':'父母宫天同——亲子关系温和，但父母对孩子缺乏足够的引导力',
+            '廉贞':'父母宫廉贞——亲子关系中有情感的纠缠与张力',
+            '天府':'父母宫天府——父母厚重稳健，家庭给予了基本的安全感',
+            '太阴':'父母宫太阴——母亲影响更深，情感细腻复杂',
+            '贪狼':'父母宫贪狼——亲子关系充满变化，父母可能各有自己的世界',
+            '巨门':'父母宫巨门——亲子沟通多摩擦，话说不到一处去',
+            '天相':'父母宫天相——父母有原则，亲子关系讲规矩',
+            '天梁':'父母宫天梁——父母有庇护力，但也带来压力和责任感的传递',
+            '七杀':'父母宫七杀——亲子冲突明显，父母关系里有强势或对立',
+            '破军':'父母宫破军——父母关系激烈动荡，家庭结构有重大变故'
+        },
+        兄弟宫: {
+            '紫微':'兄弟宫紫微——手足中有强势或出众之人，关系有尊卑感',
+            '天机':'兄弟宫天机——手足聪慧各异，关系灵动但不稳定',
+            '太阳':'兄弟宫太阳——手足光明，但竞争意识强',
+            '武曲':'兄弟宫武曲——手足务实，彼此间有实际帮扶但情感表达少',
+            '天同':'兄弟宫天同——手足关系平和温暖，不争不抢',
+            '廉贞':'兄弟宫廉贞——手足间有暗藏的竞争或情感复杂性',
+            '天府':'兄弟宫天府——手足稳重，关系可靠可依赖',
+            '太阴':'兄弟宫太阴——手足关系细腻，情感连接深但也敏感',
+            '贪狼':'兄弟宫贪狼——手足各有魅力和欲望，关系聚散难定',
+            '巨门':'兄弟宫巨门——手足间口舌是非多，误会易生',
+            '天相':'兄弟宫天相——手足关系有规矩，可互相扶持',
+            '天梁':'兄弟宫天梁——有长兄（姐）如父（母）的色彩，手足间责任感重',
+            '七杀':'兄弟宫七杀——手足竞争激烈，关系中有对抗能量',
+            '破军':'兄弟宫破军——手足缘分薄，关系破裂或分散是常态'
+        },
+        官禄宫: {
+            '紫微':'官禄宫紫微——天生适合站在权力或管理位置，事业有贵气撑腰',
+            '天机':'官禄宫天机——适合谋略性工作，幕后推动比台前主导更顺',
+            '太阳':'官禄宫太阳——事业开阔，适合公众性强的领域，但容易过度消耗',
+            '武曲':'官禄宫武曲——事业靠实力和行动积累，金融财务类领域有利',
+            '天同':'官禄宫天同——不追求高位，但可在稳定服务性岗位上持续发展',
+            '廉贞':'官禄宫廉贞——事业需要人际魅力推动，权力与欲望在职场中纠缠',
+            '天府':'官禄宫天府——稳定守成的事业格局，守业能力强于开创',
+            '太阴':'官禄宫太阴——事业有细腻和内敛的特质，财务或幕后性质更适合',
+            '贪狼':'官禄宫贪狼——事业多元，欲望驱动，但容易因贪多嚼不烂而失焦',
+            '巨门':'官禄宫巨门——靠口才和信息力推动事业，传播、咨询、谈判类有利',
+            '天相':'官禄宫天相——适合辅佐性职位，在规则和权威之间找到自己的功能',
+            '天梁':'官禄宫天梁——适合教育、医疗、法律等有庇护与责任感的职业',
+            '七杀':'官禄宫七杀——事业冲劲强，适合独当一面，但路途多风波',
+            '破军':'官禄宫破军——事业路上必有一次或多次大破大立，转行改行是常态'
+        },
+        迁移宫: {
+            '紫微':'迁移宫紫微——在外有贵人，出行得助，异地发展有格局',
+            '天机':'迁移宫天机——在外机遇多变，走得越远机会越多',
+            '太阳':'迁移宫太阳——外出光芒四射，社会形象明亮，适合闯荡',
+            '武曲':'迁移宫武曲——在外靠实力立足，白手起家的能量强',
+            '天同':'迁移宫天同——在外随遇而安，人际关系和谐',
+            '廉贞':'迁移宫廉贞——在外易有情感或人际纠纷',
+            '天府':'迁移宫天府——在外稳健，能在异地建立稳固根基',
+            '太阴':'迁移宫太阴——在外低调，适合在幕后或间接方式发展',
+            '贪狼':'迁移宫贪狼——在外人缘好，机会与诱惑并存',
+            '巨门':'迁移宫巨门——在外口舌是非多，需防言语惹祸',
+            '天相':'迁移宫天相——在外有人脉支撑，能借他人之力发展',
+            '天梁':'迁移宫天梁——在外有贵人庇护，但也承担他人的包袱',
+            '七杀':'迁移宫七杀——在外冲劲十足，适合挑战型环境',
+            '破军':'迁移宫破军——在外波折多，但逢破必立，流动是宿命'
+        }
+    };
+    var notes = [];
+    var palaceStarMap = starMeaning[palaceName] || {};
+    stars.forEach(function(s){
+        if(palaceStarMap[s]) notes.push(palaceStarMap[s]);
+    });
+    // 四化补充
+    if (hasJi)   notes.push('化忌飞入' + palaceName + '，此宫暗藏压力，缘分或资源有阻碍');
+    if (hasLu)   notes.push('化禄照耀' + palaceName + '，此宫顺畅丰厚，缘分或资源较足');
+    if (hasQuan) notes.push('化权入' + palaceName + '，此宫有强势掌控的能量在运转');
+    if (hasKe)   notes.push('化科入' + palaceName + '，此宫有名声或文化层面的加持');
+    // 空宫（无主星无四化）
+    if (notes.length === 0) notes.push(palaceName + '星曜稀疏，此宫缘分平淡，不厚不薄，随缘而定');
+    return notes.join('。');
+}
+
 // ==================== 叙事化辅助函数（所有用户输入字段→真实融入小传）====================
 
 /**
- * 家庭背景叙事化
+ * 家庭背景叙事化（接入田宅宫星曜）
  * family: wealthy(富裕) / middle(中等) / poor(贫困) / decline(没落)
+ * 田宅宫 = 命宫偏移+9
  */
-function _narrateFamily(family, era, mainStar) {
+function _narrateFamily(family, era, mainStar, chart) {
     var eraLabel = {ancient:'古代',modern:'近代',contemporary:'现代'}[era] || '现代';
+    // ── 田宅宫（偏移+9）星曜推理 ──
+    var tianzhaiStars  = _getPalaceStars(chart, 9);
+    var tianzhaiSihua  = _getPalaceSihua(chart, 9);
+    var palaceNote     = _palaceNote(tianzhaiStars, tianzhaiSihua, '田宅宫');
     var starTone = {
         '紫微':'这份家世成为他日后对「尊贵与秩序」执念的起点',
         '天机':'这样的家境催生了他以智谋换取优势的生存本能',
@@ -677,28 +814,38 @@ function _narrateFamily(family, era, mainStar) {
                 : eraLabel === '近代'   ? '没落世家出身——爷爷辈的荣耀变成了父亲的包袱，再变成他的起点。那种「我们曾经不同」的自我认知，是驱动力，也是阻碍。' + tone + '。'
                 : '家道中落的背景给了他一种独特的处境：既有精英家庭的文化底色，又有平民奋斗者的实际处境。那种「上不上下不下」的撕裂感，塑造了他的复杂性。' + tone + '。'
     };
-    return map[family] || '';
+    var baseText = map[family] || '';
+    return baseText + '\n\n*命盘印证：' + palaceNote + '。*';
 }
 
 /**
- * 社会阶层叙事化
+ * 社会阶层叙事化（接入官禄宫星曜）
  * social（即socialClass）: upper / middle / lower
+ * 官禄宫偏移+8
  */
-function _narrateSocialClass(socialClass, profession, mainStar) {
+function _narrateSocialClass(socialClass, profession, mainStar, chart) {
     var profLabel = {political:'政界',business:'商界',cultural:'文教界',military:'军警系统',technical:'技术领域',other:'各行各业'}[profession] || '所在领域';
+    var guanluStars = _getPalaceStars(chart, 8);
+    var guanluSihua = _getPalaceSihua(chart, 8);
+    var guanluNote  = _palaceNote(guanluStars, guanluSihua, '官禄宫');
     var map = {
-        upper: '在' + profLabel + '中处于上层地位，习惯了被仰视和被服务的视角——这带来了眼界，也带来了对「低处」的某种隔阂。他的社会资本是真实存在的资产，也是一道把他与大多数人隔开的玻璃。',
+        upper:  '在' + profLabel + '中处于上层地位，习惯了被仰视和被服务的视角——这带来了眼界，也带来了对「低处」的某种隔阂。他的社会资本是真实存在的资产，也是一道把他与大多数人隔开的玻璃。',
         middle: '在' + profLabel + '中属于中坚阶层，不是权力核心也不是边缘人，这个位置让他既能看到规则是怎么运转的，又保留着被规则影响的真实感受。一种实用主义的清醒，是他的生存哲学。',
-        lower: '在' + profLabel + '中处于弱势位置，对「不被看见」有切肤的体会——但这也给了他一个旁观者的视角，看得到系统的裂缝，也发展出了底层人特有的韧性与变通。'
+        lower:  '在' + profLabel + '中处于弱势位置，对「不被看见」有切肤的体会——但这也给了他一个旁观者的视角，看得到系统的裂缝，也发展出了底层人特有的韧性与变通。'
     };
-    return map[socialClass] || '';
+    var baseText = map[socialClass] || '';
+    return baseText + '\n\n*命盘印证：' + guanluNote + '。*';
 }
 
 /**
- * 父母关系叙事化
+ * 父母关系叙事化（接入父母宫星曜）
  * parents: harmonious / strained / broken / loss
+ * 父母宫偏移+11
  */
-function _narrateParents(parents, mainStar) {
+function _narrateParents(parents, mainStar, chart) {
+    var fumumStars = _getPalaceStars(chart, 11);
+    var fumumSihua = _getPalaceSihua(chart, 11);
+    var fumumNote  = _palaceNote(fumumStars, fumumSihua, '父母宫');
     var starNeed = {
         '紫微':'对权威的认同与超越',   '天机':'信任感的建立与怀疑',
         '太阳':'被看见与被认可的渴望', '武曲':'独立与依靠的张力',
@@ -715,27 +862,33 @@ function _narrateParents(parents, mainStar) {
         broken:     '父母关系破裂（离婚或长期分离），他在「不完整」的家庭结构里学会了自我安慰和独立支撑。' + need + '，在缺少稳定参照的成长环境里，被迫发展出了一套自己的逻辑。',
         loss:       '早年失去了父母一方或双方（离世/长期缺席），那种「本该在而不在」的空洞，成了他内心最深处的底色。' + need + '，在缺失中被强行成熟，这份沉甸甸的经历让他比同龄人更早见过某些真相。'
     };
-    return map[parents] || '';
+    var baseText = map[parents] || '';
+    return baseText + '\n\n*命盘印证：' + fumumNote + '。*';
 }
 
 /**
- * 兄弟关系叙事化
+ * 兄弟关系叙事化（接入兄弟宫星曜）
  * siblings: close / conflict / support / alone
+ * 兄弟宫偏移+1
  */
-function _narrateSiblings(siblings, mainStar) {
+function _narrateSiblings(siblings, mainStar, chart) {
+    var xiongdiStars = _getPalaceStars(chart, 1);
+    var xiongdiSihua = _getPalaceSihua(chart, 1);
+    var xiongdiNote  = _palaceNote(xiongdiStars, xiongdiSihua, '兄弟宫');
     var map = {
         close:    '与兄弟姐妹关系亲密，手足之间的羁绊在他的情感地图里占据重要位置。这份横向的情感纽带，给了他一种「我有人」的底气，也是他面对世界时最真实的后盾。',
         conflict: '与兄弟姐妹之间存在长期的竞争或矛盾，那种「在最亲近的地方被对立」的体验，塑造了他对关系中权力与依赖的独特敏感。比起陌生人，他更懂得如何与「熟悉的威胁」周旋。',
         support:  '虽与兄弟姐妹不算亲密，但在关键时刻彼此支撑。这种「不说话但你还在」的手足情谊，给了他一种不依赖频繁互动的安全感，也影响了他在深层关系里的相处模式。',
         alone:    '独生子女或实际上的独立成长，从小没有横向的手足参照——他既享受了独子的专注与资源，也在无人可比较的孤独里，过早地把自己当成了一个完整的单位。'
     };
-    return map[siblings] || '';
+    var baseText = map[siblings] || '';
+    return baseText + '\n\n*命盘印证：' + xiongdiNote + '。*';
 }
 
 /**
- * 职业×时代 叙事化（不只是贴标签，而是描述他在这个职业中的处境）
+ * 职业×时代 叙事化（接入官禄宫星曜）
  */
-function _narrateProfession(profession, era, mainStar) {
+function _narrateProfession(profession, era, mainStar, chart) {
     var eraLabel = {ancient:'古代',modern:'近代',contemporary:'现代'}[era] || '现代';
     var profMap = {
         political: {
@@ -770,7 +923,15 @@ function _narrateProfession(profession, era, mainStar) {
         }
     };
     var p = profMap[profession] || profMap.other;
-    return p[era] || p.contemporary || '';
+    var baseText = p[era] || p.contemporary || '';
+    // ── 官禄宫（偏移+8）星曜推理注入 ──
+    var guanluStars = _getPalaceStars(chart, 8);
+    var guanluSihua = _getPalaceSihua(chart, 8);
+    if (guanluStars.length > 0 || guanluSihua.length > 0) {
+        var guanluNote = _palaceNote(guanluStars, guanluSihua, '官禄宫');
+        return baseText + '\n\n*命盘印证：' + guanluNote + '。*';
+    }
+    return baseText;
 }
 
 /**
@@ -841,7 +1002,23 @@ function _narrateBehavior(behavior, mainStar) {
         '有条不紊': '无论外部多混乱，他自己总是有一套排序系统在运行。这种秩序感给他周围的人带来稳定，也让他在面对「无法分类的事」时会比较不舒服。',
         '自由散漫': '他的行为模式对外看起来没有规律，但其实他只是遵循着一套别人看不到的逻辑。不束缚于习惯的代价，是有时候他自己也不确定下一步在哪里。'
     };
-    return map[behavior] || behavior || '行为模式灵活多变，难以用单一标签定义';
+    var behaviorStarDefault = {
+        '紫微':'行事自有章法，不轻易被外部节奏带着跑，每个动作背后都有自己的逻辑',
+        '天机':'行动之前必先思考，计划感强，但也因此有时会在「准备」和「行动」之间消耗太多时间',
+        '太阳':'行事开放，动作幅度大，偏向主动出击而非被动等待',
+        '武曲':'行动直接，不绕弯子，执行力是他最明显的特质之一',
+        '天同':'行为模式温和而稳定，不激进，讲究一种舒适的节奏',
+        '廉贞':'行事有策略，不轻易暴露真实意图，每一步都在评估得失',
+        '天府':'行事稳健，轻易不冒险，习惯性地为自己留好退路',
+        '太阴':'行动偏向低调，不喜欢在人前展示过程，只呈现结果',
+        '贪狼':'行为模式多变，今天的他和昨天的他可能让人感觉是不同的人',
+        '巨门':'行事直接，说到做到，不喜欢迂回',
+        '天相':'行为有分寸，懂得在规则内找到自己的空间',
+        '天梁':'行事沉稳，慢工出细活，不追求速度，追求确定',
+        '七杀':'行动果决，不怕得罪人，该出手时绝不犹豫',
+        '破军':'行为模式常出人意料，走的路和别人不一样，甚至和自己的上一段路也不一样'
+    };
+    return map[behavior] || (behaviorStarDefault[mainStar] || '行为模式灵活多变，难以用单一标签定义');
 }
 
 function _narrateEmotion(emotion, mainStar, genderCN) {
@@ -883,7 +1060,23 @@ function _narrateSocial(social, mainStar) {
         '圆滑世故': '他知道在不同的人面前应该呈现自己的哪个侧面——这不是虚伪，而是他在社会规则里找到的生存艺术。代价是，他有时不确定自己最真实的一面是什么。',
         '直率真诚': '他说什么就是什么，这让人觉得安全，但在复杂的社会场合也偶尔让他付出代价。他接受这个代价，因为他无法做到在人前和人后是两套逻辑。'
     };
-    return map[social] || social || '社交方式有其独特的节奏，不随大流';
+    var socialStarDefault = {
+        '紫微':'他的圈子不大，但都是经过筛选的人，与人交往自带一种无需刻意的距离感',
+        '天机':'他选择关系靠的是智识共鸣，找不到同频的人宁愿独处',
+        '太阳':'天然的社交磁场，但真正亲近的人不多，因为不是所有人都能跟上他的能量',
+        '武曲':'他的社交是功能性的，不喜欢浪费彼此时间，但对值得的人会真心投入',
+        '天同':'他是那种让人放松的存在，不给压力，也不要求太多，关系建立得慢但稳',
+        '廉贞':'他在社交场合从不完全敞开，每段关系都有他自己设定的分寸和界限',
+        '天府':'他的社交模式是稳中求进，不热烈，但可靠，时间越长越有分量',
+        '太阴':'他在人群中是安静的，但细腻的观察力让他其实什么都看见了',
+        '贪狼':'他有一种天然的吸引力，能和各种类型的人建立连接，但真正深交的不多',
+        '巨门':'他的社交风格直接，不绕圈子，说什么是什么，不讨好也不刻意疏远',
+        '天相':'他是那种在群体里起黏合作用的人，善于协调，但有时会把自己的需求放在最后',
+        '天梁':'他的社交建立在信任上，信任需要时间，所以他的深度关系都是慢慢养出来的',
+        '七杀':'他的社交是孤独的——不是没有人，而是他的内核很难被大多数人真正理解',
+        '破军':'他的社交是非线性的，有时极度开放，有时又突然闭合，让人难以捉摸'
+    };
+    return map[social] || (socialStarDefault[mainStar] || '社交方式有其独特的节奏，不随大流');
 }
 
 function _narrateCrisis(crisis, mainStar, sihuaType) {
@@ -918,7 +1111,23 @@ function _narrateLearning(learning, mainStar) {
         '固执己见': '他对已经建立的认知体系有强烈的保护意识——新的信息首先要通过他内部的筛选，才能被纳入。这保护了他不被信息轰炸改变立场，但也让他有时忽略了真正有价值的新观点。',
         '灵活调整': '他的认知系统是动态的——结论从来不是固定的，而是随着新信息的到来在不断修正中。这种开放性是智识上的成熟，但也需要一个稳定的核心，不然容易被各种理论带着跑。'
     };
-    return map[learning] || learning || '在实践中不断调整和深化自己的认知体系';
+    var learningStarDefault = {
+        '紫微':'他的学习路径是从顶层往下渗透——先建立整体认知，再往细节扎',
+        '天机':'他对知识有近乎本能的热情，学习是他处理世界的方式，不是手段',
+        '太阳':'他的学习是开放式的，愿意接触各种领域，广度超过深度',
+        '武曲':'他只学有用的，对实际操作的掌握快于理论理解',
+        '天同':'他学习的节奏是舒适的，不逼自己，但也不停下来',
+        '廉贞':'他学习带有目的性，是为了在某个场合用出来',
+        '天府':'他的学习是系统化的，宁愿慢一些，也要把基础打牢',
+        '太阴':'他吸收信息的方式是安静的，更偏向独自消化而非在讨论中学习',
+        '贪狼':'他对新鲜知识的热情来得快，但持续性需要靠外部刺激维持',
+        '巨门':'他对知识有强烈的辨析欲，不是学到就信，而是学到就要拆解',
+        '天相':'他的学习更多来自观察他人，从别人的经历里提炼经验',
+        '天梁':'他的知识积累偏向古典和经验，重视经过时间检验的东西',
+        '七杀':'他在实战中学得最快，安静的课堂反而让他无法集中',
+        '破军':'他的学习路径完全非线性，经常在意想不到的地方获得最重要的领悟'
+    };
+    return map[learning] || (learningStarDefault[mainStar] || '在实践中不断调整和深化自己的认知体系');
 }
 
 function _narrateGrowth(growth, mainStar, sihuaType) {
@@ -1141,19 +1350,21 @@ function generateZiweiCharacterBio(userData, chart, attributes, sihuaType) {
 
     // ── 叙事化处理所有用户输入字段 ──
     var narrateAge_text    = _narrateAge(ageRaw, eraRaw, patternType, genderCN);
-    var narrateProf_text   = _narrateProfession(profRaw, eraRaw, mainStar);
-    var narrateFamily_text = familyRaw      ? _narrateFamily(familyRaw, eraRaw, mainStar)         : '';
-    var narrateSocCl_text  = socialClassRaw ? _narrateSocialClass(socialClassRaw, profRaw, mainStar) : '';
-    var narrateParents_text= parentsRaw     ? _narrateParents(parentsRaw, mainStar)               : '';
-    var narrateSiblings_text= siblingsRaw   ? _narrateSiblings(siblingsRaw, mainStar)             : '';
+    // ── 5个基础信息字段：全部接入命盘宫位星曜，做真正的紫微推理 ──
+    var narrateProf_text    = _narrateProfession(profRaw, eraRaw, mainStar, chart);
+    var narrateFamily_text  = familyRaw      ? _narrateFamily(familyRaw, eraRaw, mainStar, chart)           : '';
+    var narrateSocCl_text   = socialClassRaw ? _narrateSocialClass(socialClassRaw, profRaw, mainStar, chart) : '';
+    var narrateParents_text = parentsRaw     ? _narrateParents(parentsRaw, mainStar, chart)                  : '';
+    var narrateSiblings_text= siblingsRaw    ? _narrateSiblings(siblingsRaw, mainStar, chart)                : '';
 
-    var speech_text   = attributes.speech   ? _narrateSpeech(attributes.speech, mainStar)                   : '言辞有力，惜字如金，说话前先想好每一句';
-    var behavior_text = attributes.behavior ? _narrateBehavior(attributes.behavior, mainStar)               : '根据情境灵活切换，既能强硬果断，也能温和迂回';
-    var emotion_text  = attributes.emotion  ? _narrateEmotion(attributes.emotion, mainStar, genderCN)       : pronoun + '的情感内敛含蓄，不轻易在人前展示脆弱';
-    var social_text   = attributes.social   ? _narrateSocial(attributes.social, mainStar)                   : '朋友不多但深交，对陌生人保持适度距离';
-    var crisis_text   = attributes.crisis   ? _narrateCrisis(attributes.crisis, mainStar, sihuaType)        : '在极限压力下，防御崩塌，真实的内心才会浮出水面';
-    var learning_text = attributes.learning ? _narrateLearning(attributes.learning, mainStar)               : '在实战中学习，拒绝纸上谈兵，每一次失败都是最好的课堂';
-    var growth_text   = attributes.growth   ? _narrateGrowth(attributes.growth, mainStar, sihuaType)        : '在探索与自我对话中寻找成长的方向';
+    // 8属性：有选则用精准叙事，未选则由主星性格推导模糊描述（软处理，不留空）
+    var speech_text   = _narrateSpeech(attributes.speech || null, mainStar);
+    var behavior_text = _narrateBehavior(attributes.behavior || null, mainStar);
+    var emotion_text  = _narrateEmotion(attributes.emotion || null, mainStar, genderCN);
+    var social_text   = _narrateSocial(attributes.social || null, mainStar);
+    var crisis_text   = _narrateCrisis(attributes.crisis || null, mainStar, sihuaType);
+    var learning_text = _narrateLearning(attributes.learning || null, mainStar);
+    var growth_text   = _narrateGrowth(attributes.growth || null, mainStar, sihuaType);
 
     // 从现有数据库取格局数据
     var patternData = (window.CHART_DATABASE && window.CHART_DATABASE[patternType]) || {
