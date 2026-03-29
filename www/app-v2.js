@@ -513,17 +513,21 @@ function generateFinalBio() {
         var resultDiv = document.getElementById('result-content');
         resultDiv.innerHTML = _buildLoadingHTML();
 
-        // ── 延迟一帧再生成，让loading动效先渲染出来 ──
-        setTimeout(function() {
-            try {
-                var bio = generateZiweiCharacterBio(userInputs, selectedChart, eightAttributes, selectedSubPattern);
-                currentCharacterBio = bio;
-                resultDiv.innerHTML = renderMarkdown(bio);
-            } catch (err) {
-                resultDiv.innerHTML = '';
-                showToast('生成出错，请重试（' + err.message + '）');
-            }
-        }, 80);
+        // ── 双 rAF + setTimeout 确保loading先完整渲染到屏幕，再执行生成 ──
+        requestAnimationFrame(function() {
+            requestAnimationFrame(function() {
+                setTimeout(function() {
+                    try {
+                        var bio = generateZiweiCharacterBio(userInputs, selectedChart, eightAttributes, selectedSubPattern);
+                        currentCharacterBio = bio;
+                        resultDiv.innerHTML = renderMarkdown(bio);
+                    } catch (err) {
+                        resultDiv.innerHTML = '';
+                        showToast('生成出错，请重试（' + err.message + '）');
+                    }
+                }, 300);
+            });
+        });
 
     } catch (error) {
         console.error('生成人物小传时出错:', error);
@@ -1042,10 +1046,24 @@ function generateComparison(chars) {
         '</div>';
     }).join('');
 
-    // ── 相性评分（2人时显示）──
+    // ── 相性评分（2人/3人均显示，两两配对）──
     var compatHtml = '';
-    if (chars.length === 2) {
-        compatHtml = '<div class="cmp-compat">' + _calcCompat(chars[0], chars[1]) + '</div>';
+    if (chars.length >= 2) {
+        var pairs = [];
+        for (var pi = 0; pi < chars.length; pi++) {
+            for (var pj = pi + 1; pj < chars.length; pj++) {
+                pairs.push([chars[pi], chars[pj]]);
+            }
+        }
+        var pairHtmls = pairs.map(function(pair) {
+            var nameA = pair[0].inputs.name || ('角色' + (chars.indexOf(pair[0]) + 1));
+            var nameB = pair[1].inputs.name || ('角色' + (chars.indexOf(pair[1]) + 1));
+            return '<div class="cmp-compat-pair">' +
+                '<div class="cmp-compat-pair-title">' + nameA + ' × ' + nameB + '</div>' +
+                _calcCompat(pair[0], pair[1]) +
+            '</div>';
+        }).join('');
+        compatHtml = '<div class="cmp-compat">' + pairHtmls + '</div>';
     }
 
     return (
