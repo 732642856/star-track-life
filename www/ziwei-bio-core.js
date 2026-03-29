@@ -1346,7 +1346,9 @@ function generateZiweiCharacterBio(userData, chart, attributes, sihuaType) {
     // ── 流年流时：差异化随机种子 ──
     var gz = _getCurrentTimeGanzhi();
     var starStateList = SHI_STAR_STATE[mainStar] || ['此刻气机平稳，按照自己的节奏运转'];
-    var curState      = starStateList[gz.seed % starStateList.length];
+    // 根据性别替换代词；古代/近代角色不显示当代干支时辰
+    var curStateRaw   = starStateList[gz.seed % starStateList.length];
+    var curState      = curStateRaw.replace(/他/g, pronoun).replace(/她/g, pronoun);
 
     // ── 叙事化处理所有用户输入字段 ──
     var narrateAge_text    = _narrateAge(ageRaw, eraRaw, patternType, genderCN);
@@ -1412,7 +1414,12 @@ function generateZiweiCharacterBio(userData, chart, attributes, sihuaType) {
     bio += `**主星：** ${(chart.stars || [mainStar]).join('、')}\n\n`;
     bio += `**外貌特征：** ${appearance}\n\n`;
     bio += `**标志性细节：** ${signature}\n\n`;
-    bio += `**此刻状态（${gz.yearGan}${gz.yearZhi}年·${gz.shiZhi}时）：** ${curState}\n\n`;
+    // 现代角色显示干支时辰（创作者实时生成的参考），古代/近代不显示当代纪年
+    if (eraRaw === 'contemporary') {
+        bio += `**此刻状态（${gz.yearGan}${gz.yearZhi}年·${gz.shiZhi}时）：** ${curState}\n\n`;
+    } else {
+        bio += `**此刻状态：** ${curState}\n\n`;
+    }
 
     // 职业处境（叙事化）
     bio += `**职业处境：** ${narrateProf_text}\n\n`;
@@ -1500,7 +1507,7 @@ function generateZiweiCharacterBio(userData, chart, attributes, sihuaType) {
     bio += `- **对主角：** 可能是推动者，也可能是隐藏对立面——两者皆因${mainStar}的${sihuaKeyFull}特质而充满张力\n\n`;
     bio += `- **对朋友：** ${pronoun}的圈子小但稳固，每段关系都经过时间的考验\n\n`;
     bio += `- **对对手：** ${crossRival}\n\n`;
-    bio += `**流年运势（${gz.yearGan}${gz.yearZhi}年·流月${gz.monthZhi}·流日${gz.dayZhi}）：** ${gz.shiTrait}——${curState.replace('此刻', '当下').replace('他', pronoun).replace('她', pronoun)}\n\n`;
+    bio += `**流年运势（${gz.yearGan}${gz.yearZhi}年·流月${gz.monthZhi}·流日${gz.dayZhi}）：** ${gz.shiTrait}——${curState.replace(/此刻/g, '当下').replace(/他/g, pronoun).replace(/她/g, pronoun)}\n\n`;
     bio += `**学习与成长模式：** ${learning_text}\n\n`;
     bio += `**人物弧光总结：** 从${sihuaDetails.psychology.slice(0, 20)}……出发，经历「${crossTurning.slice(0, 25)}……」的核心转折，最终走向——${growth_text.slice(0, 40)}……\n\n`;
 
