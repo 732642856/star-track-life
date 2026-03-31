@@ -1,0 +1,175 @@
+name: Mac Build & Export (Mac Catalyst)
+
+on:
+  workflow_dispatch:  # 仅手动触发
+
+jobs:
+  build-mac:
+    runs-on: macos-15  # Xcode 16 环境
+    timeout-minutes: 40
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 安装依赖
+        run: npm install
+
+      - name: 构建前端
+        run: npm run build
+
+      - name: 同步 Capacitor（拷贝 www 到 iOS）
+        run: |
+          npx cap copy ios
+          echo "=== www 同步完成 ==="
+          ls ios/App/App/public/ | head -10
+
+      - name: 解析 Swift Package 依赖
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -onlyUsePackageVersionsFromResolvedFile
+          echo "依赖解析完成"
+
+      - name: 导入签名证书（Mac Distribution）
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          MAC_PROVISION_PROFILE_BASE64: ${{ secrets.MAC_PROVISION_PROFILE_BASE64 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # 导入 Mac 发布证书
+          CERTIFICATE_PATH=$RUNNER_TEMP/mac_certificate.p12
+          echo "$BUILD_CERTIFICATE_BASE64" | tr -d '\n' | base64 --decode > $CERTIFICATE_PATH
+          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH 2>/dev/null || true
+
+          # 安装 Mac 描述文件
+          PP_PATH=$RUNNER_TEMP/mac_pp.provisionprofile
+          echo "$MAC_PROVISION_PROFILE_BASE64" | tr -d '\n' | base64 --decode > $PP_PATH
+
+          PP_UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID raw -)
+          echo "Mac 描述文件 UUID: $PP_UUID"
+
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/${PP_UUID}.provisionprofile
+
+          echo "=== Keychain 中的证书 ==="
+          security find-identity -v -p codesigning
+          echo "=== 已安装的描述文件 ==="
+          ls ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: 递增 Build Number
+        run: |
+          BUILD_NUM=$((200 + $GITHUB_RUN_NUMBER))
+          echo "设置 Mac Build Number: $BUILD_NUM"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUM" ios/App/App/Info.plist
+          /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" ios/App/App/Info.plist
+
+      - name: 构建并归档（Mac Catalyst）
+        run: |
+          PP_PATH=$RUNNER_TEMP/mac_pp.provisionprofile
+          PP_UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID raw -)
+          PP_TEAM_ID=$(security cms -D -i $PP_PATH | plutil -extract TeamIdentifier.0 raw -)
+          echo "Team ID: $PP_TEAM_ID, PP UUID: $PP_UUID"
+
+          xcodebuild archive \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -archivePath $RUNNER_TEMP/App-Mac.xcarchive \
+            -destination 'platform=macOS,variant=Designed for [iPad,iPhone]' \
+            SUPPORTS_MACCATALYST=YES \
+            DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER=NO \
+            MACCATALYST_DEPLOYMENT_TARGET=12.0 \
+            DEVELOPMENT_TEAM="$PP_TEAM_ID" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            PROVISIONING_PROFILE="$PP_UUID" \
+            -allowProvisioningUpdates \
+            2>&1 | tail -30
+
+      - name: 导出 Mac App
+        run: |
+          PP_PATH=$RUNNER_TEMP/mac_pp.provisionprofile
+          PP_UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID raw -)
+          PP_TEAM_ID=$(security cms -D -i $PP_PATH | plutil -extract TeamIdentifier.0 raw -)
+
+          cat > $RUNNER_TEMP/ExportOptions-Mac.plist << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>teamID</key>
+            <string>$PP_TEAM_ID</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>signingCertificate</key>
+            <string>Apple Distribution</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.yinan.xinggui0</key>
+              <string>$PP_UUID</string>
+            </dict>
+            <key>destination</key>
+            <string>export</string>
+            <key>stripSwiftSymbols</key>
+            <true/>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>compileBitcode</key>
+            <false/>
+          </dict>
+          </plist>
+          EOF
+
+          xcodebuild -exportArchive \
+            -archivePath $RUNNER_TEMP/App-Mac.xcarchive \
+            -exportOptionsPlist $RUNNER_TEMP/ExportOptions-Mac.plist \
+            -exportPath $RUNNER_TEMP/export-mac \
+            2>&1 | tail -20
+
+      - name: 打包为 ZIP 并保存 Artifact
+        run: |
+          cd $RUNNER_TEMP/export-mac
+          ls -la
+          zip -r App-Mac-${{ github.run_number }}.zip . --exclude "*.DS_Store"
+          echo "✅ 打包完成"
+
+      - name: 上传 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: StarTrackLife-Mac-${{ github.run_number }}
+          path: ${{ runner.temp }}/export-mac/App-Mac-${{ github.run_number }}.zip
+          retention-days: 7
+
+      - name: 完成提示
+        run: |
+          echo "================================================"
+          echo "✅ Mac App 已导出！"
+          echo ""
+          echo "📥 下载方式："
+          echo "   GitHub Actions → 本次 Run → Artifacts"
+          echo "   下载 StarTrackLife-Mac-${{ github.run_number }}.zip"
+          echo ""
+          echo "📤 上传方式："
+          echo "   解压后用 Transporter.app 上传到 App Store Connect"
+          echo "================================================"
+
+      - name: 清理 Keychain
+        if: always()
+        run: security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true
