@@ -1597,36 +1597,30 @@ body {
     height: 100dvh;
 }
 
-/* 顶部关闭栏 */
-.cmp-top-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--space-2) var(--space-4);
+/* 左侧中间浮动返回按钮 */
+.cmp-back-float {
+    position: fixed;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 9100;
     background: var(--color-surface, #fff);
-    border-bottom: 1px solid var(--color-border);
-    flex-shrink: 0;
-}
-
-.cmp-top-title {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--color-text);
-}
-
-.cmp-close-btn {
-    background: none;
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm, 6px);
-    padding: 5px 14px;
-    font-size: 0.82rem;
+    border-radius: var(--radius-lg, 12px);
+    padding: 10px 18px;
+    font-size: 0.9rem;
+    font-weight: 600;
     color: var(--color-text);
     cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    white-space: nowrap;
     font-family: inherit;
+    transition: all 0.2s ease;
 }
 
-.cmp-close-btn:active {
-    background: var(--color-border);
+.cmp-back-float:active {
+    background: var(--color-bg, #f5f0eb);
+    transform: translateY(-50%) scale(0.95);
 }
 .cmp-summary-bar {
     display: flex;
