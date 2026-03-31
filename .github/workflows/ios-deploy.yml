@@ -50,7 +50,7 @@ jobs:
           xcodebuild -resolvePackageDependencies \
             -project ios/App/App.xcodeproj \
             -scheme App \
-            -onlyUsePackageVersionsFromResolvedFile 2>&1 | tail -5 || true
+            -onlyUsePackageVersionsFromResolvedFile 
           echo "依赖解析完成"
 
       - name: 导入签名证书
