@@ -6,7 +6,7 @@ on:
 jobs:
   build-mac:
     runs-on: macos-15  # Xcode 16 环境
-    timeout-minutes: 90
+    timeout-minutes: 40
 
     steps:
       - name: 检出代码
@@ -29,104 +29,7 @@ jobs:
           echo "=== www 同步完成 ==="
           ls ios/App/App/public/ | head -10
 
-      - name: 从源码编译 Capacitor xcframework（含 Mac Catalyst slice）
-        run: |
-          set -e
-          mkdir -p /tmp/cap-archives /tmp/cap-xcframeworks
-
-          echo "=== Clone Capacitor 8.3.0 源码 ==="
-          git clone --depth 1 --branch 8.3.0 https://github.com/ionic-team/capacitor.git /tmp/capacitor-src
-
-          # ---- 编译 Capacitor.framework ----
-          echo "=== 编译 Capacitor - iOS 真机 ==="
-          xcodebuild archive \
-            -project /tmp/capacitor-src/ios/Capacitor/Capacitor.xcodeproj \
-            -scheme Capacitor \
-            -destination "generic/platform=iOS" \
-            -archivePath /tmp/cap-archives/cap-ios.xcarchive \
-            SKIP_INSTALL=NO \
-            BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
-            SUPPORTS_MACCATALYST=NO \
-            -quiet
-
-          echo "=== 编译 Capacitor - iOS 模拟器 ==="
-          xcodebuild archive \
-            -project /tmp/capacitor-src/ios/Capacitor/Capacitor.xcodeproj \
-            -scheme Capacitor \
-            -destination "generic/platform=iOS Simulator" \
-            -archivePath /tmp/cap-archives/cap-sim.xcarchive \
-            SKIP_INSTALL=NO \
-            BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
-            SUPPORTS_MACCATALYST=NO \
-            -quiet
-
-          echo "=== 编译 Capacitor - Mac Catalyst ==="
-          xcodebuild archive \
-            -project /tmp/capacitor-src/ios/Capacitor/Capacitor.xcodeproj \
-            -scheme Capacitor \
-            -destination "generic/platform=macOS,variant=Mac Catalyst" \
-            -archivePath /tmp/cap-archives/cap-mac.xcarchive \
-            SKIP_INSTALL=NO \
-            BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
-            SUPPORTS_MACCATALYST=YES \
-            MACCATALYST_DEPLOYMENT_TARGET=12.0 \
-            -quiet
-
-          echo "=== 打包 Capacitor.xcframework ==="
-          xcodebuild -create-xcframework \
-            -framework /tmp/cap-archives/cap-ios.xcarchive/Products/Library/Frameworks/Capacitor.framework \
-            -framework /tmp/cap-archives/cap-sim.xcarchive/Products/Library/Frameworks/Capacitor.framework \
-            -framework /tmp/cap-archives/cap-mac.xcarchive/Products/Library/Frameworks/Capacitor.framework \
-            -output /tmp/cap-xcframeworks/Capacitor.xcframework
-
-          # ---- 编译 Cordova.framework ----
-          echo "=== 编译 Cordova - iOS 真机 ==="
-          xcodebuild archive \
-            -project /tmp/capacitor-src/ios/CapacitorCordova/CapacitorCordova.xcodeproj \
-            -scheme Cordova \
-            -destination "generic/platform=iOS" \
-            -archivePath /tmp/cap-archives/cor-ios.xcarchive \
-            SKIP_INSTALL=NO \
-            BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
-            SUPPORTS_MACCATALYST=NO \
-            -quiet
-
-          echo "=== 编译 Cordova - iOS 模拟器 ==="
-          xcodebuild archive \
-            -project /tmp/capacitor-src/ios/CapacitorCordova/CapacitorCordova.xcodeproj \
-            -scheme Cordova \
-            -destination "generic/platform=iOS Simulator" \
-            -archivePath /tmp/cap-archives/cor-sim.xcarchive \
-            SKIP_INSTALL=NO \
-            BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
-            SUPPORTS_MACCATALYST=NO \
-            -quiet
-
-          echo "=== 编译 Cordova - Mac Catalyst ==="
-          xcodebuild archive \
-            -project /tmp/capacitor-src/ios/CapacitorCordova/CapacitorCordova.xcodeproj \
-            -scheme Cordova \
-            -destination "generic/platform=macOS,variant=Mac Catalyst" \
-            -archivePath /tmp/cap-archives/cor-mac.xcarchive \
-            SKIP_INSTALL=NO \
-            BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
-            SUPPORTS_MACCATALYST=YES \
-            MACCATALYST_DEPLOYMENT_TARGET=12.0 \
-            -quiet
-
-          echo "=== 打包 Cordova.xcframework ==="
-          xcodebuild -create-xcframework \
-            -framework /tmp/cap-archives/cor-ios.xcarchive/Products/Library/Frameworks/Cordova.framework \
-            -framework /tmp/cap-archives/cor-sim.xcarchive/Products/Library/Frameworks/Cordova.framework \
-            -framework /tmp/cap-archives/cor-mac.xcarchive/Products/Library/Frameworks/Cordova.framework \
-            -output /tmp/cap-xcframeworks/Cordova.xcframework
-
-          echo "=== 验证 xcframework 包含 Mac Catalyst slice ==="
-          ls /tmp/cap-xcframeworks/Capacitor.xcframework/
-          ls /tmp/cap-xcframeworks/Cordova.xcframework/
-          echo "✅ Capacitor xcframework 编译完成"
-
-      - name: 解析 Swift Package 依赖（触发下载缓存）
+      - name: 解析 Swift Package 依赖
         run: |
           xcodebuild -resolvePackageDependencies \
             -project ios/App/App.xcodeproj \
@@ -134,37 +37,7 @@ jobs:
             -onlyUsePackageVersionsFromResolvedFile
           echo "依赖解析完成"
 
-      - name: 替换 SPM 缓存中的 Capacitor xcframework
-        run: |
-          set -e
-          echo "=== 查找 SPM artifacts 位置 ==="
-          DERIVED_DATA=$(find ~/Library/Developer/Xcode/DerivedData -maxdepth 1 -type d | head -5)
-          echo "DerivedData 目录: $DERIVED_DATA"
-
-          CAP_SPM=$(find ~/Library/Developer/Xcode/DerivedData -path "*/SourcePackages/artifacts/capacitor-swift-pm/Capacitor/Capacitor.xcframework" -type d 2>/dev/null | head -1)
-          COR_SPM=$(find ~/Library/Developer/Xcode/DerivedData -path "*/SourcePackages/artifacts/capacitor-swift-pm/Cordova/Cordova.xcframework" -type d 2>/dev/null | head -1)
-
-          echo "Capacitor cache: $CAP_SPM"
-          echo "Cordova cache: $COR_SPM"
-
-          if [ -z "$CAP_SPM" ]; then
-            echo "⚠️ Capacitor xcframework 未找到，尝试全局搜索..."
-            find ~/Library/Developer/Xcode/DerivedData -name "Capacitor.xcframework" -type d 2>/dev/null
-          fi
-
-          if [ -n "$CAP_SPM" ]; then
-            rm -rf "$CAP_SPM"
-            cp -R /tmp/cap-xcframeworks/Capacitor.xcframework "$CAP_SPM"
-            echo "✅ Capacitor.xcframework 替换成功: $CAP_SPM"
-          fi
-
-          if [ -n "$COR_SPM" ]; then
-            rm -rf "$COR_SPM"
-            cp -R /tmp/cap-xcframeworks/Cordova.xcframework "$COR_SPM"
-            echo "✅ Cordova.xcframework 替换成功: $COR_SPM"
-          fi
-
-      - name: 导入签名证书（Mac Installer Distribution）
+      - name: 导入签名证书（Distribution + Installer）
         env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
           P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
@@ -179,20 +52,22 @@ jobs:
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
 
           # 导入 Apple Distribution 证书（用于 archive）
-          CERT1_PATH=$RUNNER_TEMP/apple_dist.p12
-          echo "$BUILD_CERTIFICATE_BASE64" | tr -d '\n' | base64 --decode > $CERT1_PATH
-          security import $CERT1_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          CERTIFICATE_PATH=$RUNNER_TEMP/mac_certificate.p12
+          echo "$BUILD_CERTIFICATE_BASE64" | tr -d '\n' | base64 --decode > $CERTIFICATE_PATH
+          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
 
-          # 导入 Mac Installer Distribution 证书（用于 export）
-          CERT2_PATH=$RUNNER_TEMP/mac_installer.p12
-          echo "$MAC_INSTALLER_CERTIFICATE_BASE64" | tr -d '\n' | base64 --decode > $CERT2_PATH
-          security import $CERT2_PATH -P "$MAC_INSTALLER_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          # 导入 3rd Party Mac Developer Installer 证书（用于打 .pkg）
+          INSTALLER_CERT_PATH=$RUNNER_TEMP/mac_installer.p12
+          echo "$MAC_INSTALLER_CERTIFICATE_BASE64" | tr -d '\n' | base64 --decode > $INSTALLER_CERT_PATH
+          security import $INSTALLER_CERT_PATH -P "$MAC_INSTALLER_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
 
           security list-keychain -d user -s $KEYCHAIN_PATH
           security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH 2>/dev/null || true
 
+          # 安装 Mac 描述文件（Mac Catalyst App Store 类型，关联 Apple Distribution）
           PP_PATH=$RUNNER_TEMP/mac_pp.provisionprofile
           echo "$MAC_PROVISION_PROFILE_BASE64" | tr -d '\n' | base64 --decode > $PP_PATH
+
           PP_UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID raw -)
           echo "Mac 描述文件 UUID: $PP_UUID"
 
@@ -200,7 +75,9 @@ jobs:
           cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/${PP_UUID}.provisionprofile
 
           echo "=== Keychain 中的证书 ==="
-          security find-identity -v
+          security find-identity -v -p codesigning
+          echo "=== 已安装的描述文件 ==="
+          ls ~/Library/MobileDevice/Provisioning\ Profiles/
 
       - name: 递增 Build Number
         run: |
@@ -211,17 +88,10 @@ jobs:
 
       - name: 构建并归档（Mac Catalyst）
         run: |
-          set -e
           PP_PATH=$RUNNER_TEMP/mac_pp.provisionprofile
           PP_UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID raw -)
           PP_TEAM_ID=$(security cms -D -i $PP_PATH | plutil -extract TeamIdentifier.0 raw -)
           echo "Team ID: $PP_TEAM_ID, PP UUID: $PP_UUID"
-
-          # 构建前再次确认替换（xcodebuild 可能重新解析包导致覆盖）
-          CAP_SPM=$(find ~/Library/Developer/Xcode/DerivedData -path "*/SourcePackages/artifacts/capacitor-swift-pm/Capacitor/Capacitor.xcframework" -type d 2>/dev/null | head -1)
-          COR_SPM=$(find ~/Library/Developer/Xcode/DerivedData -path "*/SourcePackages/artifacts/capacitor-swift-pm/Cordova/Cordova.xcframework" -type d 2>/dev/null | head -1)
-          [ -n "$CAP_SPM" ] && rm -rf "$CAP_SPM" && cp -R /tmp/cap-xcframeworks/Capacitor.xcframework "$CAP_SPM" && echo "✅ 再次替换 Capacitor.xcframework"
-          [ -n "$COR_SPM" ] && rm -rf "$COR_SPM" && cp -R /tmp/cap-xcframeworks/Cordova.xcframework "$COR_SPM" && echo "✅ 再次替换 Cordova.xcframework"
 
           xcodebuild archive \
             -project ios/App/App.xcodeproj \
@@ -232,16 +102,15 @@ jobs:
             SUPPORTS_MACCATALYST=YES \
             DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER=NO \
             MACCATALYST_DEPLOYMENT_TARGET=12.0 \
-            PRODUCT_BUNDLE_IDENTIFIER="com.yinan.xinggui0" \
             DEVELOPMENT_TEAM="$PP_TEAM_ID" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE="$PP_UUID" \
-            -allowProvisioningUpdates
+            -allowProvisioningUpdates \
+            2>&1 | tail -50
 
-      - name: 导出 Mac App
+      - name: 导出 .app（exportArchive）
         run: |
-          set -e
           PP_PATH=$RUNNER_TEMP/mac_pp.provisionprofile
           PP_UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID raw -)
           PP_TEAM_ID=$(security cms -D -i $PP_PATH | plutil -extract TeamIdentifier.0 raw -)
@@ -279,29 +148,48 @@ jobs:
           xcodebuild -exportArchive \
             -archivePath $RUNNER_TEMP/App-Mac.xcarchive \
             -exportOptionsPlist $RUNNER_TEMP/ExportOptions-Mac.plist \
-            -exportPath $RUNNER_TEMP/export-mac
+            -exportPath $RUNNER_TEMP/export-mac \
+            2>&1 | tail -30
 
-      - name: 打包为 ZIP 并保存 Artifact
+          echo "=== 导出目录内容 ==="
+          ls -la $RUNNER_TEMP/export-mac/
+
+      - name: 打包 .pkg（productbuild + Installer 证书）
         run: |
-          cd $RUNNER_TEMP/export-mac
-          ls -la
-          zip -r App-Mac-${{ github.run_number }}.zip . --exclude "*.DS_Store"
-          echo "✅ 打包完成"
+          # 找到导出的 .app
+          APP_PATH=$(find $RUNNER_TEMP/export-mac -name "*.app" | head -1)
+          echo "找到 .app: $APP_PATH"
 
-      - name: 上传 Artifact
+          # 用 productbuild 把 .app 打成 .pkg，用 Installer 证书签名
+          productbuild \
+            --component "$APP_PATH" /Applications \
+            --sign "3rd Party Mac Developer Installer: yinan wu (2DM78YY6PM)" \
+            $RUNNER_TEMP/StarTrackLife.pkg
+
+          echo "=== .pkg 打包完成 ==="
+          ls -lh $RUNNER_TEMP/StarTrackLife.pkg
+
+          # 验证签名
+          pkgutil --check-signature $RUNNER_TEMP/StarTrackLife.pkg
+
+      - name: 上传 Artifact（.pkg 文件）
         uses: actions/upload-artifact@v4
         with:
           name: StarTrackLife-Mac-${{ github.run_number }}
-          path: ${{ runner.temp }}/export-mac/App-Mac-${{ github.run_number }}.zip
+          path: ${{ runner.temp }}/StarTrackLife.pkg
           retention-days: 7
 
       - name: 完成提示
         run: |
           echo "================================================"
-          echo "✅ Mac App 已导出！"
-          echo "📥 GitHub Actions → 本次 Run → Artifacts"
-          echo "   下载 StarTrackLife-Mac-${{ github.run_number }}.zip"
-          echo "📤 解压后用 Transporter.app 上传到 App Store Connect"
+          echo "✅ Mac .pkg 已打包！"
+          echo ""
+          echo "📥 下载方式："
+          echo "   GitHub Actions → 本次 Run → Artifacts"
+          echo "   下载 StarTrackLife-Mac-${{ github.run_number }} 中的 StarTrackLife.pkg"
+          echo ""
+          echo "📤 上传方式："
+          echo "   用 Transporter.app 直接上传 .pkg 到 App Store Connect"
           echo "================================================"
 
       - name: 清理 Keychain
