@@ -80,6 +80,7 @@ jobs:
 
       - name: 构建并归档（Mac Catalyst）
         run: |
+          set -o pipefail
           PP_PATH=$RUNNER_TEMP/mac_pp.provisionprofile
           PP_UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID raw -)
           PP_TEAM_ID=$(security cms -D -i $PP_PATH | plutil -extract TeamIdentifier.0 raw -)
@@ -98,8 +99,7 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE="$PP_UUID" \
-            -allowProvisioningUpdates \
-            2>&1 | tail -30
+            -allowProvisioningUpdates
 
       - name: 导出 Mac App
         run: |
@@ -140,8 +140,7 @@ jobs:
           xcodebuild -exportArchive \
             -archivePath $RUNNER_TEMP/App-Mac.xcarchive \
             -exportOptionsPlist $RUNNER_TEMP/ExportOptions-Mac.plist \
-            -exportPath $RUNNER_TEMP/export-mac \
-            2>&1 | tail -20
+            -exportPath $RUNNER_TEMP/export-mac
 
       - name: 打包为 ZIP 并保存 Artifact
         run: |
