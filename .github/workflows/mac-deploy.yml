@@ -164,10 +164,12 @@ jobs:
             echo "✅ Cordova.xcframework 替换成功: $COR_SPM"
           fi
 
-      - name: 导入签名证书（Mac Distribution）
+      - name: 导入签名证书（Mac Installer Distribution）
         env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
           P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          MAC_INSTALLER_CERTIFICATE_BASE64: ${{ secrets.MAC_INSTALLER_CERTIFICATE_BASE64 }}
+          MAC_INSTALLER_CERTIFICATE_PASSWORD: ${{ secrets.MAC_INSTALLER_CERTIFICATE_PASSWORD }}
           MAC_PROVISION_PROFILE_BASE64: ${{ secrets.MAC_PROVISION_PROFILE_BASE64 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
@@ -176,9 +178,16 @@ jobs:
           security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
 
-          CERTIFICATE_PATH=$RUNNER_TEMP/mac_certificate.p12
-          echo "$BUILD_CERTIFICATE_BASE64" | tr -d '\n' | base64 --decode > $CERTIFICATE_PATH
-          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          # 导入 Apple Distribution 证书（用于 archive）
+          CERT1_PATH=$RUNNER_TEMP/apple_dist.p12
+          echo "$BUILD_CERTIFICATE_BASE64" | tr -d '\n' | base64 --decode > $CERT1_PATH
+          security import $CERT1_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+
+          # 导入 Mac Installer Distribution 证书（用于 export）
+          CERT2_PATH=$RUNNER_TEMP/mac_installer.p12
+          echo "$MAC_INSTALLER_CERTIFICATE_BASE64" | tr -d '\n' | base64 --decode > $CERT2_PATH
+          security import $CERT2_PATH -P "$MAC_INSTALLER_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+
           security list-keychain -d user -s $KEYCHAIN_PATH
           security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH 2>/dev/null || true
 
@@ -191,7 +200,7 @@ jobs:
           cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/${PP_UUID}.provisionprofile
 
           echo "=== Keychain 中的证书 ==="
-          security find-identity -v -p codesigning
+          security find-identity -v
 
       - name: 递增 Build Number
         run: |
@@ -248,7 +257,7 @@ jobs:
             <key>signingStyle</key>
             <string>manual</string>
             <key>signingCertificate</key>
-            <string>Apple Distribution</string>
+            <string>3rd Party Mac Developer Installer</string>
             <key>provisioningProfiles</key>
             <dict>
               <key>com.yinan.xinggui0</key>
