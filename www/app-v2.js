@@ -204,6 +204,18 @@ document.addEventListener('DOMContentLoaded', () => {
     initEraCards();
     initOptionCards();
     loadSavedCharacters();
+
+    // 下滑箭头：点击跳到已保存角色区
+    var scrollHint = document.getElementById('scroll-hint-step4');
+    if (scrollHint) {
+        scrollHint.addEventListener('click', function() {
+            var s = document.getElementById('saved-characters-section');
+            if (s && s.style.display !== 'none') {
+                var top = s.getBoundingClientRect().top + window.pageYOffset - 20;
+                window.scrollTo({ top: top, behavior: 'smooth' });
+            }
+        });
+    }
 });
 
 // ==================== 步骤控制 ====================
@@ -221,19 +233,24 @@ function showStep(step) {
         window.scrollTo({ top: 0, behavior: 'instant' });
     });
 
-    // 步骤4：重置下滑提示，滚动后自动淡出
+    // 引导钩子：进入步骤4时触发第2步引导
+    if (step === 4) { if (typeof obOnStep4Shown === 'function') obOnStep4Shown(); }
+    // 非步骤5时隐藏下拉箭头
+    if (step !== 5) {
+        var _arr = document.getElementById('bio-scroll-arrow');
+        if (_arr) _arr.classList.add('hidden');
+    }
+
+    // 步骤4：仅当有已保存角色时显示跳转箭头
     if (step === 4) {
         var hint = document.getElementById('scroll-hint-step4');
         if (hint) {
-            hint.classList.remove('hidden');
-            var _scrollHideHandler = function() {
-                if (window.scrollY > 60) {
-                    hint.classList.add('hidden');
-                    window.removeEventListener('scroll', _scrollHideHandler);
-                }
-            };
-            window.removeEventListener('scroll', _scrollHideHandler); // 防重复
-            window.addEventListener('scroll', _scrollHideHandler, { passive: true });
+            var savedSection = document.getElementById('saved-characters-section');
+            if (savedSection && savedSection.style.display !== 'none') {
+                hint.classList.remove('hidden');
+            } else {
+                hint.classList.add('hidden');
+            }
         }
     }
 }
@@ -276,6 +293,7 @@ function confirmEra() {
     }
     userInputs.era = selectedEra;
     showStep(2);
+    if (typeof obOnEraConfirmed === 'function') obOnEraConfirmed();
 }
 
 // ==================== 步骤2: 基础信息 ====================
@@ -542,6 +560,8 @@ function generateFinalBio() {
                         var bio = generateZiweiCharacterBio(userInputs, selectedChart, eightAttributes, selectedSubPattern);
                         currentCharacterBio = bio;
                         resultDiv.innerHTML = renderMarkdown(bio);
+                        if (typeof obOnBioGenerated === 'function') obOnBioGenerated();
+                        if (typeof _showBioScrollArrow === 'function') _showBioScrollArrow();
                     } catch (err) {
                         resultDiv.innerHTML = '';
                         showToast('生成出错，请重试（' + err.message + '）');
@@ -879,6 +899,7 @@ function saveCharacter() {
     
     showToast('「' + name + '」已保存 (' + savedCharacters.length + '/10)', 'success');
     displaySavedCharacters();
+    if (typeof obOnCharacterSaved === 'function') obOnCharacterSaved();
 }
 
 function copyCharacterBio() {
@@ -926,7 +947,9 @@ function displaySavedCharacters() {
     
     section.style.display = 'block';
     compareBtn.style.display = savedCharacters.length >= 2 ? 'block' : 'none';
-    
+    // 同步步骤4跳转箭头
+    var _hint = document.getElementById('scroll-hint-step4');
+    if (_hint) { _hint.classList.remove('hidden'); }
     list.innerHTML = savedCharacters.map(char => `
         <div class="saved-character-item">
             <input type="checkbox" class="compare-checkbox" data-id="${char.id}" style="margin-right: 10px;">
@@ -972,6 +995,8 @@ function deleteCharacter(id) {
         displaySavedCharacters();
         if (savedCharacters.length === 0) {
             document.getElementById('saved-characters-section').style.display = 'none';
+            var _hint2 = document.getElementById('scroll-hint-step4');
+            if (_hint2) { _hint2.classList.add('hidden'); }
         }
         showToast('「' + name + '」已删除', 'success');
         return;
@@ -1009,6 +1034,7 @@ function showCompare() {
     section.style.display = 'flex';
     // 全屏：锁定 body 滚动
     document.body.style.overflow = 'hidden';
+    if (typeof obOnCompareShown === 'function') obOnCompareShown();
 
     // 注入右上角浮动关闭按钮（iOS 悬浮圆形风格）
     var existFab = document.getElementById('cmp-close-fab');
@@ -1241,52 +1267,147 @@ function closeCompare() {
 function showBioCompare() {}
 function closeBioCompare() {}
 
-// ==================== 新手引导 ====================
+// ==================== 快速演示引导 ====================
+var OB_STORAGE_KEY = 'xingguirensheng_onboarding_done_v4';
+var _obDemoStep = 0;
+var _obDemoTotal = 4;
+var _obDemoTimer = null;
+
+// 开机动画结束后启动演示
 (function initOnboarding() {
-    var STORAGE_KEY = 'xingguirensheng_onboarding_done';
-    // 已看过引导，直接跳过
-    if (localStorage.getItem(STORAGE_KEY)) return;
-
-    var overlay = document.getElementById('onboarding-overlay');
-    if (!overlay) return;
-
-    // 等开机动画结束后再出现（splash 约 3s）
+    if (localStorage.getItem(OB_STORAGE_KEY)) return;
     setTimeout(function() {
-        overlay.classList.add('ob-visible');
-    }, 3100);
-
-    window._obStep = 0;
+        var demo = document.getElementById('ob-demo');
+        if (!demo) return;
+        _obDemoStep = 0;
+        _obRenderDemoStep(0);
+        demo.classList.add('ob-visible');
+        _obDemoAutoPlay();
+    }, 3200);
 })();
 
-var _obTotalSteps = 3;
-function obNext() {
-    var step = (window._obStep || 0);
-    if (step < _obTotalSteps - 1) {
-        step++;
-        window._obStep = step;
-        // 滑动卡片
-        document.getElementById('ob-slides').style.transform = 'translateX(-' + (step * 100 / 3) + '%)';
-        // 更新圆点
-        for (var i = 0; i < _obTotalSteps; i++) {
-            var dot = document.getElementById('ob-dot-' + i);
-            if (dot) dot.classList.toggle('active', i === step);
+function _obRenderDemoStep(step) {
+    // 切换幕
+    for (var i = 0; i < _obDemoTotal; i++) {
+        var s = document.getElementById('ob-scene-' + i);
+        if (s) s.classList.toggle('ob-scene-active', i === step);
+    }
+    // 切换进度点
+    for (var j = 0; j < _obDemoTotal; j++) {
+        var d = document.getElementById('ob-ddot-' + j);
+        if (d) d.classList.toggle('ob-ddot-active', j === step);
+    }
+    // 更新按钮文字
+    var nextBtn = document.getElementById('ob-demo-next');
+    if (nextBtn) nextBtn.textContent = (step === _obDemoTotal - 1) ? '开始使用' : '下一步';
+    // 更新标题
+    var label = document.getElementById('ob-demo-step-label');
+    if (label) label.textContent = (step + 1) + ' / ' + _obDemoTotal;
+}
+
+// 每2.5秒自动推进（到最后一幕停下，等用户点「开始使用」）
+function _obDemoAutoPlay() {
+    if (_obDemoTimer) clearInterval(_obDemoTimer);
+    _obDemoTimer = setInterval(function() {
+        if (_obDemoStep >= _obDemoTotal - 1) {
+            // 已经是最后一幕，停止自动播放，等用户主动点「开始使用」
+            clearInterval(_obDemoTimer);
+            return;
         }
-        // 最后一页改按钮文字
-        if (step === _obTotalSteps - 1) {
-            document.getElementById('ob-next-btn').textContent = '开始使用';
-        }
-    } else {
+        _obDemoStep++;
+        _obRenderDemoStep(_obDemoStep);
+    }, 2500);
+}
+
+// 手动点「下一步 / 开始使用」
+function obDemoNext() {
+    if (_obDemoTimer) clearInterval(_obDemoTimer);
+    _obDemoStep++;
+    if (_obDemoStep >= _obDemoTotal) {
         obDone();
+    } else {
+        _obRenderDemoStep(_obDemoStep);
+        // 最后一幕不再重启自动播放，等用户主动点「开始使用」
+        if (_obDemoStep < _obDemoTotal - 1) {
+            _obDemoAutoPlay();
+        }
     }
 }
-function obSkip() { obDone(); }
+
 function obDone() {
-    localStorage.setItem('xingguirensheng_onboarding_done', '1');
-    var overlay = document.getElementById('onboarding-overlay');
-    if (overlay) {
-        overlay.style.transition = 'opacity 0.3s ease';
-        overlay.style.opacity = '0';
-        overlay.style.pointerEvents = 'none';
-        setTimeout(function() { overlay.style.display = 'none'; }, 320);
+    if (_obDemoTimer) clearInterval(_obDemoTimer);
+    localStorage.setItem(OB_STORAGE_KEY, '1');
+    var demo = document.getElementById('ob-demo');
+    if (demo) {
+        demo.style.opacity = '0';
+        demo.style.pointerEvents = 'none';
+        setTimeout(function() { demo.style.display = 'none'; }, 350);
     }
 }
+
+// 空钩子（业务代码里有调用，保留避免报错）
+function obOnEraConfirmed() {}
+function obOnStep4Shown() {}
+function obOnBioGenerated() {}
+function obOnCharacterSaved() {}
+function obOnCompareShown() {}
+
+// 对比角色按钮：平滑滚到「已保存的角色」区域（不切步骤）
+function goToSavedForCompare() {
+    var savedSection = document.getElementById('saved-characters-section');
+    if (savedSection && savedSection.style.display !== 'none') {
+        savedSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        showToast('请先保存角色，再进行对比');
+    }
+}
+
+// 人物小传页箭头：滚到「保存角色」按钮
+function scrollToSaved() {
+    var btn = document.getElementById('save-char-btn');
+    if (btn) {
+        btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+// ==================== 人物小传下拉箭头 ====================
+function _initBioScrollArrow() {
+    var arrow = document.getElementById('bio-scroll-arrow');
+    if (!arrow) return;
+    // 监听页面滚动：有内容时显示，接近底部时隐藏
+    var _scrollHandler = function() {
+        var btn = document.getElementById('save-char-btn');
+        if (!btn) { arrow.classList.add('hidden'); return; }
+        var rect = btn.getBoundingClientRect();
+        if (rect.top <= window.innerHeight) {
+            // 保存按钮已进入视口，隐藏箭头
+            arrow.classList.add('hidden');
+        }
+    };
+    window.addEventListener('scroll', _scrollHandler, { passive: true });
+}
+
+// 步骤5显示时初始化箭头
+var _origShowStep = showStep;
+// 注：不覆盖showStep，而是在generateFinalBio完成后直接调用
+function _showBioScrollArrow() {
+    var arrow = document.getElementById('bio-scroll-arrow');
+    if (!arrow) return;
+    setTimeout(function() {
+        // 只要 action-bar 不在视口内，就显示箭头
+        var btn = document.getElementById('save-char-btn');
+        if (btn) {
+            var rect = btn.getBoundingClientRect();
+            // 保存按钮不在视口内（底部不可见），才显示引导箭头
+            if (rect.top > window.innerHeight) {
+                arrow.classList.remove('hidden');
+            }
+        } else {
+            arrow.classList.remove('hidden');
+        }
+        _initBioScrollArrow();
+    }, 500);
+}
+// 挂到 generateFinalBio 完成后（已有钩子位置）
+// 在 obOnBioGenerated 里调用（虽然现在是空函数，但我们直接在 generateFinalBio 里额外处理）
+

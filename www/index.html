@@ -10,7 +10,7 @@
     <meta name="description" content="星轨人生 - 专为艺术创作者提供人物塑造辅助工具 · 576盘精细排盘系统 · 三时代人物设计工具">
     <title>星轨人生 - 艺术创作者的人物塑造工具</title>
     
-    <link rel="stylesheet" href="styles-v2.css?v=14">
+    <link rel="stylesheet" href="styles-v2.css?v=17">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -59,9 +59,9 @@
 
     /* 头像 */
     .sp-avatar-wrap {
-        width: 150px;
-        height: 150px;
-        border-radius: 34px;
+        width: 80px;
+        height: 80px;
+        border-radius: 18px;
         overflow: hidden;
         opacity: 0;
         animation: spPopIn 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.15s forwards;
@@ -130,122 +130,182 @@
         to   { opacity: 1; }
     }
 
-    /* ══ 新手引导层 ══ */
-    #onboarding-overlay {
+    /* ══ 快速演示引导 ══ */
+    #ob-demo {
         position: fixed;
         inset: 0;
         z-index: 9998;
-        background: #fff;
+        background: rgba(240,240,242,0.82);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
         display: flex;
-        flex-direction: column;
         align-items: center;
-        justify-content: flex-end;
-        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 48px);
+        justify-content: center;
         font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", sans-serif;
         opacity: 0;
         pointer-events: none;
-        transition: opacity 0.3s ease;
+        transition: opacity 0.35s ease;
     }
-    #onboarding-overlay.ob-visible {
+    #ob-demo.ob-visible {
         opacity: 1;
         pointer-events: auto;
     }
-    /* 卡片轨道（横向滑动） */
-    .ob-track {
-        width: 100%;
+    /* 演示卡片 */
+    #ob-demo-card {
+        background: #f5f5f7;
+        border-radius: 20px;
+        width: calc(100% - 48px);
+        max-width: 360px;
         overflow: hidden;
-        flex: 1;
-        display: flex;
-        align-items: center;
-    }
-    .ob-slides {
-        display: flex;
-        width: 300%;
-        height: 100%;
-        transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
-        will-change: transform;
-    }
-    .ob-slide {
-        width: calc(100% / 3);
-        height: 100%;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.08);
         display: flex;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 0 40px;
-        gap: 0;
-        text-align: center;
     }
-    .ob-icon {
-        font-size: 64px;
-        line-height: 1;
-        margin-bottom: 32px;
-        opacity: 0.88;
-    }
-    .ob-title {
-        font-size: 24px;
-        font-weight: 600;
-        color: #1a1a1a;
-        letter-spacing: 0.02em;
-        margin-bottom: 14px;
-        line-height: 1.3;
-    }
-    .ob-desc {
-        font-size: 15px;
-        font-weight: 400;
-        color: #888;
-        line-height: 1.65;
-        max-width: 280px;
-    }
-    /* 圆点指示器 */
-    .ob-dots {
+    /* 卡片顶栏 */
+    #ob-demo-header {
         display: flex;
-        gap: 6px;
-        margin-bottom: 28px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 18px 0;
     }
-    .ob-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #d0d0d0;
-        transition: background 0.25s, width 0.25s;
+    #ob-demo-step-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #999;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
     }
-    .ob-dot.active {
-        background: #1a1a1a;
-        width: 18px;
-        border-radius: 3px;
-    }
-    /* 主按钮 */
-    .ob-btn {
-        width: calc(100% - 80px);
-        max-width: 320px;
-        height: 50px;
-        border-radius: 25px;
-        background: #1a1a1a;
-        color: #fff;
-        font-size: 16px;
-        font-weight: 500;
-        border: none;
-        cursor: pointer;
-        letter-spacing: 0.03em;
-        transition: opacity 0.15s;
-        font-family: inherit;
-    }
-    .ob-btn:active { opacity: 0.75; }
-    /* 跳过 */
-    .ob-skip {
-        position: absolute;
-        top: calc(env(safe-area-inset-top, 44px) + 14px);
-        right: 22px;
-        font-size: 14px;
-        color: #aaa;
+    #ob-demo-skip {
+        font-size: 13px;
+        color: #bbb;
         background: none;
         border: none;
         cursor: pointer;
+        padding: 2px 0;
         font-family: inherit;
-        padding: 4px 0;
     }
-    .ob-skip:active { color: #666; }
+    #ob-demo-skip:active { color: #888; }
+    /* 演示幕 */
+    #ob-demo-scenes {
+        padding: 20px 20px 8px;
+        min-height: 220px;
+        position: relative;
+    }
+    .ob-scene {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 8px;
+        animation: obFadeIn 0.3s ease;
+    }
+    .ob-scene.ob-scene-active { display: flex; }
+    @keyframes obFadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    .ob-scene-icon { font-size: 40px; line-height: 1; margin-bottom: 4px; }
+    .ob-scene-title { font-size: 17px; font-weight: 700; color: #333; letter-spacing: 0.01em; }
+    .ob-scene-desc  { font-size: 13px; color: #888; line-height: 1.6; }
+    /* mock 选项片段 */
+    .ob-scene-mock { display: flex; gap: 8px; margin-top: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
+    .ob-mock-chip {
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 13px;
+        border: none;
+        color: #888;
+        background: #ebebed;
+    }
+    .ob-mock-selected {
+        background: #dcdcde;
+        color: #333;
+        font-weight: 600;
+    }
+    /* mock 表单 */
+    .ob-mock-form {
+        flex-direction: column;
+        width: 100%;
+        background: #ebebed;
+        border-radius: 12px;
+        padding: 10px 14px;
+        gap: 6px !important;
+    }
+    .ob-mock-row { display: flex; justify-content: space-between; font-size: 13px; }
+    .ob-mock-label { color: #aaa; }
+    .ob-mock-val   { color: #444; font-weight: 500; }
+    /* mock 小传 */
+    .ob-mock-bio {
+        flex-direction: column;
+        width: 100%;
+        background: #ebebed;
+        border-radius: 12px;
+        padding: 10px 14px;
+        gap: 5px !important;
+        text-align: left;
+    }
+    .ob-mock-bio-line { font-size: 12px; color: #666; line-height: 1.5; }
+    .ob-mock-bio-h    { font-size: 13px; font-weight: 700; color: #333; }
+    .ob-mock-bio-short { color: #999; }
+    .ob-mock-bio-dots { font-size: 11px; color: #bbb; letter-spacing: 3px; margin-top: 2px; }
+    /* mock 对比 */
+    .ob-mock-compare { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+    .ob-mock-cmp-col { background: #ebebed; border-radius: 10px; padding: 8px 14px; text-align: center; }
+    .ob-mock-cmp-name { font-size: 13px; font-weight: 700; color: #333; }
+    .ob-mock-cmp-star { font-size: 11px; color: #999; margin-top: 2px; }
+    .ob-mock-cmp-vs   { font-size: 12px; color: #ccc; font-weight: 600; }
+    /* 底栏：进度点 + 按钮 */
+    #ob-demo-footer {
+        padding: 14px 20px calc(env(safe-area-inset-bottom, 0px) + 18px);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-top: 1px solid #e8e8ea;
+    }
+    #ob-demo-dots { display: flex; gap: 5px; align-items: center; }
+    .ob-ddot {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: #d0d0d2;
+        transition: background 0.25s, width 0.25s;
+    }
+    .ob-ddot.ob-ddot-active { background: #888; width: 16px; border-radius: 3px; }
+    #ob-demo-next {
+        background: #dcdcde;
+        color: #333;
+        border: none;
+        border-radius: 20px;
+        padding: 9px 22px;
+        font-size: 14px;
+        font-weight: 500;
+        font-family: inherit;
+        cursor: pointer;
+        transition: opacity 0.15s;
+    }
+    #ob-demo-next:active { opacity: 0.75; }
+
+    /* ══ 人物小传下拉箭头 ══ */
+    #bio-scroll-arrow {
+        position: fixed;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.92);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 100;
+        transition: opacity 0.4s ease;
+        animation: obBounce 1.4s ease-in-out infinite;
+    }
+    #bio-scroll-arrow.hidden { opacity: 0; pointer-events: none; }
+    #bio-scroll-arrow svg { width: 18px; height: 18px; }
+    @keyframes obBounce {
+        0%, 100% { transform: translateX(-50%) translateY(0); }
+        50%       { transform: translateX(-50%) translateY(5px); }
+    }
 </style>
 </head>
 <body>
@@ -275,41 +335,80 @@
     <div class="page-wrapper">
         <!-- 导航栏 -->
 
-    <!-- ══ 新手引导层 ══ -->
-    <div id="onboarding-overlay" role="dialog" aria-modal="true">
-        <button class="ob-skip" onclick="obSkip()">跳过</button>
-        <div class="ob-track">
-            <div class="ob-slides" id="ob-slides">
-                <!-- 第1页 -->
-                <div class="ob-slide">
-                    <div class="ob-icon">✦</div>
-                    <div class="ob-title">命盘决定角色底色</div>
-                    <div class="ob-desc">144种紫微命盘，每个角色天生不同——性格、欲望、命运走向，全由星盘决定。</div>
+    <!-- ══ 快速演示引导 ══ -->
+    <div id="ob-demo">
+        <div id="ob-demo-card">
+            <!-- 顶部标题 -->
+            <div id="ob-demo-header">
+                <span id="ob-demo-step-label">功能演示</span>
+                <button id="ob-demo-skip" onclick="obDone()">跳过</button>
+            </div>
+            <!-- 演示内容区（每幕切换） -->
+            <div id="ob-demo-scenes">
+                <!-- 幕0：选时代 -->
+                <div class="ob-scene ob-scene-active" id="ob-scene-0">
+                    <div class="ob-scene-icon">🏯</div>
+                    <div class="ob-scene-title">① 选择时代背景</div>
+                    <div class="ob-scene-desc">古代、近代、现代<br>决定角色的命运底色</div>
+                    <div class="ob-scene-mock">
+                        <span class="ob-mock-chip ob-mock-selected">古代</span>
+                        <span class="ob-mock-chip">近代</span>
+                        <span class="ob-mock-chip">现代</span>
+                    </div>
                 </div>
-                <!-- 第2页 -->
-                <div class="ob-slide">
-                    <div class="ob-icon">⊕</div>
-                    <div class="ob-title">三步生成人物小传</div>
-                    <div class="ob-desc">选命盘，填背景，一键生成专属人物小传，可直接用于剧本和小说创作。</div>
+                <!-- 幕1：填信息 -->
+                <div class="ob-scene" id="ob-scene-1">
+                    <div class="ob-scene-icon">📝</div>
+                    <div class="ob-scene-title">② 填写角色背景</div>
+                    <div class="ob-scene-desc">姓名、性别、职业、家境……<br>每项都影响小传内容</div>
+                    <div class="ob-scene-mock ob-mock-form">
+                        <div class="ob-mock-row"><span class="ob-mock-label">姓名</span><span class="ob-mock-val">角色1</span></div>
+                        <div class="ob-mock-row"><span class="ob-mock-label">职业</span><span class="ob-mock-val">文化人</span></div>
+                        <div class="ob-mock-row"><span class="ob-mock-label">时代</span><span class="ob-mock-val">近代</span></div>
+                    </div>
                 </div>
-                <!-- 第3页 -->
-                <div class="ob-slide">
-                    <div class="ob-icon">≋</div>
-                    <div class="ob-title">对比命盘，看关系张力</div>
-                    <div class="ob-desc">多个角色并排，命盘相性、关系原型、剧情建议——帮你设计有张力的人物关系。</div>
+                <!-- 幕2：生成小传 -->
+                <div class="ob-scene" id="ob-scene-2">
+                    <div class="ob-scene-icon">✦</div>
+                    <div class="ob-scene-title">③ 一键生成人物小传</div>
+                    <div class="ob-scene-desc">紫微命盘 × 编剧理论<br>专属小传，精准塑造</div>
+                    <div class="ob-scene-mock ob-mock-bio">
+                        <div class="ob-mock-bio-line ob-mock-bio-h">角色1 · 廉贞化禄</div>
+                        <div class="ob-mock-bio-line">外表疏冷，内心执念深重……</div>
+                        <div class="ob-mock-bio-line ob-mock-bio-short">危机应对：以柔克刚…</div>
+                        <div class="ob-mock-bio-dots">●●●</div>
+                    </div>
+                </div>
+                <!-- 幕3：对比角色 -->
+                <div class="ob-scene" id="ob-scene-3">
+                    <div class="ob-scene-icon">⊕</div>
+                    <div class="ob-scene-title">④ 对比角色命盘相性</div>
+                    <div class="ob-scene-desc">多角色并排，看关系张力<br>戏剧关系 · 相性评分</div>
+                    <div class="ob-scene-mock ob-mock-compare">
+                        <div class="ob-mock-cmp-col">
+                            <div class="ob-mock-cmp-name">角色1</div>
+                            <div class="ob-mock-cmp-star">廉贞化禄</div>
+                        </div>
+                        <div class="ob-mock-cmp-vs">vs</div>
+                        <div class="ob-mock-cmp-col">
+                            <div class="ob-mock-cmp-name">角色2</div>
+                            <div class="ob-mock-cmp-star">天机化科</div>
+                        </div>
+                    </div>
                 </div>
             </div>
+            <!-- 进度点 + 操作 -->
+            <div id="ob-demo-footer">
+                <div id="ob-demo-dots">
+                    <span class="ob-ddot ob-ddot-active" id="ob-ddot-0"></span>
+                    <span class="ob-ddot" id="ob-ddot-1"></span>
+                    <span class="ob-ddot" id="ob-ddot-2"></span>
+                    <span class="ob-ddot" id="ob-ddot-3"></span>
+                </div>
+                <button id="ob-demo-next" onclick="obDemoNext()">下一步</button>
+            </div>
         </div>
-        <div class="ob-dots">
-            <div class="ob-dot active" id="ob-dot-0"></div>
-            <div class="ob-dot" id="ob-dot-1"></div>
-            <div class="ob-dot" id="ob-dot-2"></div>
-        </div>
-        <button class="ob-btn" id="ob-next-btn" onclick="obNext()">下一步</button>
     </div>
-
-    <div class="page-wrapper">
-        <!-- 导航栏 -->
         <nav class="main-nav">
             <div class="nav-container">
                 <div class="logo">
@@ -675,9 +774,9 @@
                 </div>
 
                 <!-- iOS 下滑引导提示 -->
-                <div class="scroll-hint" id="scroll-hint-step4">
+                <div class="scroll-hint" id="scroll-hint-step4" onclick="(function(){var s=document.getElementById('saved-characters-section');if(s&&s.style.display!=='none'){var top=s.getBoundingClientRect().top+window.pageYOffset-20;window.scrollTo({top:top,behavior:'smooth'});}})()">
                     <span class="scroll-hint-icon">↓</span>
-                    <span class="scroll-hint-text">下滑选择更多属性</span>
+                    <span class="scroll-hint-text">查看已保存角色</span>
                 </div>
 
                 <div class="action-bar">
@@ -710,10 +809,10 @@
                         <span class="btn-arrow">←</span>
                         返回
                     </button>
-                    <button class="btn btn-primary" onclick="saveCharacter()">
+                    <button id="save-char-btn" class="btn btn-primary" onclick="saveCharacter()">
                         保存角色
                     </button>
-                    <button class="btn btn-outline" onclick="showCompare()">
+                    <button class="btn btn-outline" onclick="goToSavedForCompare()">
                         对比角色
                     </button>
                     <button class="btn btn-outline" onclick="copyCharacterBio()">
@@ -727,7 +826,7 @@
         </main>
 
         <!-- 已保存角色列表 -->
-        <div id="saved-characters-section" style="display:none; max-width:800px; margin:24px auto; padding:0 16px;">
+        <div id="saved-characters-section" style="display:none; max-width:800px; margin:8px auto 0; padding:0 16px;">
             <div class="content-card">
                 <div class="card-header">
                     <h2 class="card-title">已保存的角色</h2>
@@ -772,6 +871,13 @@
     <script src="chart-storage.js?v=11"></script>
     <script src="character-20-questions.js?v=11"></script>
     <script src="ziwei-bio-core.js?v=12"></script>
-    <script src="app-v2.js?v=14"></script>
+    <script src="app-v2.js?v=17"></script>
+
+    <!-- 下拉箭头：直接挂在 body，避免父容器 transform/animation 影响 fixed 定位 -->
+    <div id="bio-scroll-arrow" class="hidden" onclick="scrollToSaved()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+    </div>
 </body>
 </html>
