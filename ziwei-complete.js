@@ -534,97 +534,209 @@ function selectChartPattern(gender, career, personality, family, life) {
 /**
  * 生成十二宫位排布
  */
+
+// ==================== 真实排盘引擎 v2.0 ====================
+// 替换原有随机排盘算法，实现基于推算逻辑的真实安星
+
+const BRANCH_INDEX_MAP = { '子':0,'丑':1,'寅':2,'卯':3,'辰':4,'巳':5,'午':6,'未':7,'申':8,'酉':9,'戌':10,'亥':11 };
+const INDEX_BRANCH_ARR = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+
+/** 年干四化表（三合派权威版） */
+const SIHUA_TABLE = {
+    '甲': { '化禄':'廉贞', '化权':'破军', '化科':'武曲', '化忌':'太阳' },
+    '乙': { '化禄':'天机', '化权':'天梁', '化科':'紫微', '化忌':'太阴' },
+    '丙': { '化禄':'天同', '化权':'天机', '化科':'文昌', '化忌':'廉贞' },
+    '丁': { '化禄':'太阴', '化权':'天同', '化科':'天机', '化忌':'巨门' },
+    '戊': { '化禄':'贪狼', '化权':'太阴', '化科':'右弼', '化忌':'天机' },
+    '己': { '化禄':'武曲', '化权':'贪狼', '化科':'天梁', '化忌':'文曲' },
+    '庚': { '化禄':'太阳', '化权':'武曲', '化科':'太阴', '化忌':'天同' },
+    '辛': { '化禄':'巨门', '化权':'太阳', '化科':'文曲', '化忌':'文昌' },
+    '壬': { '化禄':'天梁', '化权':'紫微', '化科':'左辅', '化忌':'武曲' },
+    '癸': { '化禄':'破军', '化权':'巨门', '化科':'太阴', '化忌':'贪狼' }
+};
+
+/** 紫微星落宫：ceil(birthDay/juShu) 商决定跳宫次数，从寅(2)起每次+2 */
+function _getZiweiIdx(birthDay, juShu) {
+    const q = Math.ceil(birthDay / juShu);
+    return (2 + (q - 1) * 2) % 12;
+}
+
+/** 十四主星位置（以紫微index为基准） */
+function _getMainStarPos(ziweiIdx) {
+    const zi = ziweiIdx;
+    const tianfu = (14 - zi) % 12;
+    return {
+        '紫微': zi,
+        '天机': (zi - 1 + 12) % 12,
+        '太阳': (zi - 2 + 12) % 12,
+        '武曲': (zi - 3 + 12) % 12,
+        '天同': (zi - 4 + 12) % 12,
+        '廉贞': (zi - 5 + 12) % 12,
+        '天府': tianfu,
+        '太阴': (tianfu + 1) % 12,
+        '贪狼': (tianfu + 2) % 12,
+        '巨门': (tianfu + 3) % 12,
+        '天相': (tianfu + 4) % 12,
+        '天梁': (tianfu + 5) % 12,
+        '七杀': (tianfu + 6) % 12,
+        '破军': (zi + 6) % 12
+    };
+}
+
+/** 六吉星位置（根据年干、生月、生时） */
+function _getAuxPos(yearGan, birthMonth, birthHour) {
+    const KY = {
+        '甲':{'天魁':1,'天钺':7},'戊':{'天魁':1,'天钺':7},'庚':{'天魁':1,'天钺':7},
+        '乙':{'天魁':0,'天钺':8},'己':{'天魁':0,'天钺':8},
+        '丙':{'天魁':11,'天钺':9},'丁':{'天魁':11,'天钺':9},
+        '壬':{'天魁':3,'天钺':5},'癸':{'天魁':3,'天钺':5},
+        '辛':{'天魁':6,'天钺':2}
+    };
+    const ky = KY[yearGan] || { '天魁':1, '天钺':7 };
+    return {
+        '天魁': ky['天魁'],
+        '天钺': ky['天钺'],
+        '左辅': (4 + birthMonth - 1) % 12,
+        '右弼': (10 - birthMonth + 1 + 12) % 12,
+        '文昌': (10 - birthHour + 12) % 12,
+        '文曲': (4 + birthHour) % 12
+    };
+}
+
+/** 六煞星位置（根据年干、年支、生时） */
+function _getMalPos(yearGan, yearZhi, birthHour) {
+    const YT = {
+        '甲':{'擎羊':3,'陀罗':1},'乙':{'擎羊':4,'陀罗':2},
+        '丙':{'擎羊':6,'陀罗':4},'丁':{'擎羊':7,'陀罗':5},
+        '戊':{'擎羊':6,'陀罗':4},'己':{'擎羊':7,'陀罗':5},
+        '庚':{'擎羊':9,'陀罗':7},'辛':{'擎羊':10,'陀罗':8},
+        '壬':{'擎羊':0,'陀罗':10},'癸':{'擎羊':1,'陀罗':11}
+    };
+    const yt = YT[yearGan] || { '擎羊':3, '陀罗':1 };
+    const HX = {'寅':2,'午':6,'戌':10,'申':5,'子':5,'辰':5,'亥':2,'卯':2,'未':2,'巳':2,'酉':2,'丑':2};
+    const LX = {'寅':10,'午':10,'戌':10,'申':9,'子':9,'辰':9,'亥':9,'卯':9,'未':9,'巳':9,'酉':9,'丑':9};
+    return {
+        '擎羊': yt['擎羊'],
+        '陀罗': yt['陀罗'],
+        '地空': (11 - birthHour + 12) % 12,
+        '地劫': (11 + birthHour) % 12,
+        '火星': ((HX[yearZhi] || 2) + birthHour) % 12,
+        '铃星': ((LX[yearZhi] || 10) + birthHour) % 12
+    };
+}
+
+/** 用户选项 → 命盘推算参数（确定性：相同输入永远同一结果） */
+function _deriveParams(gender, age, career, personality, family, life) {
+    const TIANGAN = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+    const ganByP  = {
+        'decisive':['甲','庚','壬'], 'strategic':['乙','己','癸'],
+        'outgoing':['丙','甲','庚'], 'reserved': ['辛','己','癸'],
+        'steady':  ['戊','己','壬'], 'creative': ['乙','丁','癸'],
+        'default': ['甲','丙','戊']
+    };
+    const monByF = {
+        'noble':[1,3,5], 'wealthy':[2,4,8], 'normal':[6,7,9], 'poor':[10,11,12]
+    };
+    const hrByL  = {
+        'smooth':[3,5,7], 'hard':[11,0,1], 'rollercoaster':[2,6,10],
+        'late_bloomer':[1,9,5], 'default':[4,6,8]
+    };
+    const juByC  = {
+        'politician':[5,3], 'merchant':[4,6], 'military':[6,4],
+        'artist':[2,3],     'scholar':[3,5],  'default':[3,4]
+    };
+
+    const seedStr = [gender,age,career,personality,family,life].join('|');
+    let seed = 0;
+    for (let c of seedStr) seed = (seed * 31 + c.charCodeAt(0)) & 0xFFFFFF;
+    const pick = (arr, off) => arr[Math.abs(seed + off) % arr.length];
+
+    const yearGan    = pick(ganByP[personality] || ganByP['default'], 0);
+    const birthMonth = pick(monByF[family]  || [5,6,7], 1);
+    const birthHour  = pick(hrByL[life]     || hrByL['default'], 2);
+    const juShu      = pick(juByC[career]   || juByC['default'], 3);
+    const yearZhi    = INDEX_BRANCH_ARR[TIANGAN.indexOf(yearGan) % 12];
+    const birthDay   = ((seed % 28) + 1);
+    const ziweiIdx   = _getZiweiIdx(birthDay, juShu);
+    const mingIdx    = (2 + (birthMonth - 1) + birthHour) % 12;
+
+    return { yearGan, yearZhi, birthMonth, birthHour, birthDay, juShu, ziweiIdx, mingIdx };
+}
+
+/**
+ * 真实排盘：生成十二宫位（替换原随机版 generatePalaces）
+ */
 function generatePalaces(pattern, gender, age, career, personality, family, life) {
+    const p = _deriveParams(gender, age, career, personality, family, life);
+    const { yearGan, yearZhi, birthMonth, birthHour, juShu, ziweiIdx, mingIdx } = p;
+
+    const mainPos = _getMainStarPos(ziweiIdx);
+    const auxPos  = _getAuxPos(yearGan, birthMonth, birthHour);
+    const malPos  = _getMalPos(yearGan, yearZhi, birthHour);
+
+    const PALACE_ORDER = ['命宫','父母宫','福德宫','田宅宫','官禄宫','交友宫',
+                          '迁移宫','疾厄宫','财帛宫','子女宫','夫妻宫','兄弟宫'];
     const palaces = [];
-    const mainStars = pattern.mainStars;
-    
-    // 确定命宫位置（根据出生时辰，这里简化处理）
-    const mingIndex = Math.floor(Math.random() * 12);
-    
-    // 生成十二宫
+
     for (let i = 0; i < 12; i++) {
-        const palaceName = PALACES[i].name;
-        const palaceInfo = PALACES[i];
-        
-        // 确定宫位的主星
-        let stars = [];
-        let brightness = {};
-        
-        // 命宫和迁移宫放主星
-        if (i === mingIndex) {
-            stars = [...mainStars];
-            mainStars.forEach(star => {
-                const branch = EARTHLY_BRANCHES[i];
-                brightness[star] = MAIN_STARS[star].brightness[branch] || '平';
-            });
-        } else if (i === (mingIndex + 6) % 12) {
-            // 迁移宫可能也有主星影响
-            if (Math.random() > 0.5) {
-                stars.push(mainStars[0]);
-                const branch = EARTHLY_BRANCHES[i];
-                brightness[mainStars[0]] = MAIN_STARS[mainStars[0]].brightness[branch] || '平';
+        const branchIdx  = (mingIdx + i) % 12;
+        const branch     = INDEX_BRANCH_ARR[branchIdx];
+        const palaceName = PALACE_ORDER[i];
+        const baseInfo   = PALACES.find(p2 => p2.name === palaceName) || PALACES[i];
+
+        const stars      = [];
+        const brightness = {};
+
+        for (const [star, pos] of Object.entries(mainPos)) {
+            if (pos === branchIdx && MAIN_STARS[star]) {
+                stars.push(star);
+                brightness[star] = MAIN_STARS[star]?.brightness?.[branch] || '平';
             }
         }
-        
-        // 随机添加辅星和煞星
-        const auxStars = Object.keys(AUXILIARY_STARS);
-        const malStars = Object.keys(MALEVOLENT_STARS);
-        
-        // 根据人生经历调整吉凶星
-        let auxCount = 1;
-        let malCount = 0;
-        
-        if (life === 'smooth') {
-            auxCount = 2;
-            malCount = 0;
-        } else if (life === 'hard') {
-            auxCount = 0;
-            malCount = 2;
-        } else if (life === 'rollercoaster') {
-            auxCount = 1;
-            malCount = 1;
-        }
-        
-        // 添加辅星
-        for (let j = 0; j < auxCount; j++) {
-            if (Math.random() > 0.5) {
-                const star = auxStars[Math.floor(Math.random() * auxStars.length)];
-                if (!stars.includes(star)) {
-                    stars.push(star);
-                }
-            }
-        }
-        
-        // 添加煞星
-        for (let j = 0; j < malCount; j++) {
-            if (Math.random() > 0.5) {
-                const star = malStars[Math.floor(Math.random() * malStars.length)];
-                if (!stars.includes(star)) {
-                    stars.push(star);
-                }
-            }
-        }
-        
+        for (const [star, pos] of Object.entries(auxPos))  { if (pos === branchIdx) stars.push(star); }
+        for (const [star, pos] of Object.entries(malPos))  { if (pos === branchIdx) stars.push(star); }
+
         palaces.push({
-            index: i,
-            name: palaceName,
-            branch: EARTHLY_BRANCHES[i],
-            element: palaceInfo.element,
-            direction: palaceInfo.direction,
-            desc: palaceInfo.desc,
-            stars: stars,
-            brightness: brightness,
-            isMing: i === mingIndex,
-            isShen: i === mingIndex // 简化：命宫即身宫
+            index: i, name: palaceName,
+            branch, element: baseInfo?.element || '水',
+            direction: baseInfo?.direction || '北',
+            desc: baseInfo?.desc || '',
+            stars, brightness,
+            isMing: i === 0, isShen: i === 0,
+            _meta: i === 0 ? {
+                五行局: ['水二局','木三局','金四局','土五局','火六局'][juShu-2] || juShu+'局',
+                年干: yearGan, 命宫地支: branch,
+                紫微落宫: INDEX_BRANCH_ARR[ziweiIdx]
+            } : null
         });
     }
-    
     return palaces;
 }
 
 /**
- * 计算三方四正
+ * 真实四化计算（替换原随机版 calculateSihua）
  */
+function calculateSihua(palaces, pattern) {
+    const meta = palaces[0]?._meta;
+    let yearGan = meta?.年干;
+    if (!yearGan) {
+        const fb = {'紫微':'壬','天机':'乙','太阳':'庚','武曲':'己','天同':'庚','廉贞':'甲',
+                    '天府':'甲','太阴':'乙','贪狼':'戊','巨门':'辛','天相':'甲','天梁':'壬',
+                    '七杀':'甲','破军':'癸'};
+        yearGan = fb[pattern.mainStars[0]] || '甲';
+    }
+    const table = SIHUA_TABLE[yearGan] || SIHUA_TABLE['甲'];
+    const sihua = {};
+    for (const [sName, tStar] of Object.entries(table)) {
+        const palace = palaces.find(p => p.stars.includes(tStar));
+        sihua[sName] = {
+            palace: palace ? palace.name : '（飞宫）',
+            star:   tStar,
+            desc:   FOUR_TRANSFORMATIONS[sName]?.desc || sName
+        };
+    }
+    return sihua;
+}
 function calculateSanfangSizheng(palaces) {
     const result = {};
     
@@ -649,48 +761,6 @@ function calculateSanfangSizheng(palaces) {
 
 /**
  * 计算四化
- */
-function calculateSihua(palaces, pattern) {
-    const sihua = {
-        '化禄': { palace: '', star: '', desc: '' },
-        '化权': { palace: '', star: '', desc: '' },
-        '化科': { palace: '', star: '', desc: '' },
-        '化忌': { palace: '', star: '', desc: '' }
-    };
-    
-    // 根据主星确定四化（简化版）
-    const mainStar = pattern.mainStars[0];
-    const sihuaMap = {
-        '紫微': { hualu: '破军', huaquan: '天梁', huake: '紫微', huaji: '太阳' },
-        '天机': { hualu: '天梁', huaquan: '紫微', huake: '武曲', huaji: '贪狼' },
-        '太阳': { hualu: '太阴', huaquan: '天梁', huake: '天机', huaji: '巨门' },
-        '武曲': { hualu: '贪狼', huaquan: '紫微', huake: '天梁', huaji: '太阳' },
-        '天同': { hualu: '太阴', huaquan: '天梁', huake: '天机', huaji: '巨门' },
-        '廉贞': { hualu: '武曲', huaquan: '紫微', huake: '天梁', huaji: '太阳' },
-        '天府': { hualu: '太阴', huaquan: '天梁', huake: '天机', huaji: '巨门' },
-        '太阴': { hualu: '天梁', huaquan: '紫微', huake: '武曲', huaji: '贪狼' },
-        '贪狼': { hualu: '太阴', huaquan: '天梁', huake: '天机', huaji: '巨门' },
-        '巨门': { hualu: '天梁', huaquan: '紫微', huake: '武曲', huaji: '贪狼' },
-        '天相': { hualu: '太阴', huaquan: '天梁', huake: '天机', huaji: '巨门' },
-        '天梁': { hualu: '天梁', huaquan: '紫微', huake: '武曲', huaji: '贪狼' },
-        '七杀': { hualu: '破军', huaquan: '天梁', huake: '紫微', huaji: '太阳' },
-        '破军': { hualu: '破军', huaquan: '天梁', huake: '紫微', huaji: '太阳' }
-    };
-    
-    const map = sihuaMap[mainStar] || sihuaMap['紫微'];
-    
-    // 随机分配四化到宫位
-    const palaceNames = palaces.map(p => p.name);
-    sihua['化禄'] = { palace: palaceNames[Math.floor(Math.random() * 12)], star: map.hualu, desc: '主财富增长，机遇良好' };
-    sihua['化权'] = { palace: palaceNames[Math.floor(Math.random() * 12)], star: map.huaquan, desc: '主权力掌控，决策力强' };
-    sihua['化科'] = { palace: palaceNames[Math.floor(Math.random() * 12)], star: map.huake, desc: '主名声远播，学业有成' };
-    sihua['化忌'] = { palace: palaceNames[Math.floor(Math.random() * 12)], star: map.huaji, desc: '主阻碍压力，需谨慎应对' };
-    
-    return sihua;
-}
-
-/**
- * 生成逐宫详细解读
  */
 function generatePalaceAnalysis(palaces, gender, age, career, personality, family, life) {
     const analysis = [];
