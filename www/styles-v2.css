@@ -1327,7 +1327,7 @@ body {
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .title-line {
         font-size: var(--text-3xl);
     }
@@ -1351,6 +1351,34 @@ body {
     .btn {
         width: 100%;
         justify-content: center;
+    }
+
+    /* iOS：主操作按钮置顶，返回退居文字链 */
+    .action-bar .btn-primary,
+    .action-bar .btn-large {
+        order: -1;
+        border-radius: 50px;
+        font-size: 1rem;
+        font-weight: 600;
+        padding: 14px 24px;
+        letter-spacing: 0.02em;
+    }
+
+    .action-bar .btn-secondary {
+        order: 1;
+        background: transparent;
+        border: none;
+        color: var(--color-text-secondary, #888);
+        font-size: 0.85rem;
+        font-weight: 400;
+        padding: 6px 16px;
+        width: auto;
+        align-self: center;
+    }
+
+    .action-bar .btn-secondary:hover {
+        background: transparent;
+        color: var(--color-text, #333);
     }
     
     .ke-selector {
@@ -1597,40 +1625,53 @@ body {
     height: 100dvh;
 }
 
-/* 左侧中间浮动返回按钮 */
-.cmp-back-float {
-    position: fixed;
-    left: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 9100;
-    background: var(--color-surface, #fff);
+/* 顶部左上角固定返回按钮 */
+.cmp-back-btn {
+    flex-shrink: 0;
+    background: transparent;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg, 12px);
-    padding: 10px 18px;
-    font-size: 0.9rem;
+    padding: 6px 14px;
+    font-size: 0.875rem;
     font-weight: 600;
     color: var(--color-text);
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    white-space: nowrap;
     font-family: inherit;
-    transition: all 0.2s ease;
+    white-space: nowrap;
+    transition: background 0.15s;
 }
 
-.cmp-back-float:active {
+.cmp-back-btn:active {
     background: var(--color-bg, #f5f0eb);
-    transform: translateY(-50%) scale(0.95);
+    transform: scale(0.95);
 }
 .cmp-summary-bar {
     display: flex;
-    gap: var(--space-3);
+    align-items: center;
+    gap: var(--space-2);
     padding: var(--space-3) var(--space-4);
+    padding-top: calc(env(safe-area-inset-top, 0px) + var(--space-3));
     background: var(--color-surface, #fff);
     border-bottom: 1px solid var(--color-border);
     flex-shrink: 0;
-    flex-wrap: wrap;
-    align-items: center;
+    overflow-x: auto;
+}
+
+/* 顶栏固定标题 */
+.cmp-summary-bar .cmp-summary-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    flex: 1;
+    text-align: center;
+}
+
+/* vs 分隔符（保留兼容）*/
+.cmp-summary-sep {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+    padding: 0 2px;
 }
 
 .cmp-summary-item {
@@ -1665,10 +1706,40 @@ body {
 
 /* 对比分析条 */
 .cmp-analysis {
-    padding: var(--space-2) var(--space-4);
+    padding: 10px var(--space-4) 12px;
     background: var(--color-surface-alt, #faf7f4);
     border-bottom: 1px solid var(--color-border);
     flex-shrink: 0;
+}
+
+.cmp-archetype-tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--color-primary, #6c63ff);
+    background: rgba(108,99,255,0.08);
+    border-radius: 4px;
+    padding: 2px 8px;
+    margin-bottom: 6px;
+}
+
+.cmp-archetype-tip {
+    font-size: 0.78rem;
+    color: var(--color-text, #333);
+    line-height: 1.7;
+    margin: 0 0 4px;
+}
+
+.cmp-scene-tip {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary, #666);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.cmp-scene-tip strong {
+    color: var(--color-text, #333);
 }
 
 .cmp-analysis p {
@@ -1736,10 +1807,32 @@ body {
 }
 
 .cmp-bio-name {
-    font-size: 0.95rem;
+    font-size: 1rem;
     font-weight: 700;
     color: var(--color-text);
     margin: 0 0 2px 0;
+}
+
+/* 列头：名字 + 四化标签横排 */
+.cmp-col-name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 3px;
+}
+
+/* 四化类型标签 */
+.cmp-sihua-tag {
+    display: inline-block;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--color-accent, #8b1a1a);
+    background: rgba(139,26,26,0.08);
+    border-radius: 4px;
+    padding: 1px 6px;
+    line-height: 1.6;
+    white-space: nowrap;
 }
 
 .cmp-bio-meta {
@@ -1878,10 +1971,65 @@ body {
     font-size: var(--text-lg);
 }
 
+/* ==================== 下滑引导提示（iOS 风格）==================== */
+.scroll-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 18px;
+    margin: 8px auto 4px;
+    width: fit-content;
+    background: rgba(0, 0, 0, 0.06);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 50px;
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary, #666);
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    opacity: 1;
+}
+
+.scroll-hint.hidden {
+    opacity: 0;
+}
+
+.scroll-hint-icon {
+    font-size: 0.875rem;
+    animation: scrollBounce 1.6s ease-in-out infinite;
+    display: inline-block;
+}
+
+@keyframes scrollBounce {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(4px); }
+}
+
+/* ==================== 全步骤 sticky action-bar ==================== */
+/* 所有步骤的下一步/生成按钮始终吸底可见 */
+#step-1 .action-bar,
+#step-2 .action-bar,
+#step-3 .action-bar,
+#step-4 .action-bar {
+    position: sticky;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-top: 1px solid var(--color-border-light, #F0F0F0);
+    padding: 12px 16px;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+    margin-left: calc(-1 * var(--space-6));
+    margin-right: calc(-1 * var(--space-6));
+    z-index: 50;
+}
+
 /* ==================== 步骤4：8属性细化 ==================== */
 /* 步骤4整体容器 - 添加顶部内边距，确保说明可见 */
 #step-4 {
     padding-top: var(--space-12, 48px) !important;
+    padding-bottom: 80px; /* 给 sticky action-bar 留空间，防止最后选项被遮住 */
 }
 
 .attribute-group {
@@ -1904,6 +2052,7 @@ body {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-3, 12px);
+    justify-content: flex-start;
 }
 
 .attribute-option {
@@ -1964,7 +2113,7 @@ body {
 }
 
 /* ==================== iOS 移动端适配 ==================== */
-@media (max-width: 430px) {
+@media (max-width: 1024px) {
     /* 根字号适当放大，让 rem 单位在小屏更清晰 */
     html {
         font-size: 15px;
@@ -2056,24 +2205,34 @@ body {
         font-size: 0.625rem;
     }
 
-    /* 步骤4属性选项：标签按钮适当收紧 */
+    /* 步骤4属性选项：iOS chip 风格，紧凑可扫描 */
     .attribute-option {
-        padding: 10px 14px;
-        font-size: 0.875rem;
+        padding: 7px 13px;
+        font-size: 0.8125rem;   /* 13px */
+        border-radius: 20px;    /* 全圆角 pill 形 */
+        line-height: 1.3;
     }
 
     .attribute-group {
-        padding: 16px 14px;
-        margin-bottom: 20px;
+        padding: 14px 12px;
+        margin-bottom: 12px;
     }
 
     .attribute-label {
-        font-size: 1rem;
-        margin-bottom: 10px;
+        font-size: 0.9375rem;   /* 15px */
+        margin-bottom: 8px;
     }
 
     .attribute-options {
-        gap: 8px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 7px;
+    }
+
+    .attribute-options .attribute-option {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
     }
 
     /* 卡片内边距整体收紧 */
@@ -2101,18 +2260,31 @@ body {
         font-size: 1.875rem;
     }
 
-    /* 步骤指示器收紧 */
+    /* 步骤指示器 — iOS 手机端紧凑版 */
     .step-indicator {
-        gap: 12px;
-        padding: 20px 12px;
+        gap: 0;
+        padding: 14px 8px;
+    }
+
+    .step {
+        gap: 3px;
+        min-width: 40px;
     }
 
     .step-number {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
+        line-height: 1;
     }
 
     .step-label {
-        font-size: 0.75rem;
+        font-size: 0.6875rem;
+        line-height: 1.3;
+        text-align: center;
+    }
+
+    .step-line {
+        width: 20px;
+        flex-shrink: 0;
     }
 
     /* 星盘/特质/格局网格：小屏单列 */
@@ -2127,5 +2299,224 @@ body {
     .trait-card,
     .pattern-card {
         padding: 14px;
+    }
+
+    /* ── 步骤2 表单区域 ── */
+    .form-section {
+        padding: 16px 14px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        font-size: 1rem;
+        margin-bottom: 10px;
+    }
+
+    .name-input {
+        padding: 12px 14px;
+        font-size: 1rem;
+    }
+
+    .form-input {
+        padding: 11px 14px;
+        font-size: 1rem;
+    }
+
+    /* ── 人物小传（步骤5）结果区 ── */
+    .result-content {
+        padding: 16px 14px;
+    }
+
+    .result-section {
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+    }
+
+    .result-title {
+        font-size: 1rem;
+        margin-bottom: 10px;
+        padding-left: 10px;
+    }
+
+    .result-content p {
+        font-size: 0.9375rem;
+        line-height: 1.85;
+        margin-bottom: 10px;
+    }
+
+    .result-content h1 { font-size: 1.25rem; margin: 16px 0 8px; }
+    .result-content h2 { font-size: 1.1rem;  margin: 14px 0 6px; }
+    .result-content h3 { font-size: 1rem;    margin: 12px 0 5px; }
+
+    /* ── 小传 bio 表格 ── */
+    .bio-table {
+        font-size: 0.875rem;
+    }
+
+    .bio-table th,
+    .bio-table td {
+        padding: 8px 10px;
+        line-height: 1.7;
+    }
+
+    /* ── 按钮区域（iOS 风格） ── */
+    .action-bar {
+        padding: 12px 16px;
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+        gap: 6px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn {
+        padding: 12px 20px;
+        font-size: 0.9375rem;
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* 主操作：胶囊形、置顶、突出 */
+    .action-bar .btn-primary,
+    .action-bar .btn-large {
+        order: -1;
+        border-radius: 50px;
+        font-size: 1rem;
+        font-weight: 600;
+        padding: 15px 24px;
+        letter-spacing: 0.02em;
+    }
+
+    /* 返回/次要：轻量文字链，居中，不占视觉重量 */
+    .action-bar .btn-secondary {
+        order: 1;
+        background: transparent !important;
+        border: none !important;
+        color: var(--color-text-secondary, #888) !important;
+        font-size: 0.85rem;
+        font-weight: 400;
+        padding: 6px 16px;
+        width: auto;
+        align-self: center;
+        box-shadow: none !important;
+    }
+
+    /* ── 出生信息区 ── */
+    .birth-info-content {
+        padding: 14px;
+    }
+
+    /* ── 模式选择按钮 ── */
+    .mode-selector {
+        gap: 8px;
+    }
+
+    .mode-btn {
+        padding: 12px 10px;
+        font-size: 0.875rem;
+    }
+
+    .mode-icon {
+        font-size: 1.25rem;
+    }
+
+    /* ── 主内容区左右边距收紧 ── */
+    .main-content {
+        padding-left: var(--space-4);
+        padding-right: var(--space-4);
+    }
+
+    /* ── 表单组间距 ── */
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-label {
+        font-size: 0.9375rem;
+        margin-bottom: 8px;
+    }
+
+    /* ── 步骤3 星盘概览 ── */
+    .chart-overview {
+        padding: 14px 12px;
+    }
+
+    .chart-info-grid {
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .info-item {
+        padding: 10px 8px;
+    }
+
+    .info-label {
+        font-size: 0.6875rem;
+        margin-bottom: 2px;
+    }
+
+    .info-value {
+        font-size: 0.9375rem;
+    }
+
+    /* ── 星盘卡片（步骤3细分选择）── */
+    .star-card,
+    .trait-card,
+    .pattern-card {
+        padding: 12px;
+    }
+
+    .star-name,
+    .trait-name,
+    .pattern-name {
+        font-size: 0.9375rem;
+        margin-bottom: 4px;
+    }
+
+    .star-desc,
+    .trait-desc,
+    .pattern-desc {
+        font-size: 0.75rem;
+        line-height: 1.5;
+    }
+
+    /* ── 命盘格局名 ── */
+    .pattern-name-display {
+        font-size: 1.5rem;
+    }
+
+    /* ── 已保存角色列表 ── */
+    .saved-character-item {
+        padding: 10px 12px;
+        gap: 10px;
+    }
+
+    .character-name-display {
+        font-size: 0.9375rem;
+    }
+
+    .character-meta {
+        font-size: 0.75rem;
+        line-height: 1.5;
+    }
+
+    /* ── saved-chars 区域按钮 ── */
+    .saved-character-item .btn {
+        padding: 8px 14px;
+        font-size: 0.8125rem;
+    }
+
+    /* ── content-card 整体收紧 ── */
+    .content-card {
+        border-radius: 10px;
+    }
+
+    /* ── 步骤5 人物小传页 action-bar（返回/保存） ── */
+    #step-5 .action-bar {
+        padding: 12px 16px;
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+        gap: 8px;
     }
 }

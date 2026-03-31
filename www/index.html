@@ -10,7 +10,7 @@
     <meta name="description" content="星轨人生 - 专为艺术创作者提供人物塑造辅助工具 · 576盘精细排盘系统 · 三时代人物设计工具">
     <title>星轨人生 - 艺术创作者的人物塑造工具</title>
     
-    <link rel="stylesheet" href="styles-v2.css">
+    <link rel="stylesheet" href="styles-v2.css?v=13">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -521,6 +521,12 @@
                     </div>
                 </div>
 
+                <!-- iOS 下滑引导提示 -->
+                <div class="scroll-hint" id="scroll-hint-step4">
+                    <span class="scroll-hint-icon">↓</span>
+                    <span class="scroll-hint-text">下滑选择更多属性</span>
+                </div>
+
                 <div class="action-bar">
                     <button class="btn btn-secondary" onclick="prevStep()">
                         <span class="btn-arrow">←</span>
@@ -584,7 +590,6 @@
 
         <!-- 对比结果（全屏覆盖层，样式由 CSS #compare-section 控制） -->
         <div id="compare-section">
-            <div class="cmp-back-float" onclick="closeCompare()">返回</div>
             <div id="compare-content" style="display:contents;"></div>
         </div>
 
@@ -614,6 +619,6 @@
     <script src="chart-storage.js?v=11"></script>
     <script src="character-20-questions.js?v=11"></script>
     <script src="ziwei-bio-core.js?v=12"></script>
-    <script src="app-v2.js?v=11"></script>
+    <script src="app-v2.js?v=13"></script>
 </body>
 </html>

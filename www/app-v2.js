@@ -216,19 +216,25 @@ function showStep(step) {
     
     currentStep = step;
 
-    // 切换到步骤3时，自动滚到「选择细分星盘」区块顶部
-    if (step === 3) {
-        requestAnimationFrame(function() {
-            var el = document.getElementById('step-3');
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-    }
-    // 切换到步骤5时，自动滚到顶部（确保loading动效可见）
-    if (step === 5) {
-        requestAnimationFrame(function() {
-            var el = document.getElementById('step-5');
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
+    // 所有步骤切换后立即归到顶部（iOS 习惯：新页面从头开始）
+    requestAnimationFrame(function() {
+        window.scrollTo({ top: 0, behavior: 'instant' });
+    });
+
+    // 步骤4：重置下滑提示，滚动后自动淡出
+    if (step === 4) {
+        var hint = document.getElementById('scroll-hint-step4');
+        if (hint) {
+            hint.classList.remove('hidden');
+            var _scrollHideHandler = function() {
+                if (window.scrollY > 60) {
+                    hint.classList.add('hidden');
+                    window.removeEventListener('scroll', _scrollHideHandler);
+                }
+            };
+            window.removeEventListener('scroll', _scrollHideHandler); // 防重复
+            window.addEventListener('scroll', _scrollHideHandler, { passive: true });
+        }
     }
 }
 
@@ -1009,89 +1015,128 @@ function generateComparison(chars) {
     var eraMap = {ancient:'古代', modern:'近代', contemporary:'现代'};
     var ageMap = {youth:'青年', middle:'中年', senior:'老年'};
 
-    // ── 顶部摘要条 ──
-    var summaryItems = chars.map(function(char) {
-        var sihua = char.sihua || '';
-        var era   = eraMap[char.inputs.era] || '';
-        var gender = char.inputs.gender === 'female' ? '女' : '男';
-        var age   = ageMap[char.inputs.age] || '';
-        return '<div class="cmp-summary-item">' +
-            '<span class="cmp-summary-name">' + (char.name || '角色') + '</span>' +
-            '<span class="cmp-summary-meta">' + era + ' · ' + gender + ' · ' + age + ' · ' + sihua + '</span>' +
-        '</div>';
-    }).join('');
+    // ── 顶部摘要条：固定标题，不重复显示角色名（列头已有）──
+    var summaryItems = '<span class="cmp-summary-title">角色对比分析</span>';
 
-    // ── 戏剧关系分析 ──
+    // ── 戏剧关系分析（聚焦关系原型 + 剧情建议，不重复相性卡片内容）──
     var sihuaList = chars.map(function(c) { return c.sihua || '未知'; });
     var genderList = chars.map(function(c) { return c.inputs.gender === 'female' ? '女' : '男'; });
     var ageList  = chars.map(function(c) { return ageMap[c.inputs.age] || c.inputs.age || '未知'; });
     var eraList  = chars.map(function(c) { return eraMap[c.inputs.era] || c.inputs.era || '未知'; });
     var nameList = chars.map(function(c) { return c.name || '角色'; });
 
-    var relationMap = {
-        '野心者_执念者': '两人都是目标导向型，容易在同一条路上竞争，甚至互为镜像——外向扩张对内向执着，张力极强。',
-        '执念者_野心者': '两人都是目标导向型，容易在同一条路上竞争，甚至互为镜像——外向扩张对内向执着，张力极强。',
-        '野心者_隐忍者': '一个主动出击，一个蓄力待发。表面强弱，实则隐忍者的爆发往往比野心者更彻底。适合设计从依附到反转的关系弧。',
-        '隐忍者_野心者': '一个主动出击，一个蓄力待发。表面强弱，实则隐忍者的爆发往往比野心者更彻底。适合设计从依附到反转的关系弧。',
-        '谋局者_执念者': '一个算计全局，一个死磕一点。前者容易把后者当棋子，后者往往是最后翻盘的变量。适合设计利用与被利用、最终失控的关系。',
-        '执念者_谋局者': '一个算计全局，一个死磕一点。前者容易把后者当棋子，后者往往是最后翻盘的变量。适合设计利用与被利用、最终失控的关系。',
-        '隐忍者_执念者': '两人都有强烈内驱力，一个向内消化，一个向外固着。放在亲密关系里尤其有戏——彼此理解却互相消耗。',
-        '执念者_隐忍者': '两人都有强烈内驱力，一个向内消化，一个向外固着。放在亲密关系里尤其有戏——彼此理解却互相消耗。',
+    // 关系原型：基于四化组合，给出剧本创作层面的关系定型
+    var archetypeMap = {
+        '谋局者_谋局者': { name: '双谋对弈', tip: '两个人都在下棋，谁也不是棋子。冲突来自信息战，合作本质是暂时的同盟。建议设计"共同敌人消失后立刻反目"的结构。' },
+        '野心者_野心者': { name: '双雄角力', tip: '目标高度重叠，天然竞争。建议在同一利益场景里制造"合则两利、斗则俱损"的困境，迫使他们反复选择。' },
+        '享乐者_享乐者': { name: '同频共振', tip: '两人都追求当下满足，矛盾往往来自外部压力而非内部。建议用"大难临头"或"各自被迫成长"破坏这种平衡。' },
+        '执念者_执念者': { name: '两败俱伤型', tip: '两个人都死磕，谁也不肯松手。建议设计一个他们共同在意却只有一个人能得到的东西，让冲突彻底化。' },
+        '谋局者_野心者': { name: '棋手与剑客', tip: '一个算，一个冲。前期谋局者占优，中后期野心者容易突破算计。建议在第三幕让野心者做一件"完全不在预案里"的事，打破谋局者的掌控感。' },
+        '野心者_谋局者': { name: '棋手与剑客', tip: '一个算，一个冲。前期谋局者占优，中后期野心者容易突破算计。建议在第三幕让野心者做一件"完全不在预案里"的事，打破谋局者的掌控感。' },
+        '谋局者_享乐者': { name: '猎人与猎物', tip: '谋局者看穿享乐者的欲望并加以利用，享乐者往往不自知。建议设计"享乐者被唤醒"的转折点——一旦他不再好骗，谋局者将失去最大棋子。' },
+        '享乐者_谋局者': { name: '猎人与猎物', tip: '谋局者看穿享乐者的欲望并加以利用，享乐者往往不自知。建议设计"享乐者被唤醒"的转折点——一旦他不再好骗，谋局者将失去最大棋子。' },
+        '谋局者_执念者': { name: '利用与失控', tip: '谋局者把执念者当变量纳入棋局，但执念者的不理性恰恰是最大的变数。建议在关键节点让执念者的偏执"刚好"拆了谋局者最精密的一步棋。' },
+        '执念者_谋局者': { name: '利用与失控', tip: '谋局者把执念者当变量纳入棋局，但执念者的不理性恰恰是最大的变数。建议在关键节点让执念者的偏执"刚好"拆了谋局者最精密的一步棋。' },
+        '野心者_享乐者': { name: '驱动与阻力', tip: '野心者往前冲，享乐者拉着不走。两人关系的核心冲突是"为什么要那么拼"。建议让享乐者在某个节点选择放弃，迫使野心者面对孤独。' },
+        '享乐者_野心者': { name: '驱动与阻力', tip: '野心者往前冲，享乐者拉着不走。两人关系的核心冲突是"为什么要那么拼"。建议让享乐者在某个节点选择放弃，迫使野心者面对孤独。' },
+        '野心者_执念者': { name: '扩张与深挖', tip: '野心者要占领更多，执念者只盯着一件事。目标不同，路线交叉时冲突爆发。建议设计"那件事"同时是两人的关键——让目标物重叠。' },
+        '执念者_野心者': { name: '扩张与深挖', tip: '野心者要占领更多，执念者只盯着一件事。目标不同，路线交叉时冲突爆发。建议设计"那件事"同时是两人的关键——让目标物重叠。' },
+        '享乐者_执念者': { name: '轻与重的拉锯', tip: '享乐者觉得执念者太沉，执念者觉得享乐者不可信任。两人的互相吸引和互相嫌弃可以同时存在。建议在关系最好的时刻安排一次关于"值不值得"的选择。' },
+        '执念者_享乐者': { name: '轻与重的拉锯', tip: '享乐者觉得执念者太沉，执念者觉得享乐者不可信任。两人的互相吸引和互相嫌弃可以同时存在。建议在关系最好的时刻安排一次关于"值不值得"的选择。' },
     };
-    var sihuaKey = sihuaList[0] + '_' + sihuaList[1];
-    var relationDesc = relationMap[sihuaKey] || '这几种类型并置，核心戏剧张力来自各自动机的碰撞——目标交叉时冲突自然产生，合作也带着裂缝。';
+    var sihuaKey2 = sihuaList.slice(0,2).join('_');
+    var archetype = archetypeMap[sihuaKey2] || { name: '多元混局', tip: '多种驱动类型并存，关系结构复杂。建议先确定谁是主视角，再设计其他角色对其构成的具体压力。' };
 
-    var contextNote = '';
-    if (eraList.some(function(e){ return e !== eraList[0]; })) {
-        contextNote = '角色处于不同时代（' + eraList.join(' / ') + '），若需同框需设计跨时代叙事结构。';
-    } else if (ageList.some(function(a){ return a !== ageList[0]; })) {
-        contextNote = '年龄段不同（' + nameList.map(function(n,i){ return n + ageList[i]; }).join('、') + '），适合设计代际传承或对抗关系。';
-    } else if (genderList.some(function(g){ return g !== genderList[0]; })) {
-        contextNote = '性别构成混合，' + eraList[0] + '背景下，性别带来的社会处境差异本身就是戏剧资源。';
+    // 场景建议：基于时代/年龄给出具体场景切入点（不重复相性卡片的"跨时代""年龄相近"判断）
+    var sceneTip = '';
+    var allSameEra = eraList.every(function(e){ return e === eraList[0]; });
+    var allSameAge = ageList.every(function(a){ return a === ageList[0]; });
+    var hasFemaleMale = genderList.indexOf('女') > -1 && genderList.indexOf('男') > -1;
+
+    if (!allSameEra) {
+        var eraCombo = [...new Set(eraList)].join('→');
+        var eraTipMap = {
+            '古代→近代': '建议以"物件/秘密/血脉传承"为跨时代纽带，让古代角色的选择直接影响近代角色的命运。',
+            '近代→现代': '建议以"历史遗留问题"为切入点——近代的未竟之事，在现代角色身上形成回响或债务。',
+            '古代→现代': '时代跨度最大，建议只保留精神/价值观层面的呼应，避免强行物理同框。',
+            '古代→近代→现代': '三代并存，天然史诗结构。建议设计一条贯穿三代的"执念或遗物"作为主线锚点。',
+        };
+        sceneTip = eraTipMap[eraCombo] || ('跨越' + eraCombo + '的时代跨度，叙事上需要一个横贯时代的核心意象或命题来统一。');
+    } else if (!allSameAge) {
+        var ageCombo = nameList.map(function(n,i){ return n + '（' + ageList[i] + '）'; }).join('、');
+        sceneTip = ageCombo + '——建议设计一个"共同在场"的场景：同一空间里，青年角色的冲劲与老年角色的经验形成对位，中年角色承接两端的压力。';
+    } else if (hasFemaleMale) {
+        sceneTip = '性别构成有男有女，建议在' + eraList[0] + '社会结构下设计至少一个"性别带来不同处境"的具体场景——同样的选择，男女角色面对的代价不同。';
     } else {
-        contextNote = '背景相近（' + eraList[0] + '，' + ageList[0] + '），关系张力主要来自内在驱动力与价值观差异，适合设计同类相斥的竞争。';
+        sceneTip = '背景高度相近，外部差异极小。建议把场景聚焦在"一个只有一个人能得到的东西"上，用稀缺性制造内部摩擦。';
     }
 
-    // ── 相性评分 HTML（2人/3人均显示，两两配对）──
-    var compatHtml = '';
-    if (chars.length >= 2) {
-        var pairs = [];
-        for (var pi = 0; pi < chars.length; pi++) {
-            for (var pj = pi + 1; pj < chars.length; pj++) {
-                pairs.push([chars[pi], chars[pj]]);
-            }
-        }
-        var pairHtmls = pairs.map(function(pair) {
-            var nameA = pair[0].inputs.name || ('角色' + (chars.indexOf(pair[0]) + 1));
-            var nameB = pair[1].inputs.name || ('角色' + (chars.indexOf(pair[1]) + 1));
-            return '<div class="cmp-compat-pair">' +
-                '<div class="cmp-compat-pair-title">' + nameA + ' × ' + nameB + '</div>' +
-                _calcCompat(pair[0], pair[1]) +
+    // ── 预先计算所有两两配对的相性 HTML（每列只显示自己参与的那一对）──
+    // 建立 charIndex → 与下一个角色的配对映射：2人时 0→0×1；3人时 0→0×1，1→1×2，2→2×0
+    var pairMap = {};  // key: charIndex, value: { nameA, nameB, compatHtml }
+    if (chars.length === 2) {
+        var nameA0 = chars[0].inputs.name || '角色1';
+        var nameB0 = chars[1].inputs.name || '角色2';
+        var h = _calcCompat(chars[0], chars[1]);
+        pairMap[0] = { title: nameA0 + ' × ' + nameB0, html: h };
+        pairMap[1] = { title: nameA0 + ' × ' + nameB0, html: h };
+    } else if (chars.length === 3) {
+        // 3人：A×B / A×C / B×C，每列显示自己"第一次出现"的那对
+        // A列：A×B，B列：B×C，C列：A×C（让每列配对不重复）
+        var pairs3 = [
+            [0, 1],
+            [1, 2],
+            [0, 2]
+        ];
+        var assigned = [0, 1, 2]; // colIndex → pairsIndex
+        assigned.forEach(function(colIdx, i) {
+            var pi = pairs3[i][0], pj = pairs3[i][1];
+            var nA = chars[pi].inputs.name || ('角色' + (pi + 1));
+            var nB = chars[pj].inputs.name || ('角色' + (pj + 1));
+            pairMap[colIdx] = { title: nA + ' × ' + nB, html: _calcCompat(chars[pi], chars[pj]) };
+        });
+    }
+
+    // ── 三列完整小传（每列末尾只显示该列对应的那一对相性）──
+    var colsHtml = chars.map(function(char, colIdx) {
+        var meta = [
+            eraMap[char.inputs.era] || '',
+            char.inputs.gender === 'female' ? '女' : '男',
+            ageMap[char.inputs.age] || '',
+            char.chart.name || ''
+        ].filter(Boolean).join(' · ');
+        var sihuaTag = char.sihua ? '<span class="cmp-sihua-tag">' + char.sihua + '</span>' : '';
+        var colCompatHtml = '';
+        if (pairMap[colIdx]) {
+            colCompatHtml = '<div class="cmp-compat">' +
+                '<div class="cmp-compat-pair-title">' + pairMap[colIdx].title + '</div>' +
+                pairMap[colIdx].html +
             '</div>';
-        }).join('');
-        compatHtml = '<div class="cmp-compat">' + pairHtmls + '</div>';
-    }
-
-    // ── 三列完整小传（相性评分追加到每列末尾，随列滚动可见）──
-    var colsHtml = chars.map(function(char) {
-        var meta = [eraMap[char.inputs.era]||'', char.inputs.gender==='female'?'女':'男', ageMap[char.inputs.age]||'', char.chart.name||''].filter(Boolean).join(' · ');
+        }
         return '<div class="cmp-bio-col">' +
             '<div class="cmp-bio-col-header">' +
-                '<p class="cmp-bio-name">' + (char.name||'角色') + '</p>' +
+                '<div class="cmp-col-name-row">' +
+                    '<p class="cmp-bio-name">' + (char.name || '角色') + '</p>' +
+                    sihuaTag +
+                '</div>' +
                 '<p class="cmp-bio-meta">' + meta + '</p>' +
             '</div>' +
             '<div class="cmp-bio-col-body">' +
                 renderMarkdown(char.bio) +
-                compatHtml +
+                colCompatHtml +
             '</div>' +
         '</div>';
     }).join('');
 
     return (
-        '<div class="cmp-summary-bar">' + summaryItems + '</div>' +
+        '<div class="cmp-summary-bar">' +
+            '<button class="cmp-back-btn" onclick="closeCompare()">← 返回</button>' +
+            summaryItems +
+        '</div>' +
         '<div class="cmp-analysis">' +
-            '<p><strong>四化类型：</strong>' + sihuaList.join(' vs ') + '　<strong>戏剧关系：</strong>' + relationDesc + '</p>' +
-            '<p><strong>背景处境：</strong>' + contextNote + '</p>' +
+            '<span class="cmp-archetype-tag">' + archetype.name + '</span>' +
+            '<p class="cmp-archetype-tip">' + archetype.tip + '</p>' +
+            (sceneTip ? '<p class="cmp-scene-tip"><strong>场景切入：</strong>' + sceneTip + '</p>' : '') +
         '</div>' +
         '<div class="cmp-bio-columns">' + colsHtml + '</div>'
     );
@@ -1151,24 +1196,25 @@ function _calcCompat(charA, charB) {
     // 限制在0-100
     score = Math.max(0, Math.min(100, score));
 
-    // 评语
+    // 标签和颜色
     var label = score >= 85 ? '高度契合' : score >= 70 ? '关系良好' : score >= 50 ? '张力显著' : '冲突型组合';
     var labelColor = score >= 85 ? '#27ae60' : score >= 70 ? '#2980b9' : score >= 50 ? '#e67e22' : '#e74c3c';
 
-    var barFill = '<div style="height:8px;border-radius:4px;background:linear-gradient(90deg,' + labelColor + ',rgba(108,99,255,0.3));' +
+    // 只取最核心的一句评语（四化决定性格，优先级最高；其余取第一条）
+    var mainReason = reasons[0] || '';
+
+    var barFill = '<div style="height:6px;border-radius:3px;background:linear-gradient(90deg,' + labelColor + ',rgba(108,99,255,0.25));' +
         'width:' + score + '%;transition:width 0.6s ease;"></div>';
 
-    return '<div style="margin-bottom:2px;">' +
-        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">' +
-            '<span style="font-size:13px;font-weight:600;color:#333;">命盘相性</span>' +
-            '<span style="font-size:22px;font-weight:700;color:' + labelColor + ';">' + score + '</span>' +
-            '<span style="font-size:12px;color:' + labelColor + ';font-weight:600;padding:2px 8px;' +
-                'background:' + labelColor + '22;border-radius:10px;">' + label + '</span>' +
+    return '<div style="padding:10px 0 4px;">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">' +
+            '<span style="font-size:12px;color:#999;">命盘相性</span>' +
+            '<span style="font-size:20px;font-weight:700;color:' + labelColor + ';">' + score + '</span>' +
+            '<span style="font-size:11px;color:' + labelColor + ';font-weight:600;padding:2px 7px;' +
+                'background:' + labelColor + '18;border-radius:8px;">' + label + '</span>' +
         '</div>' +
-        '<div style="background:#f0f0f0;border-radius:4px;overflow:hidden;margin-bottom:8px;">' + barFill + '</div>' +
-        '<ul style="margin:0;padding-left:16px;list-style:disc;">' +
-            reasons.map(function(r){ return '<li style="font-size:12px;color:#555;margin-bottom:3px;">' + r + '</li>'; }).join('') +
-        '</ul>' +
+        '<div style="background:#ebebeb;border-radius:3px;overflow:hidden;margin-bottom:7px;">' + barFill + '</div>' +
+        (mainReason ? '<p style="font-size:12px;color:#666;margin:0;line-height:1.5;">' + mainReason + '</p>' : '') +
     '</div>';
 }
 
