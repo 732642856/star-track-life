@@ -252,13 +252,13 @@ jobs:
           <plist version="1.0">
           <dict>
             <key>method</key>
-            <string>app-store</string>
+            <string>app-store-connect</string>
             <key>teamID</key>
             <string>$PP_TEAM_ID</string>
             <key>signingStyle</key>
             <string>manual</string>
             <key>signingCertificate</key>
-            <string>3rd Party Mac Developer Installer</string>
+            <string>Apple Distribution</string>
             <key>provisioningProfiles</key>
             <dict>
               <key>com.yinan.xinggui0</key>
