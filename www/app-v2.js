@@ -1009,6 +1009,17 @@ function showCompare() {
     section.style.display = 'flex';
     // 全屏：锁定 body 滚动
     document.body.style.overflow = 'hidden';
+
+    // 注入右上角浮动关闭按钮（iOS 悬浮圆形风格）
+    var existFab = document.getElementById('cmp-close-fab');
+    if (existFab) existFab.remove();
+    var fab = document.createElement('button');
+    fab.id = 'cmp-close-fab';
+    fab.className = 'cmp-close-fab';
+    fab.innerHTML = '&#x2715;'; // ×
+    fab.setAttribute('aria-label', '关闭对比');
+    fab.onclick = closeCompare;
+    document.body.appendChild(fab);
 }
 
 function generateComparison(chars) {
@@ -1221,8 +1232,61 @@ function _calcCompat(charA, charB) {
 function closeCompare() {
     document.getElementById('compare-section').style.display = 'none';
     document.body.style.overflow = '';
+    // 移除浮动关闭按钮
+    var fab = document.getElementById('cmp-close-fab');
+    if (fab) fab.remove();
 }
 
 // showBioCompare / closeBioCompare 已并入新版 generateComparison，保留空实现以防旧引用
 function showBioCompare() {}
 function closeBioCompare() {}
+
+// ==================== 新手引导 ====================
+(function initOnboarding() {
+    var STORAGE_KEY = 'xingguirensheng_onboarding_done';
+    // 已看过引导，直接跳过
+    if (localStorage.getItem(STORAGE_KEY)) return;
+
+    var overlay = document.getElementById('onboarding-overlay');
+    if (!overlay) return;
+
+    // 等开机动画结束后再出现（splash 约 3s）
+    setTimeout(function() {
+        overlay.classList.add('ob-visible');
+    }, 3100);
+
+    window._obStep = 0;
+})();
+
+var _obTotalSteps = 3;
+function obNext() {
+    var step = (window._obStep || 0);
+    if (step < _obTotalSteps - 1) {
+        step++;
+        window._obStep = step;
+        // 滑动卡片
+        document.getElementById('ob-slides').style.transform = 'translateX(-' + (step * 100 / 3) + '%)';
+        // 更新圆点
+        for (var i = 0; i < _obTotalSteps; i++) {
+            var dot = document.getElementById('ob-dot-' + i);
+            if (dot) dot.classList.toggle('active', i === step);
+        }
+        // 最后一页改按钮文字
+        if (step === _obTotalSteps - 1) {
+            document.getElementById('ob-next-btn').textContent = '开始使用';
+        }
+    } else {
+        obDone();
+    }
+}
+function obSkip() { obDone(); }
+function obDone() {
+    localStorage.setItem('xingguirensheng_onboarding_done', '1');
+    var overlay = document.getElementById('onboarding-overlay');
+    if (overlay) {
+        overlay.style.transition = 'opacity 0.3s ease';
+        overlay.style.opacity = '0';
+        overlay.style.pointerEvents = 'none';
+        setTimeout(function() { overlay.style.display = 'none'; }, 320);
+    }
+}

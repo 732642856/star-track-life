@@ -1625,25 +1625,36 @@ body {
     height: 100dvh;
 }
 
-/* 顶部左上角固定返回按钮 */
-.cmp-back-btn {
-    flex-shrink: 0;
-    background: transparent;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg, 12px);
-    padding: 6px 14px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--color-text);
+/* 右上角浮动关闭按钮（iOS 悬浮圆形风格） */
+.cmp-close-fab {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 44px) + 10px);
+    right: 16px;
+    z-index: 9100;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: none;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    font-family: inherit;
-    white-space: nowrap;
-    transition: background 0.15s;
+    font-size: 17px;
+    color: #3a3a3a;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.cmp-close-fab:active {
+    transform: scale(0.88);
+    box-shadow: 0 1px 6px rgba(0,0,0,0.14);
 }
 
-.cmp-back-btn:active {
-    background: var(--color-bg, #f5f0eb);
-    transform: scale(0.95);
+/* 旧按钮隐藏兼容 */
+.cmp-back-btn {
+    display: none;
 }
 .cmp-summary-bar {
     display: flex;
