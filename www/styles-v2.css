@@ -2536,3 +2536,647 @@ body {
         gap: 8px;
     }
 }
+
+/* Mac 侧边栏：默认隐藏 */
+.mac-sidebar { display: none; }
+
+/* =====================================================
+   Mac 宽屏 · Apple 极简风（min-width: 1025px）
+   背景分层：#F5F5F7（侧栏）/ #FFFFFF（内容）
+   边框只用 1px #E5E5EA 细线，无圆角卡片阴影
+   ===================================================== */
+@media (min-width: 1025px) {
+
+    /* ── 全局重置：Mac 模式下用 Apple 系字体 ── */
+    html {
+        font-size: 15px;
+        background: #F5F5F7;
+    }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+        background: #F5F5F7;
+    }
+
+    /* ── 隐藏移动端专属元素 ── */
+    .main-nav,
+    .hero-section,
+    .step-indicator,
+    .scroll-hint,
+    #bio-scroll-arrow,
+    .footer-text,
+    .footer-copyright {
+        display: none !important;
+    }
+
+    /* ── 整体双栏布局 ── */
+    .page-wrapper {
+        display: flex;
+        flex-direction: row;
+        min-height: 100vh;
+        overflow: hidden;
+        background: #F5F5F7;
+    }
+
+    /* ══════════════════════════════
+       左侧边栏
+       背景 #F5F5F7，右侧 1px 线分隔
+       ═════════════════════════════ */
+    .mac-sidebar {
+        display: flex;
+        flex-direction: column;
+        width: 200px;
+        min-width: 200px;
+        max-width: 200px;
+        flex-shrink: 0;
+        background: #F5F5F7;
+        border-right: 1px solid #E5E5EA;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        padding: 36px 0 28px;
+        z-index: 10;
+    }
+
+    /* 品牌区 */
+    .mac-sidebar-brand {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 0 20px 24px;
+        border-bottom: 1px solid #E5E5EA;
+        margin-bottom: 20px;
+    }
+
+    .mac-sidebar-icon {
+        font-size: 1.5rem;
+        color: #1D1D1F;
+        line-height: 1;
+        margin-bottom: 10px;
+    }
+
+    .mac-sidebar-title {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1D1D1F;
+        letter-spacing: -0.01em;
+        margin-bottom: 2px;
+    }
+
+    .mac-sidebar-subtitle {
+        font-size: 0.7rem;
+        color: #86868B;
+        letter-spacing: 0;
+        line-height: 1.4;
+    }
+
+    /* 步骤导航 */
+    .mac-step-nav {
+        flex: 1;
+        padding: 0 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .mac-step-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: default;
+        transition: background 120ms ease;
+    }
+
+    .mac-step-item:hover {
+        background: rgba(0,0,0,0.04);
+    }
+
+    .mac-step-item.active {
+        background: rgba(0,0,0,0.06);
+    }
+
+    .mac-step-item.done {
+        opacity: 0.38;
+    }
+
+    .mac-step-num {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.65rem;
+        font-weight: 600;
+        color: #86868B;
+        flex-shrink: 0;
+        background: #E5E5EA;
+        transition: all 150ms ease;
+    }
+
+    .mac-step-item.active .mac-step-num {
+        background: #1D1D1F;
+        color: #fff;
+    }
+
+    .mac-step-item.done .mac-step-num {
+        background: #C7C7CC;
+        color: #fff;
+    }
+
+    .mac-step-label {
+        font-size: 0.8125rem;
+        color: #3A3A3C;
+        font-weight: 400;
+        white-space: nowrap;
+        letter-spacing: -0.01em;
+    }
+
+    .mac-step-item.active .mac-step-label {
+        color: #1D1D1F;
+        font-weight: 500;
+    }
+
+    /* 侧边栏底部 */
+    .mac-sidebar-footer {
+        padding: 0 20px;
+        font-size: 0.65rem;
+        color: #C7C7CC;
+        line-height: 1.6;
+    }
+
+    /* ══════════════════════════════
+       右侧内容区
+       背景纯白，内容居中最大 680px
+       ═════════════════════════════ */
+    .main-content {
+        flex: 1;
+        min-width: 0;
+        background: #FFFFFF;
+        padding: 48px 56px 100px;
+        overflow-y: auto;
+        min-height: 100vh;
+    }
+
+    /* 内容卡片：去掉阴影和圆角，改用分隔线 */
+    .content-card {
+        max-width: 660px;
+        margin: 0 auto;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        background: transparent !important;
+    }
+
+    /* 卡片头部：底部细线分隔 */
+    .card-header {
+        padding: 0 0 20px;
+        border-bottom: 1px solid #E5E5EA;
+        background: transparent !important;
+        border-radius: 0 !important;
+    }
+
+    .card-title {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+        font-size: 1.375rem;
+        font-weight: 600;
+        color: #1D1D1F;
+        letter-spacing: -0.02em;
+    }
+
+    .card-subtitle {
+        font-size: 0.8125rem;
+        color: #86868B;
+        margin-top: 4px;
+        letter-spacing: -0.01em;
+    }
+
+    /* 卡片内容区 */
+    .card-body {
+        padding: 28px 0;
+        background: transparent !important;
+    }
+
+    /* 表单区域 */
+    .form-section {
+        padding: 0;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    .form-group {
+        margin-bottom: 28px;
+        padding-bottom: 28px;
+        border-bottom: 1px solid #F2F2F7;
+    }
+
+    .form-group:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .form-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #1D1D1F;
+        margin-bottom: 12px;
+        letter-spacing: -0.01em;
+    }
+
+    /* 输入框 Apple 风格 */
+    .name-input,
+    .form-input {
+        background: #F5F5F7 !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 12px 14px !important;
+        font-size: 0.9375rem !important;
+        color: #1D1D1F !important;
+        outline: none !important;
+        box-shadow: none !important;
+        -webkit-appearance: none;
+    }
+
+    .name-input:focus,
+    .form-input:focus {
+        background: #EBEBF0 !important;
+    }
+
+    /* ── option-card（步骤2：性别/年龄/职业/家境等）── */
+    .option-card {
+        padding: 14px 16px !important;
+        border: none !important;
+        border-radius: 10px !important;
+        background: #F5F5F7 !important;
+        box-shadow: none !important;
+        transition: background 120ms ease !important;
+    }
+
+    .option-card:hover {
+        background: #EBEBF0 !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    .option-card.selected {
+        background: #1D1D1F !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .option-card.selected .option-title,
+    .option-card.selected .option-desc,
+    .option-card.selected .option-icon {
+        color: #fff !important;
+    }
+
+    .option-icon {
+        font-size: 1.25rem !important;
+        margin-bottom: 6px !important;
+    }
+
+    .option-title {
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
+        color: #1D1D1F !important;
+        letter-spacing: -0.01em !important;
+    }
+
+    .option-desc {
+        font-size: 0.75rem !important;
+        color: #86868B !important;
+        line-height: 1.4 !important;
+        margin-top: 2px !important;
+    }
+
+    /* ── era-card（步骤1：时代选择）── */
+    .era-card {
+        padding: 16px 12px !important;
+        border: none !important;
+        border-radius: 10px !important;
+        background: #F5F5F7 !important;
+        box-shadow: none !important;
+        transition: background 120ms ease !important;
+    }
+
+    .era-card:hover {
+        background: #EBEBF0 !important;
+        transform: none !important;
+        box-shadow: none !important;
+        border-color: transparent !important;
+    }
+
+    .era-card.selected {
+        background: #1D1D1F !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .era-card.selected .era-title,
+    .era-card.selected .era-desc,
+    .era-card.selected .era-icon {
+        color: #fff !important;
+    }
+
+    .era-card.selected .era-feature {
+        background: rgba(255,255,255,0.15) !important;
+        color: rgba(255,255,255,0.85) !important;
+    }
+
+    .era-icon {
+        font-size: 1.5rem !important;
+        margin-bottom: 6px !important;
+    }
+
+    .era-title {
+        font-size: 0.9375rem !important;
+        font-weight: 600 !important;
+        color: #1D1D1F !important;
+        letter-spacing: -0.01em !important;
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;
+    }
+
+    .era-desc {
+        font-size: 0.75rem !important;
+        color: #86868B !important;
+        margin-bottom: 10px !important;
+    }
+
+    .era-feature {
+        font-size: 0.6875rem !important;
+        padding: 3px 8px !important;
+        background: rgba(0,0,0,0.05) !important;
+        border-radius: 4px !important;
+        color: #3A3A3C !important;
+    }
+
+    /* ── time-card（时辰选择）── */
+    .time-period-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 8px !important;
+    }
+
+    .time-card {
+        padding: 10px 8px !important;
+        border: none !important;
+        border-radius: 8px !important;
+        background: #F5F5F7 !important;
+        box-shadow: none !important;
+        transition: background 120ms ease !important;
+    }
+
+    .time-card:hover {
+        background: #EBEBF0 !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    .time-card.selected {
+        background: #1D1D1F !important;
+        border: none !important;
+    }
+
+    .time-card.selected .time-name,
+    .time-card.selected .time-range,
+    .time-card.selected .time-icon {
+        color: #fff !important;
+    }
+
+    .time-name {
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
+    }
+
+    .time-range {
+        font-size: 0.6875rem !important;
+        color: #86868B !important;
+    }
+
+    /* ── 选项按钮通用（option-btn）── */
+    .option-btn {
+        border: none !important;
+        background: #F5F5F7 !important;
+        border-radius: 8px !important;
+        font-size: 0.8125rem !important;
+        color: #3A3A3C !important;
+        padding: 10px 14px !important;
+        font-weight: 400 !important;
+        transition: background 120ms ease !important;
+        box-shadow: none !important;
+    }
+
+    .option-btn:hover {
+        background: #EBEBF0 !important;
+    }
+
+    .option-btn.selected,
+    .option-btn.active {
+        background: #1D1D1F !important;
+        color: #FFFFFF !important;
+    }
+
+    /* ── 属性选项 chip（步骤4）── */
+    .attribute-option {
+        border: none !important;
+        background: #F5F5F7 !important;
+        border-radius: 8px !important;
+        font-size: 0.8125rem !important;
+        color: #3A3A3C !important;
+        padding: 9px 12px !important;
+        box-shadow: none !important;
+        transition: background 120ms ease !important;
+        transform: none !important;
+    }
+
+    .attribute-option:hover {
+        background: #EBEBF0 !important;
+        transform: none !important;
+        box-shadow: none !important;
+        border-color: transparent !important;
+        color: #1D1D1F !important;
+    }
+
+    .attribute-option.selected {
+        background: #1D1D1F !important;
+        color: #fff !important;
+    }
+
+    .attribute-options {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 8px !important;
+    }
+
+    /* ── star-card / trait-card / pattern-card（步骤3）── */
+    .star-card,
+    .trait-card,
+    .pattern-card {
+        border: none !important;
+        box-shadow: none !important;
+        background: #F5F5F7 !important;
+        border-radius: 10px !important;
+        padding: 14px 16px !important;
+        transition: background 120ms ease !important;
+    }
+
+    .star-card:hover,
+    .trait-card:hover,
+    .pattern-card:hover {
+        background: #EBEBF0 !important;
+        transform: none !important;
+        box-shadow: none !important;
+        border-color: transparent !important;
+    }
+
+    .star-card.selected,
+    .trait-card.selected,
+    .pattern-card.selected {
+        background: #1D1D1F !important;
+        color: #fff !important;
+    }
+
+    .star-card.selected .star-name,
+    .trait-card.selected .trait-name,
+    .pattern-card.selected .pattern-name,
+    .star-card.selected .star-desc,
+    .trait-card.selected .trait-desc,
+    .pattern-card.selected .pattern-desc {
+        color: rgba(255,255,255,0.9) !important;
+    }
+
+    /* star/trait/pattern 卡片网格列数 */
+    .stars-grid,
+    .traits-grid,
+    .patterns-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 8px !important;
+    }
+
+    .star-name,
+    .trait-name,
+    .pattern-name {
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
+        color: #1D1D1F !important;
+        letter-spacing: -0.01em !important;
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;
+        margin-bottom: 4px !important;
+    }
+
+    .star-desc,
+    .trait-desc,
+    .pattern-desc,
+    .pattern-composition {
+        font-size: 0.75rem !important;
+        color: #86868B !important;
+        line-height: 1.4 !important;
+    }
+
+    /* 已保存角色列表 */
+    #saved-characters-section {
+        max-width: 660px;
+        margin: 40px auto 0;
+        border-top: 1px solid #E5E5EA;
+        padding-top: 32px;
+    }
+
+    .saved-character-item {
+        border: none !important;
+        border-bottom: 1px solid #F2F2F7 !important;
+        border-radius: 0 !important;
+        padding: 14px 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .saved-character-item:last-child {
+        border-bottom: none !important;
+    }
+
+    /* 小传内容区 */
+    .result-content {
+        padding: 0;
+        background: transparent !important;
+    }
+
+    .result-section {
+        border-bottom: 1px solid #F2F2F7;
+        padding-bottom: 24px;
+        margin-bottom: 24px;
+    }
+
+    .result-section:last-child {
+        border-bottom: none;
+    }
+
+    /* chart-overview 去边框 */
+    .chart-overview {
+        border: none !important;
+        background: #F5F5F7 !important;
+        border-radius: 10px !important;
+        box-shadow: none !important;
+    }
+
+    .birth-info-content {
+        background: #F5F5F7 !important;
+        border: none !important;
+        border-radius: 10px !important;
+    }
+
+    /* ── Action bar：扁平横排，贴底白色背景分隔线 ── */
+    .action-bar {
+        flex-direction: row !important;
+        position: static !important;
+        background: transparent !important;
+        backdrop-filter: none !important;
+        border: none !important;
+        border-top: 1px solid #E5E5EA !important;
+        padding: 20px 0 !important;
+        margin-top: 8px;
+        max-width: 660px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .action-bar .btn {
+        width: auto !important;
+        border-radius: 8px !important;
+        font-weight: 500 !important;
+        font-size: 0.9375rem !important;
+        letter-spacing: -0.01em !important;
+        padding: 10px 24px !important;
+    }
+
+    .action-bar .btn-primary,
+    .action-bar .btn-large {
+        order: unset !important;
+        background: #1D1D1F !important;
+        color: #fff !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 8px !important;
+    }
+
+    .action-bar .btn-primary:hover,
+    .action-bar .btn-large:hover {
+        background: #3A3A3C !important;
+    }
+
+    .action-bar .btn-secondary {
+        order: unset !important;
+        background: #F5F5F7 !important;
+        border: none !important;
+        color: #3A3A3C !important;
+        box-shadow: none !important;
+        width: auto !important;
+        align-self: auto !important;
+    }
+
+    .action-bar .btn-secondary:hover {
+        background: #EBEBF0 !important;
+        color: #1D1D1F !important;
+    }
+}

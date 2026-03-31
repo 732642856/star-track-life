@@ -222,10 +222,19 @@ document.addEventListener('DOMContentLoaded', () => {
 function showStep(step) {
     document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
-    
+
     document.getElementById('step-' + step).classList.add('active');
-    document.querySelector('.step[data-step="' + step + '"]').classList.add('active');
-    
+    var mobileStepEl = document.querySelector('.step[data-step="' + step + '"]');
+    if (mobileStepEl) mobileStepEl.classList.add('active');
+
+    // 同步 Mac 侧边栏步骤高亮
+    document.querySelectorAll('.mac-step-item').forEach(function(el) {
+        var s = parseInt(el.getAttribute('data-step'));
+        el.classList.remove('active', 'done');
+        if (s === step) el.classList.add('active');
+        else if (s < step) el.classList.add('done');
+    });
+
     currentStep = step;
 
     // 所有步骤切换后立即归到顶部（iOS 习惯：新页面从头开始）
