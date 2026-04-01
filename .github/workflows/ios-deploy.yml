@@ -125,10 +125,10 @@ jobs:
             -scheme App \
             -configuration Release \
             -archivePath $RUNNER_TEMP/App.xcarchive \
-            -destination 'generic/id=c3f39ad79e27cf5265e287fb63fee51109cd5406' \
+            -destination 'generic/platform=iOS' \
             DEVELOPMENT_TEAM="$PP_TEAM_ID" \
             CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="iPhone Distribution" \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE="$PP_UUID" \
             -allowProvisioningUpdates
 
@@ -145,7 +145,7 @@ jobs:
           <plist version="1.0">
           <dict>
             <key>method</key>
-            <string>mac_installer_distribution</string>
+            <string>app-store</string>
             <key>teamID</key>
             <string>$PP_TEAM_ID</string>
             <key>signingStyle</key>
