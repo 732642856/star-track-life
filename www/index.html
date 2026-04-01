@@ -264,9 +264,21 @@
         width: 6px; height: 6px;
         border-radius: 50%;
         background: #d0d0d2;
+        cursor: pointer;
         transition: background 0.25s, width 0.25s;
     }
     .ob-ddot.ob-ddot-active { background: #888; width: 16px; border-radius: 3px; }
+    #ob-demo-prev {
+        background: none;
+        border: none;
+        font-size: 14px;
+        color: #888;
+        font-family: inherit;
+        cursor: pointer;
+        padding: 8px 14px;
+        visibility: hidden;
+    }
+    #ob-demo-prev:active { color: #555; }
     #ob-demo-next {
         background: #dcdcde;
         color: #333;
@@ -432,11 +444,12 @@
             </div>
             <!-- 进度点 + 操作 -->
             <div id="ob-demo-footer">
+                <button id="ob-demo-prev" onclick="obDemoPrev()">上一步</button>
                 <div id="ob-demo-dots">
-                    <span class="ob-ddot ob-ddot-active" id="ob-ddot-0"></span>
-                    <span class="ob-ddot" id="ob-ddot-1"></span>
-                    <span class="ob-ddot" id="ob-ddot-2"></span>
-                    <span class="ob-ddot" id="ob-ddot-3"></span>
+                    <span class="ob-ddot ob-ddot-active" id="ob-ddot-0" onclick="obDemoGoTo(0)"></span>
+                    <span class="ob-ddot" id="ob-ddot-1" onclick="obDemoGoTo(1)"></span>
+                    <span class="ob-ddot" id="ob-ddot-2" onclick="obDemoGoTo(2)"></span>
+                    <span class="ob-ddot" id="ob-ddot-3" onclick="obDemoGoTo(3)"></span>
                 </div>
                 <button id="ob-demo-next" onclick="obDemoNext()">下一步</button>
             </div>

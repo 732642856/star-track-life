@@ -1277,10 +1277,10 @@ function showBioCompare() {}
 function closeBioCompare() {}
 
 // ==================== 快速演示引导 ====================
-var OB_STORAGE_KEY = 'xingguirensheng_onboarding_done_v4';
+var OB_STORAGE_KEY = 'xingguirensheng_onboarding_done_v5';
 var _obDemoStep = 0;
 var _obDemoTotal = 4;
-var _obDemoTimer = null;
+var _obTouchStartX = 0;
 
 // 开机动画结束后启动演示
 (function initOnboarding() {
@@ -1291,60 +1291,63 @@ var _obDemoTimer = null;
         _obDemoStep = 0;
         _obRenderDemoStep(0);
         demo.classList.add('ob-visible');
-        _obDemoAutoPlay();
+        // 绑定触摸滑动
+        demo.addEventListener('touchstart', function(e) {
+            _obTouchStartX = e.touches[0].clientX;
+        }, { passive: true });
+        demo.addEventListener('touchend', function(e) {
+            var dx = e.changedTouches[0].clientX - _obTouchStartX;
+            if (Math.abs(dx) > 50) {
+                if (dx < 0) obDemoNext();   // 左滑 → 下一页
+                else obDemoPrev();            // 右滑 → 上一页
+            }
+        }, { passive: true });
     }, 3200);
 })();
 
 function _obRenderDemoStep(step) {
-    // 切换幕
     for (var i = 0; i < _obDemoTotal; i++) {
         var s = document.getElementById('ob-scene-' + i);
         if (s) s.classList.toggle('ob-scene-active', i === step);
     }
-    // 切换进度点
     for (var j = 0; j < _obDemoTotal; j++) {
         var d = document.getElementById('ob-ddot-' + j);
         if (d) d.classList.toggle('ob-ddot-active', j === step);
     }
-    // 更新按钮文字
     var nextBtn = document.getElementById('ob-demo-next');
     if (nextBtn) nextBtn.textContent = (step === _obDemoTotal - 1) ? '开始使用' : '下一步';
-    // 更新标题
+    var prevBtn = document.getElementById('ob-demo-prev');
+    if (prevBtn) prevBtn.style.visibility = (step === 0) ? 'hidden' : 'visible';
     var label = document.getElementById('ob-demo-step-label');
     if (label) label.textContent = (step + 1) + ' / ' + _obDemoTotal;
 }
 
-// 每2.5秒自动推进（到最后一幕停下，等用户点「开始使用」）
-function _obDemoAutoPlay() {
-    if (_obDemoTimer) clearInterval(_obDemoTimer);
-    _obDemoTimer = setInterval(function() {
-        if (_obDemoStep >= _obDemoTotal - 1) {
-            // 已经是最后一幕，停止自动播放，等用户主动点「开始使用」
-            clearInterval(_obDemoTimer);
-            return;
-        }
-        _obDemoStep++;
-        _obRenderDemoStep(_obDemoStep);
-    }, 2500);
+// 点进度点跳转
+function obDemoGoTo(idx) {
+    if (idx < 0 || idx >= _obDemoTotal) return;
+    _obDemoStep = idx;
+    _obRenderDemoStep(idx);
 }
 
-// 手动点「下一步 / 开始使用」
+// 上一步
+function obDemoPrev() {
+    if (_obDemoStep > 0) {
+        _obDemoStep--;
+        _obRenderDemoStep(_obDemoStep);
+    }
+}
+
+// 下一步 / 开始使用
 function obDemoNext() {
-    if (_obDemoTimer) clearInterval(_obDemoTimer);
     _obDemoStep++;
     if (_obDemoStep >= _obDemoTotal) {
         obDone();
     } else {
         _obRenderDemoStep(_obDemoStep);
-        // 最后一幕不再重启自动播放，等用户主动点「开始使用」
-        if (_obDemoStep < _obDemoTotal - 1) {
-            _obDemoAutoPlay();
-        }
     }
 }
 
 function obDone() {
-    if (_obDemoTimer) clearInterval(_obDemoTimer);
     localStorage.setItem(OB_STORAGE_KEY, '1');
     var demo = document.getElementById('ob-demo');
     if (demo) {
