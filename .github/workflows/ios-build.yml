@@ -128,12 +128,12 @@ jobs:
             -scheme App \
             -configuration Release \
             -archivePath $RUNNER_TEMP/App.xcarchive \
-            -destination 'generic/platform=iOS' -archiveTimeout 3600 \
+            -destination 'generic/platform=iOS' \
             DEVELOPMENT_TEAM="$PP_TEAM_ID" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE="$PP_UUID" \
-            -skipUnavailableModels
+            -allowProvisioningUpdates
 
       - name: 导出 IPA
         run: |
@@ -142,20 +142,28 @@ jobs:
           PP_TEAM_ID=$(security cms -D -i $PP_PATH | plutil -extract TeamIdentifier.0 raw -)
           echo "导出用 UUID: $PP_UUID, Team: $PP_TEAM_ID"
 
-          # 验证 archive 存在
-          echo "检查 archive:"
-          ls -la $RUNNER_TEMP/App.xcarchive
-
-          # 使用 ad-hoc 方式导出（可用于测试分发）
           cat > $RUNNER_TEMP/ExportOptions.plist << EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
             <key>method</key>
-            <string>ad-hoc</string>
+            <string>app-store</string>
             <key>teamID</key>
             <string>$PP_TEAM_ID</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>signingCertificate</key>
+            <string>Apple Distribution</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.yinan.xinggui0</key>
+              <string>$PP_UUID</string>
+            </dict>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>compileBitcode</key>
+            <false/>
           </dict>
           </plist>
           EOF
