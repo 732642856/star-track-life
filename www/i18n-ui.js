@@ -541,14 +541,14 @@ const UI_TEXT = {
         
         // 8 Attributes (for dynamic usage) - NEW FIXED VERSION
         attr: {
-            appearance: { name: 'Appearance', options: ['Commanding', 'Gentle', 'Sharp', 'Warm', 'Distinctive', 'Unassuming'] },
-            speech: { name: 'Speaking', options: ['Direct', 'Tactful', 'Enthusiastic', 'Calm', 'Humorous', 'Reserved'] },
+            appearance: { name: 'Appearance', options: ['Commanding', 'Gentle & Refined', 'Sharp & Capable', 'Warm & Approachable', 'Distinctive', 'Unassuming'] },
+            speech: { name: 'Speaking Style', options: ['Direct & Concise', 'Tactful & Soft', 'Enthusiastic', 'Calm & Measured', 'Humorous', 'Reserved'] },
             behavior: { name: 'Habits', options: ['Decisive', 'Thoughtful', 'Spontaneous', 'Cautious', 'Methodical', 'Free-spirited'] },
-            emotion: { name: 'Emotion', options: ['Expressive', 'Reserved', 'Changeable', 'Stable', 'Controlled', 'Impulsive'] },
-            social: { name: 'Social', options: ['Leader', 'Supporter', 'Observer', 'Connector', 'Independent', 'Group-oriented'] },
-            crisis: { name: 'Crisis', options: ['Confront', 'Analyze', 'Seek help', 'Hide', 'Charge', 'Adapt'] },
-            learning: { name: 'Learning', options: ['Practical', 'Theoretical', 'Intuitive', 'Methodical', 'Experimental', 'Traditional'] },
-            growth: { name: 'Growth', options: ['Achievement', 'Freedom', 'Connection', 'Knowledge', 'Balance', 'Wisdom'] }
+            emotion: { name: 'Emotional Expression', options: ['Openly Expressive', 'Reserved', 'Changeable', 'Stable', 'Rationally Controlled', 'Impulsive'] },
+            social: { name: 'Social Style', options: ['Leader', 'Supporter', 'Observer', 'Connector', 'Independent', 'Group-oriented'] },
+            crisis: { name: 'Crisis Response', options: ['Confront directly', 'Analyze calmly', 'Seek help', 'Hide & evade', 'Take charge', 'Adapt & change'] },
+            learning: { name: 'Learning & Adaptation', options: ['Practical', 'Theoretical', 'Intuitive', 'Methodical', 'Experimental', 'Traditional'] },
+            growth: { name: 'Growth Direction', options: ['Achievement', 'Contribution', 'Connection', 'Knowledge', 'Self-mastery', 'Balance'] }
         },
     }
 };
@@ -694,14 +694,14 @@ const UI_DYNAMIC = {
         
         // 8大维度（简洁清晰版，去除重复冗余）- FIXED: Now using array format
         attr: [
-            { id: 'appearance', name: '外貌特征', options: ['威严', '温和', '锐利', '柔和', '清秀', '神秘'] },
-            { id: 'speech', name: '说话方式', options: ['简洁', '温和', '热情', '沉稳', '幽默', '寡言'] },
-            { id: 'behavior', name: '行为习惯', options: ['果断', '深思', '随性', '谨慎', '从容', '敢拼'] },
-            { id: 'emotion', name: '情感表达', options: ['外露', '内敛', '多变', '稳定', '克制', '冲动'] },
-            { id: 'social', name: '社交风格', options: ['领导', '配合', '观察', '连接', '独立', '合群'] },
-            { id: 'crisis', name: '应对危机', options: ['冷静', '果断', '求助', '逃避', '承受', '应变'] },
-            { id: 'learning', name: '学习适应', options: ['实用', '理论', '直觉', '系统', '实验', '传统'] },
-            { id: 'growth', name: '成长方向', options: ['成就', '自由', '连结', '知识', '平衡', '智慧'] }
+            { id: 'appearance', name: '外貌特征', options: ['威严霸气', '温和儒雅', '锐利干练', '柔和亲和', '独特个性', '低调朴素'] },
+            { id: 'speech', name: '说话方式', options: ['简洁有力', '温和委婉', '热情洋溢', '沉稳冷静', '幽默风趣', '寡言内敛'] },
+            { id: 'behavior', name: '行为习惯', options: ['雷厉风行', '深思熟虑', '随性而为', '谨慎小心', '有条不紊', '自由随性'] },
+            { id: 'emotion', name: '情感表达', options: ['外露直白', '内敛含蓄', '丰富多变', '稳定平和', '理性克制', '感性冲动'] },
+            { id: 'social', name: '社交风格', options: ['主动热情', '被动等待', '理性交往', '感性相交', '圆滑世故', '直率真诚'] },
+            { id: 'crisis', name: '应对危机', options: ['冷静分析', '果断行动', '寻求帮助', '逃避回避', '慌乱无措', '坚定抵抗'] },
+            { id: 'learning', name: '学习适应', options: ['快速学习', '稳步积累', '依赖经验', '善于应变', '固执己见', '灵活调整'] },
+            { id: 'growth', name: '成长方向', options: ['追求成功', '追求自由', '追求安稳', '追求真理', '追求情感', '追求平衡'] }
         ],
         // 四化相性描述
         sihuaScoreMap: {
@@ -784,14 +784,14 @@ const UI_DYNAMIC = {
         
         // 8大维度（简洁清晰版，去除重复冗余）- FIXED: Now using array format
         attr: [
-            { id: 'appearance', name: '外貌特徵', options: ['威嚴', '溫和', '銳利', '柔和', '清秀', '神秘'] },
-            { id: 'speech', name: '說話方式', options: ['簡潔有力', '溫和委婉', '幽默風趣', '寡言內斂', '侃侃而談', '輕聲細語'] },
-            { id: 'behavior', name: '行為習慣', options: ['雷厲風行', '深思熟慮', '隨性而為', '謹慎小心', '從容不迫', '敢闖敢拼'] },
+            { id: 'appearance', name: '外貌特徵', options: ['威嚴霸氣', '溫和儒雅', '銳利幹練', '柔和親和', '獨特個性', '低調樸素'] },
+            { id: 'speech', name: '說話方式', options: ['簡潔有力', '溫和委婉', '熱情洋溢', '沉穩冷靜', '幽默風趣', '寡言內斂'] },
+            { id: 'behavior', name: '行為習慣', options: ['雷厲風行', '深思熟慮', '隨性而為', '謹慎小心', '有條不紊', '自由隨性'] },
             { id: 'emotion', name: '情感表達', options: ['外露直白', '內斂含蓄', '豐富多變', '穩定平和', '理性克制', '感性衝動'] },
-            { id: 'social', name: '社交風格', options: ['主動熱情', '被動等待', '理性交往', '直率真誠'] },
-            { id: 'crisis', name: '應對危機', options: ['冷靜分析', '果斷行動', '尋求幫助', '逃避回避', '堅韌承受', '靈活應變'] },
-            { id: 'learning', name: '學習適應', options: ['快速學習', '穩步積累', '依賴經驗', '靈活調整', '勤學苦練', '天賦異稟'] },
-            { id: 'growth', name: '成長方向', options: ['追求成功', '追求自由', '追求安穩', '追求平衡', '追求真理', '追求情感'] }
+            { id: 'social', name: '社交風格', options: ['主動熱情', '被動等待', '理性交往', '感性相交', '圓滑世故', '直率真誠'] },
+            { id: 'crisis', name: '應對危機', options: ['冷靜分析', '果斷行動', '尋求幫助', '逃避回避', '慌亂無措', '堅定抵抗'] },
+            { id: 'learning', name: '學習適應', options: ['快速學習', '穩步積累', '依賴經驗', '善於應變', '固執己見', '靈活調整'] },
+            { id: 'growth', name: '成長方向', options: ['追求成功', '追求自由', '追求安穩', '追求真理', '追求情感', '追求平衡'] }
         ],
         sihuaScoreMap: {
             '化祿型_化權型': [+12, '祿權相輔，一方給力一方掌局，合作有天然驅動力'],
@@ -865,10 +865,10 @@ const UI_DYNAMIC = {
         
         // 8大维度（简洁清晰版，去除重复冗余）- FIXED: Now using array format
         attr: [
-            { id: 'appearance', name: 'Appearance', options: ['Commanding', 'Gentle', 'Sharp', 'Warm', 'Distinctive', 'Unassuming'] },
-            { id: 'speech', name: 'Speaking Style', options: ['Direct', 'Tactful', 'Enthusiastic', 'Calm', 'Humorous', 'Reserved'] },
+            { id: 'appearance', name: 'Appearance', options: ['Commanding', 'Gentle & Refined', 'Sharp & Capable', 'Warm & Approachable', 'Distinctive', 'Unassuming'] },
+            { id: 'speech', name: 'Speaking Style', options: ['Direct & Concise', 'Tactful & Soft', 'Enthusiastic', 'Calm & Measured', 'Humorous', 'Reserved'] },
             { id: 'behavior', name: 'Habits', options: ['Decisive', 'Thoughtful', 'Spontaneous', 'Cautious', 'Methodical', 'Free-spirited'] },
-            { id: 'emotion', name: 'Emotional Expression', options: ['Expressive', 'Reserved', 'Changeable', 'Stable', 'Controlled', 'Impulsive'] },
+            { id: 'emotion', name: 'Emotional Expression', options: ['Openly Expressive', 'Reserved', 'Changeable', 'Stable', 'Rationally Controlled', 'Impulsive'] },
             { id: 'social', name: 'Social Style', options: ['Proactive', 'Passive', 'Rational', 'Emotionally Guided', 'Diplomatic', 'Frank & Honest'] },
             { id: 'crisis', name: 'Crisis Response', options: ['Calm Analysis', 'Swift Action', 'Seeks Help', 'Avoidance', 'Panic', 'Firm Resistance'] },
             { id: 'learning', name: 'Adaptability', options: ['Fast Learner', 'Steady Accumulator', 'Experience-reliant', 'Highly Adaptive', 'Stubborn', 'Flexible'] },
@@ -949,170 +949,3 @@ function getDynamic() {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { UI_TEXT, tUI, applyI18nToDOM, UI_DYNAMIC, tDyn, getDynamic };
 }
-// ═══════════════════════════════════════════════════════════════════════════
-// 覆盖 rich-word-library 的 ATTR_DATA，使用短选项
-// ═══════════════════════════════════════════════════════════════════════════
-if (typeof ATTR_DATA !== 'undefined') {
-    ATTR_DATA.cn = window.ATTR_DATA_CN_short || ATTR_DATA.cn;
-    ATTR_DATA.en = window.ATTR_DATA_EN_short || ATTR_DATA.en;
-    ATTR_DATA.tw = window.ATTR_DATA_TW_short || ATTR_DATA.tw;
-}
-
-// 简化的8属性选项（短词汇）
-ATTR_DATA = {
-    cn: {
-        appearance: { name: '外貌特征', options: ['威严', '温和', '锐利', '柔和', '独特', '普通'] },
-        speech: { name: '说话方式', options: ['简洁', '温和', '热情', '沉稳', '幽默', '寡言'] },
-        behavior: { name: '行为习惯', options: ['果断', '深思', '随性', '谨慎', '有序', '自由'] },
-        emotion: { name: '情感表达', options: ['外露', '内敛', '多变', '稳定', '克制', '冲动'] },
-        social: { name: '社交风格', options: ['主动', '被动', '理性', '感性', '圆滑', '直率'] },
-        crisis: { name: '应对危机', options: ['冷静', '果断', '求助', '逃避', '慌乱', '坚定'] },
-        learning: { name: '学习适应', options: ['快速', '稳步', '依赖', '应变', '固执', '灵活'] },
-        growth: { name: '成长方向', options: ['成就', '自由', '安稳', '真理', '情感', '平衡'] }
-    },
-    en: {
-        appearance: { name: 'Appearance', options: ['Commanding', 'Gentle', 'Sharp', 'Warm', 'Distinctive', 'Unassuming'] },
-        speech: { name: 'Speaking', options: ['Direct', 'Tactful', 'Enthusiastic', 'Calm', 'Humorous', 'Reserved'] },
-        behavior: { name: 'Habits', options: ['Decisive', 'Thoughtful', 'Spontaneous', 'Cautious', 'Methodical', 'Free-spirited'] },
-        emotion: { name: 'Emotion', options: ['Expressive', 'Reserved', 'Changeable', 'Stable', 'Controlled', 'Impulsive'] },
-        social: { name: 'Social', options: ['Leader', 'Supporter', 'Observer', 'Connector', 'Independent', 'Group-oriented'] },
-        crisis: { name: 'Crisis', options: ['Confront', 'Analyze', 'Seek help', 'Hide', 'Charge', 'Adapt'] },
-        learning: { name: 'Learning', options: ['Practical', 'Theoretical', 'Intuitive', 'Methodical', 'Experimental', 'Traditional'] },
-        growth: { name: 'Growth', options: ['Achievement', 'Contribution', 'Connection', 'Knowledge', 'Self-mastery', 'Balance'] }
-    },
-    tw: {
-        appearance: { name: '外貌特徵', options: ['威嚴', '溫和', '銳利', '柔和', '獨特', '普通'] },
-        speech: { name: '說話方式', options: ['簡潔', '溫和', '熱情', '沉穩', '幽默', '寡言'] },
-        behavior: { name: '行為習慣', options: ['果斷', '深思', '隨性', '謹慎', '有序', '自由'] },
-        emotion: { name: '情感表達', options: ['外露', '內斂', '多變', '穩定', '克制', '衝動'] },
-        social: { name: '社交風格', options: ['主動', '被動', '理性', '感性', '圓滑', '直率'] },
-        crisis: { name: '應對危機', options: ['冷靜', '果斷', '求助', '逃避', '慌亂', '堅定'] },
-        learning: { name: '學習適應', options: ['快速', '穩步', '依賴', '應變', '固執', '靈活'] },
-        growth: { name: '成長方向', options: ['成就', '自由', '連結', '知識', '平衡', '智慧'] }
-    }
-};
-
-// ═══════════════════════════════════════════════════════════════════════════
-// 覆盖 rich-word-library 的 ATTR_DATA，使用短选项
-// ═══════════════════════════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════════════════════════
-// 简化的8属性选项（短词汇）
-// ═══════════════════════════════════════════════════════════════════════════
-ATTR_DATA = {
-    cn: {
-        appearance: { name: '外貌特征', options: ['威严', '温和', '锐利', '柔和', '独特', '普通'] },
-        speech: { name: '说话方式', options: ['简洁', '温和', '热情', '沉稳', '幽默', '寡言'] },
-        behavior: { name: '行为习惯', options: ['果断', '深思', '随性', '谨慎', '有序', '自由'] },
-        emotion: { name: '情感表达', options: ['外露', '内敛', '多变', '稳定', '克制', '冲动'] },
-        social: { name: '社交风格', options: ['主动', '被动', '理性', '感性', '圆滑', '直率'] },
-        crisis: { name: '应对危机', options: ['冷静', '果断', '求助', '逃避', '慌乱', '坚定'] },
-        learning: { name: '学习适应', options: ['快速', '稳步', '依赖', '应变', '固执', '灵活'] },
-        growth: { name: '成长方向', options: ['成就', '自由', '安稳', '真理', '情感', '平衡'] }
-    },
-    en: {
-        appearance: { name: 'Appearance', options: ['Commanding', 'Gentle', 'Sharp', 'Warm', 'Distinctive', 'Unassuming'] },
-        speech: { name: 'Speaking', options: ['Direct', 'Tactful', 'Enthusiastic', 'Calm', 'Humorous', 'Reserved'] },
-        behavior: { name: 'Habits', options: ['Decisive', 'Thoughtful', 'Spontaneous', 'Cautious', 'Methodical', 'Free-spirited'] },
-        emotion: { name: 'Emotion', options: ['Expressive', 'Reserved', 'Changeable', 'Stable', 'Controlled', 'Impulsive'] },
-        social: { name: 'Social', options: ['Leader', 'Supportive', 'Observer', 'Connector', 'Independent', 'Group-oriented'] },
-        crisis: { name: 'Crisis', options: ['Confront', 'Analyze', 'Seek help', 'Hide', 'Charge', 'Adapt'] },
-        learning: { name: 'Learning', options: ['Practical', 'Theoretical', 'Intuitive', 'Methodical', 'Experimental', 'Traditional'] },
-        growth: { name: 'Growth', options: ['Achievement', 'Contribution', 'Connection', 'Knowledge', 'Self-mastery', 'Balance'] }
-    }
-};
-
-// ═══════════════════════════════════════════════════════════════════════════
-// 简化的8属性选项（短词汇）- 覆盖rich-word-library的长句子
-// ═══════════════════════════════════════════════════════════════════════════
-ATTR_DATA = {
-    cn: {
-        appearance: ['威严', '温和', '锐利', '柔和', '独特', '普通'],
-        speech: ['简洁', '温和', '热情', '沉稳', '幽默', '寡言'],
-        behavior: ['果断', '深思', '随性', '谨慎', '有序', '自由'],
-        emotion: ['外露', '内敛', '多变', '稳定', '克制', '冲动'],
-        social: ['主动', '被动', '理性', '感性', '圆滑', '直率'],
-        crisis: ['冷静', '果断', '求助', '逃避', '慌乱', '坚定'],
-        learning: ['快速', '稳步', '依赖', '应变', '固执', '灵活'],
-        growth: ['成就', '自由', '安稳', '真理', '情感', '平衡']
-    },
-    en: {
-        appearance: ['Commanding', 'Gentle', 'Sharp', 'Warm', 'Distinctive', 'Unassuming'],
-        speech: ['Direct', 'Tactful', 'Enthusiastic', 'Calm', 'Humorous', 'Reserved'],
-        behavior: ['Decisive', 'Thoughtful', 'Spontaneous', 'Cautious', 'Methodical', 'Free-spirited'],
-        emotion: ['Expressive', 'Reserved', 'Changeable', 'Stable', 'Controlled', 'Impulsive'],
-        social: ['Leader', 'Supportive', 'Observer', 'Connector', 'Independent', 'Group-oriented'],
-        crisis: ['Confront', 'Analyze', 'Seek help', 'Hide', 'Charge', 'Adapt'],
-        learning: ['Practical', 'Theoretical', 'Intuitive', 'Methodical', 'Experimental', 'Traditional'],
-        growth: ['Achievement', 'Contribution', 'Connection', 'Knowledge', 'Self-mastery', 'Balance']
-    }
-};
-
-// ═══════════════════════════════════════════════════════════════════════════
-// 简化的8属性选项（短词汇）- 覆盖rich-word-library的长句子
-// ═══════════════════════════════════════════════════════════════════════════
-ATTR_DATA = {
-    cn: {
-        appearance: { name: '外貌特征', options: ['威严', '温和', '锐利', '柔和', '独特', '普通'] },
-        speech: { name: '说话方式', options: ['简洁', '温和', '热情', '沉稳', '幽默', '寡言'] },
-        behavior: { name: '行为习惯', options: ['果断', '深思', '随性', '谨慎', '有序', '自由'] },
-        emotion: { name: '情感表达', options: ['外露', '内敛', '多变', '稳定', '克制', '冲动'] },
-        social: { name: '社交风格', options: ['主动', '被动', '理性', '感性', '圆滑', '直率'] },
-        crisis: { name: '应对危机', options: ['冷静', '果断', '求助', '逃避', '慌乱', '坚定'] },
-        learning: { name: '学习适应', options: ['快速', '稳步', '依赖', '应变', '固执', '灵活'] },
-        growth: { name: '成长方向', options: ['成就', '自由', '安稳', '真理', '情感', '平衡'] }
-    },
-    en: {
-        appearance: { name: 'Appearance', options: ['Commanding', 'Gentle', 'Sharp', 'Warm', 'Distinctive', 'Unassuming'] },
-        speech: { name: 'Speaking', options: ['Direct', 'Tactful', 'Enthusiastic', 'Calm', 'Humorous', 'Reserved'] },
-        behavior: { name: 'Habits', options: ['Decisive', 'Thoughtful', 'Spontaneous', 'Cautious', 'Methodical', 'Free-spirited'] },
-        emotion: { name: 'Emotion', options: ['Expressive', 'Reserved', 'Changeable', 'Stable', 'Controlled', 'Impulsive'] },
-        social: { name: 'Social', options: ['Leader', 'Supportive', 'Observer', 'Connector', 'Independent', 'Group-oriented'] },
-        crisis: { name: 'Crisis', options: ['Confront', 'Analyze', 'Seek help', 'Hide', 'Charge', 'Adapt'] },
-        learning: { name: 'Learning', options: ['Practical', 'Theoretical', 'Intuitive', 'Methodical', 'Experimental', 'Traditional'] },
-        growth: { name: 'Growth', options: ['Achievement', 'Contribution', 'Connection', 'Knowledge', 'Self-mastery', 'Balance'] }
-    },
-    tw: {
-        appearance: { name: '外貌特徵', options: ['威嚴', '溫和', '銳利', '柔和', '獨特', '普通'] },
-        speech: { name: '說話方式', options: ['簡潔', '溫和', '熱情', '沉穩', '幽默', '寡言'] },
-        behavior: { name: '行為習慣', options: ['果斷', '深思', '隨性', '謹慎', '有序', '自由'] },
-        emotion: { name: '情感表達', options: ['外露', '內斂', '多變', '穩定', '克制', '衝動'] },
-        social: { name: '社交風格', options: ['主動', '被動', '理性', '感性', '圓滑', '直率'] },
-        crisis: { name: '危機應對', options: ['冷靜', '果斷', '求助', '逃避', '慌亂', '堅定'] },
-        learning: { name: '學習適應', options: ['快速', '穩步', '依賴', '應變', '固執', '靈活'] },
-        growth: { name: '成長方向', options: ['成就', '自由', '連結', '知識', '平衡', '智慧'] }
-    }
-};
-
-
-// 简化的8属性选项（短词汇）
-ATTR_DATA = {
-    cn: {
-        appearance: ['威严', '温和', '锐利', '柔和', '独特', '普通'],
-        speech: ['简洁', '温和', '热情', '沉稳', '幽默', '寡言'],
-        behavior: ['果断', '深思', '随性', '谨慎', '有序', '自由'],
-        emotion: ['外露', '内敛', '多变', '稳定', '克制', '冲动'],
-        social: ['主动', '被动', '理性', '感性', '圆滑', '直率'],
-        crisis: ['冷静', '果断', '求助', '逃避', '慌乱', '坚定'],
-        learning: ['快速', '稳步', '依赖', '应变', '固执', '灵活'],
-        growth: ['成就', '自由', '安稳', '真理', '情感', '平衡']
-    },
-    en: {
-        appearance: ['Commanding', 'Gentle', 'Sharp', 'Warm', 'Distinctive', 'Unassuming'],
-        speech: ['Direct', 'Tactful', 'Enthusiastic', 'Calm', 'Humorous', 'Reserved'],
-        behavior: ['Decisive', 'Thoughtful', 'Spontaneous', 'Cautious', 'Methodical', 'Free-spirited'],
-        emotion: ['Expressive', 'Reserved', 'Changeable', 'Stable', 'Controlled', 'Impulsive'],
-        social: ['Leader', 'Supportive', 'Observer', 'Connector', 'Independent', 'Group-oriented'],
-        crisis: ['Confront', 'Analyze', 'Seek help', 'Hide', 'Charge', 'Adapt'],
-        learning: ['Practical', 'Theoretical', 'Intuitive', 'Methodical', 'Experimental', 'Traditional'],
-        growth: ['Achievement', 'Contribution', 'Connection', 'Knowledge', 'Self-mastery', 'Balance']
-    }
-};
-// 简化8属性覆盖
-ATTR_DATA = {
-cn: {appearance:['威严','温和','锐利','柔和','独特','普通'],speech:['简洁','温和','热情','沉稳','幽默','寡言'],behavior:['果断','深思','随性','谨慎','有序','自由'],emotion:['外露','内敛','多变','稳定','克制','冲动'],social:['主动','被动','理性','感性','圆滑','直率'],crisis:['冷静','果断','求助','逃避','慌乱','坚定'],learning:['快速','稳步','依赖','应变','固执','灵活'],growth:['成就','自由','安稳','真理','情感','平衡']},
-en: {appearance:['Commanding','Gentle','Sharp','Warm','Distinctive','Unassuming'],speech:['Direct','Tactful','Enthusiastic','Calm','Humorous','Reserved'],behavior:['Decisive','Thoughtful','Spontaneous','Cautious','Methodical','Free-spirited'],emotion:['Expressive','Reserved','Changeable','Stable','Controlled','Impulsive'],social:['Leader','Supportive','Observer','Connector','Independent','Group-oriented'],crisis:['Confront','Analyze','Seek help','Hide','Charge','Adapt'],learning:['Practical','Theoretical','Intuitive','Methodical','Experimental','Traditional'],growth:['Achievement','Contribution','Connection','Knowledge','Self-mastery','Balance']}
-};
-ATTR_DATA={cn:{appearance:["威严","温和","锐利","柔和","独特","普通"],speech:["简洁","温和","热情","沉稳","幽默","寡言"],behavior:["果断","深思","随性","谨慎","有序","自由"],emotion:["外露","内敛","多变","稳定","克制","冲动"],social:["主动","被动","理性","感性","圆滑","直率"],crisis:["冷静","果断","求助","逃避","慌乱","坚定"],learning:["快速","稳步","依赖","应变","固执","灵活"],growth:["成就","自由","安稳","真理","情感","平衡"]},en:{appearance:["Commanding","Gentle","Sharp","Warm","Distinctive","Unassuming"],speech:["Direct","Tactful","Enthusiastic","Calm","Humorous","Reserved"],behavior:["Decisive","Thoughtful","Spontaneous","Cautious","Methodical","Free-spirited"],emotion:["Expressive","Reserved","Changeable","Stable","Controlled","Impulsive"],social:["Leader","Supportive","Observer","Connector","Independent","Group-oriented"],crisis:["Confront","Analyze","Seek help","Hide","Charge","Adapt"],learning:["Practical","Theoretical","Intuitive","Methodical","Experimental","Traditional"],growth:["Achievement","Contribution","Connection","Knowledge","Self-mastery","Balance"]}};
-ATTR_DATA={cn:{appearance:["威严","温和","锐利","柔和","独特","普通"],speech:["简洁","温和","热情","沉稳","幽默","寡言"],behavior:["果断","深思","随性","谨慎","有序","自由"],emotion:["外露","内敛","多变","稳定","克制","冲动"],social:["主动","被动","理性","感性","圆滑","直率"],crisis:["冷静","果断","求助","逃避","慌乱","坚定"],learning:["快速","稳步","依赖","应变","固执","灵活"],growth:["成就","自由","安稳","真理","情感","平衡"]},en:{appearance:["Commanding","Gentle","Sharp","Warm","Distinctive","Unassuming"],speech:["Direct","Tactful","Enthusiastic","Calm","Humorous","Reserved"],behavior:["Decisive","Thoughtful","Spontaneous","Cautious","Methodical","Free-spirited"],emotion:["Expressive","Reserved","Changeable","Stable","Controlled","Impulsive"],social:["Leader","Supportive","Observer","Connector","Independent","Group-oriented"],crisis:["Confront","Analyze","Seek help","Hide","Charge","Adapt"],learning:["Practical","Theoretical","Intuitive","Methodical","Experimental","Traditional"],growth:["Achievement","Contribution","Connection","Knowledge","Self-mastery","Balance"]}};
-ATTR_DATA={cn:{appearance:["威严","温和","锐利","柔和","独特","普通"],speech:["简洁","温和","热情","沉稳","幽默","寡言"],behavior:["果断","深思","随性","谨慎","有序","自由"],emotion:["外露","内敛","多变","稳定","克制","冲动"],social:["主动","被动","理性","感性","圆滑","直率"],crisis:["冷静","果断","求助","逃避","慌乱","坚定"],learning:["快速","稳步","依赖","应变","固执","灵活"],growth:["成就","自由","安稳","真理","情感","平衡"]},en:{appearance:["Commanding","Gentle","Sharp","Warm","Distinctive","Unassuming"],speech:["Direct","Tactful","Enthusiastic","Calm","Humorous","Reserved"],behavior:["Decisive","Thoughtful","Spontaneous","Cautious","Methodical","Free-spirited"],emotion:["Expressive","Reserved","Changeable","Stable","Controlled","Impulsive"],social:["Leader","Supportive","Observer","Connector","Independent","Group-oriented"],crisis:["Confront","Analyze","Seek help","Hide","Charge","Adapt"],learning:["Practical","Theoretical","Intuitive","Methodical","Experimental","Traditional"],growth:["Achievement","Contribution","Connection","Knowledge","Self-mastery","Balance"]}};
-ATTR_DATA={cn:{appearance:["威严","温和","锐利","柔和","独特","普通"],speech:["简洁","温和","热情","沉稳","幽默","寡言"],behavior:["果断","深思","随性","谨慎","有序","自由"],emotion:["外露","内敛","多变","稳定","克制","冲动"],social:["主动","被动","理性","感性","圆滑","直率"],crisis:["冷静","果断","求助","逃避","慌乱","坚定"],learning:["快速","稳步","依赖","应变","固执","灵活"],growth:["成就","自由","安稳","真理","情感","平衡"]},en:{appearance:["Commanding","Gentle","Sharp","Warm","Distinctive","Unassuming"],speech:["Direct","Tactful","Enthusiastic","Calm","Humorous","Reserved"],behavior:["Decisive","Thoughtful","Spontaneous","Cautious","Methodical","Free-spirited"],emotion:["Expressive","Reserved","Changeable","Stable","Controlled","Impulsive"],social:["Leader","Supportive","Observer","Connector","Independent","Group-oriented"],crisis:["Confront","Analyze","Seek help","Hide","Charge","Adapt"],learning:["Practical","Theoretical","Intuitive","Methodical","Experimental","Traditional"],growth:["Achievement","Contribution","Connection","Knowledge","Self-mastery","Balance"]}};

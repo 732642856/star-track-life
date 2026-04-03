@@ -19226,3 +19226,5 @@
         var siHua1 = (_sihuaProfile && _sihuaProfile.luStar) ? _sihuaProfile.luStar : siHua1;
         var siHua2 = (_sihuaProfile && _sihuaProfile.quanStar) ? _sihuaProfile.quanStar : siHua2;
         var siHua3 = (_sihuaProfile && _sihuaProfile.keStar) ? _sihuaProfile.keStar : siHua3;
+
+// test_append
