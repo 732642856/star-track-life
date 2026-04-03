@@ -469,6 +469,16 @@ function _generateAppearanceDesc(mainStar, appearanceTag, genderCN, lang) {
     if (lang === 'en') {
         // 英文版外貌：简洁描述
         var tagEN = appearanceTag || 'Distinctive';
+        // 将中文/繁体外貌标签映射为英文
+        var tagMapEN = {
+            '威严霸气': 'Commanding', '威嚴霸氣': 'Commanding',
+            '温和儒雅': 'Gentle & Refined', '溫和儒雅': 'Gentle & Refined',
+            '锐利干练': 'Sharp & Capable', '銳利幹練': 'Sharp & Capable',
+            '柔和亲和': 'Warm & Approachable', '柔和親和': 'Warm & Approachable',
+            '独特个性': 'Distinctive', '獨特個性': 'Distinctive',
+            '普通平凡': 'Unassuming'
+        };
+        var displayTagEN = tagMapEN[tagEN] || tagEN;
         var faceEN = {
             '紫微': 'Commanding presence — broad forehead, steady gaze, natural authority',
             '天机': 'Quick, bright-eyed, perpetually thinking — their face gives the sense of a mind in motion',
@@ -485,7 +495,7 @@ function _generateAppearanceDesc(mainStar, appearanceTag, genderCN, lang) {
             '七杀': 'Hard-edged, intense — a face that people instinctively step back from before stepping toward',
             '破军': 'Unconventional — something about the features doesn\'t follow the expected pattern'
         };
-        return (faceEN[mainStar] || tagEN) + '. Overall impression: ' + tagEN + '.';
+        return (faceEN[mainStar] || displayTagEN) + '. Overall impression: ' + displayTagEN + '.';
     }
 
     // 中文/繁体版外貌（主体描述相同，繁体转换由前端处理）
@@ -1074,6 +1084,81 @@ var STAR_ERA_WOUNDS = {
 };
 window.ERA_WOUNDS = ERA_WOUNDS;
 window.STAR_ERA_WOUNDS = STAR_ERA_WOUNDS;
+
+// ── 英文版：时代伤痕（STAR_ERA_WOUNDS_EN）──
+var STAR_ERA_WOUNDS_EN = {
+    '紫微': {
+        ancient:     'In court power struggles, a once-trusted ally turned — overnight, he fell from power. Learned that true dignity can only be self-guarded.',
+        modern:      'Family fortune collapsed — lost the titles, status, and retinue that gave him identity. Only the "my fate is mine" conviction kept him rebuilding in chaos.',
+        contemporary:'Rose to executive level, then was sidelined in a power play. Learned: positions granted by others\' protection can be taken away just as easily.'
+    },
+    '天机': {
+        ancient:     'Offered brilliant strategy to his lord, but was suspected for being too capable. A lifetime of strategy with nowhere to deploy — that suppression became his deepest scar.',
+        modern:      'Wartime intelligence background — saw too much calculation and betrayal. Too deep an understanding of human nature, lost the ability to trust without guard.',
+        contemporary:'Always the problem-solver — family troubles, friends\' dilemmas. Used to being needed, but doesn\'t know what he actually wants for himself.'
+    },
+    '太阳': {
+        ancient:     'Spoke truth to power and was exiled. That blow taught him: being aboveboard doesn\'t always bring fairness — but he still chose to be the light.',
+        modern:      'Believed revolution could change the world, watched ideals erode in reality. The comrades who sacrificed remain a weight he can never set down.',
+        contemporary:'Became the family\'s "sun" — supporting parents\' expectations, siblings\' dependence. The cost of shining too long: when he burns out, no one notices he was already exhausted.'
+    },
+    '武曲': {
+        ancient:     'Fought bravely on the battlefield, was imprisoned for a misjudgment. That "I was clearly right" fury became the bedrock of his hardened worldview.',
+        modern:      'Built from nothing in chaos — no backing, no patron, only his hands. Every coin was earned with dignity and sweat, so he has zero tolerance for weakness.',
+        contemporary:'When the factory closed, his father became unemployed overnight. Learned then: the world doesn\'t spare you for trying — only money in hand means safety.'
+    },
+    '天同': {
+        ancient:     'Lived through war and displacement, saw too much separation. Inner peace was earned through suffering, not born.',
+        modern:      'In wartime, the family fled constantly — learned to find small joys in the worst conditions. That "go with the flow" is survival instinct and armor.',
+        contemporary:'Peacemaker in family conflicts from childhood — dissolved adult tensions with laughter. Cost: every grievance pressed inside, surface forever pleasant.'
+    },
+    '廉贞': {
+        ancient:     'Survived court through charm and maneuvering — attracted jealousy and schemes. The trap that nearly cost everything taught him: being desired is itself a danger.',
+        modern:      'Years of trading beauty and emotion for survival — couldn\'t distinguish real feeling from exchange. That hunger for authentic love and distrust of it persisted.',
+        contemporary:'Been cheated on or betrayed, never mentions it. Hides fragility under allure and confidence — the more wounded, the more effortless the performance.'
+    },
+    '天府': {
+        ancient:     'Managed family finances and personnel at the peak. The massive loss from trusting the wrong relative became the starting point of lifelong caution.',
+        modern:      'In chaos, guarded what little remained while constantly moving. Saw too many lose everything to impulse — adopted "stability first" as highest wisdom.',
+        contemporary:'After parents divorced, finances collapsed. Learned early to save, to skip unnecessary things — because "everything can vanish" planted deep fear of uncertainty.'
+    },
+    '太阴': {
+        ancient:     'The one he loved was forced to marry a noble — he could only drink alone under the moon, channeling that bone-deep regret into art. Since then, tenderness only for the truly worthy.',
+        modern:      'Love in wartime never gets a proper goodbye. The one lost in chaos became an unfinished sentence — every later relationship carries unexplained melancholy.',
+        contemporary:'Experienced emotional betrayal or hurt, now uses complexity to protect inner fragility. Gentleness only for those truly worth it — and that threshold keeps rising.'
+    },
+    '贪狼': {
+        ancient:     'Favored by the powerful for many talents — nearly destroyed in political vortex for the same. Learned: talent can be weapon or target, depending on who\'s watching.',
+        modern:      'Brilliant on stage, paying invisible costs backstage — used, consumed, discarded. Under the glitter, a deep hunger to be "truly seen."',
+        contemporary:'Criticized since childhood for "too many interests, none serious." The feeling "I have many faces, but none are recognized" became his deepest pain.'
+    },
+    '巨门': {
+        ancient:     'Spoke truth to power, was branded "spreading dangerous speech." That imprisonment taught him: truth isn\'t always welcome — but silence suffocates him more.',
+        modern:      'Used writing to expose darkness, was persecuted for it — imprisoned or exiled. The "I told truth and was punished" experience left deep injustice.',
+        contemporary:'Always offending people by speaking directly — criticized by teachers, controlled by parents, isolated by classmates. The "I just told the truth" grievance left confusion and resentment about social rules.'
+    },
+    '天相': {
+        ancient:     'Forced to pick sides in factional struggle, chose wrong, family suffered. Learned: "fairness" is a luxury — but "not picking" costs less than picking wrong.',
+        modern:      'Peacemaker in wartime, trusted by neither side,随时可能被出卖. The exhaustion of pleasing everyone in a squeeze became instinctive conflict avoidance.',
+        contemporary:'Family peacemaker, habitually suppressing own stance to maintain harmony. Cost: constant "what do I actually want" confusion, and "do my words count" low self-worth.'
+    },
+    '天梁': {
+        ancient:     'Watched his upright father framed by corrupt officials, justice nowhere to appeal. The "I know it\'s wrong but can\'t do anything" despair became the root of his cynicism and救世情怀 coexistence.',
+        modern:      'Healer or savior in chaos — saw too much death, saved too many, couldn\'t save himself. The heart carrying others\' pain occasionally collapses when no one\'s watching.',
+        contemporary:'The "sensible child" since childhood — accustomed to managing others\' emotions, suppressing own needs. Grew up as everyone\'s confidant, but no one ever truly cared for him.'
+    },
+    '七杀': {
+        ancient:     'Saw too many brothers fall on the battlefield. Killing brought not just victory, but nights haunted by ghosts. The hardened exterior covers undigested fear and grief.',
+        modern:      'Carried too much alone in the most dangerous era — parents above, children below, every direction a battlefield. Long-term high pressure with nowhere to vent made him lock the emotional valve, becoming someone who "just needs to hold on."',
+        contemporary:'Competing at home since childhood — proving worth, becoming "the capable one." After success, discovered he\'d been running to prove to a father who might never have truly cared about the result.'
+    },
+    '破军': {
+        ancient:     'A reform or revolution failed, comrades implicated, he escaped. The "we were right but still lost" fury became fuel for constantly breaking everything afterward.',
+        modern:      'Experienced complete "reset" — war, political movement, or family overthrow. Everything familiar gone, only the choice to start over remained. That total collapse became his lightest starting point.',
+        contemporary:'Changed many jobs, cities, people — not from irresponsibility, but an inner voice saying "this isn\'t what I want." The uncertainty about self and dissatisfaction with the world is a double-edged sword.'
+    }
+};
+window.STAR_ERA_WOUNDS_EN = STAR_ERA_WOUNDS_EN;
 
 // ==================== 辅助函数 ====================
 
@@ -3694,18 +3779,21 @@ function _generateSpatialInteraction(chart, sihua) {
 // ==================== 灵魂伤痕（三维差异化：主星×时代×格局）====================
 function _generateSoulWound(era, patternType, mainStar) {
     var eraKey = {ancient:'ancient', modern:'modern', contemporary:'contemporary'}[era] || 'contemporary';
+    var _lang = (typeof CURRENT_LANG !== 'undefined') ? CURRENT_LANG : 'zh';
 
     // 优先：主星×时代（最精细，每颗主星独立描述）
-    var starEraData = (STAR_ERA_WOUNDS[mainStar] || {})[eraKey];
-    // 降级：格局×时代（同格局的通用伤痕）
-    var patternEraData = (ERA_WOUNDS[eraKey] || {})[patternType];
-    var eraWound = starEraData || patternEraData || '经历过改变人生的重大事件，在伤痛中蜕变成型';
+    var starEraData = (_lang === 'en' ? (STAR_ERA_WOUNDS_EN[mainStar] || {})[eraKey] : (STAR_ERA_WOUNDS[mainStar] || {})[eraKey]);
+    // 降级：格局×时代（同格局的通用伤痕）- 英文版暂用 fallback
+    var patternEraData = (!starEraData && _lang !== 'en') ? ((ERA_WOUNDS[eraKey] || {})[patternType]) : null;
+    var eraWound = starEraData || patternEraData || (_lang === 'en' ? 'A defining wound that shaped who he became.' : '经历过改变人生的重大事件，在伤痛中蜕变成型');
 
     // 补充主星层面的心理伤痕
     var starDetails = _getStarDescriptions(mainStar) || {};
     var starWound = starDetails.wound || '';
 
-    return `**时代伤痕：** ${eraWound}\n\n**星曜伤痕：** ${starWound}\n\n`;
+    return (_lang === 'en')
+        ? `**Era Wound:** ${eraWound}\n\n**Star Wound:** ${starWound}\n\n`
+        : `**时代伤痕：** ${eraWound}\n\n**星曜伤痕：** ${starWound}\n\n`;
 }
 
 // ==================== 核心生成函数：8模块 2400字+ ====================
@@ -3952,10 +4040,13 @@ function generateZiweiCharacterBio(userData, chart, attributes, sihuaType) {
         fudeEffect: '内心世界丰富', fuqiEffect: '感情模式独特',
         traits: ['深刻', '独特']
     };
-    var cpData = (window.CP_PREFERENCE_RULES && window.CP_PREFERENCE_RULES[patternType]) || {
+    var cpData = (window.CP_PREFERENCE_RULES && window.CP_PREFERENCE_RULES[patternType]) || (_lang === 'en' ? {
+        idealPartner: 'Someone who truly understands', conflict: 'Tension arises with those of opposite temperament',
+        chemistry: 'Strong resonance with like-minded souls', growth: 'Must learn to maintain self in relationships'
+    } : {
         idealPartner: '能理解自己的伴侣', conflict: '容易与性格极端相反的人产生张力',
         chemistry: '与志同道合的人有强烈共鸣', growth: '需要学会在关系中保持自我'
-    };
+    });
 
     var starDetails  = _getStarDescriptions(mainStar) || {
         personality: _getStarPersonality(mainStar), psychology: '内心有独特的心理世界',
@@ -4342,7 +4433,7 @@ function generateZiweiCharacterBio(userData, chart, attributes, sihuaType) {
     }
     // 流年当下关系状态（英文模式下 gz.shiTrait 是中文，用简洁英文）
     if (_lang === 'en') {
-        bio += `- **${T.fCurrentRel} (${gz.yearGan}${gz.yearZhi}·${gz.monthZhi})${_c}** Relationships in this period carry the energy of ` + (_PATTERN_NAME_EN[patternType] || patternType) + ` — worth noticing who shows up now.\n\n`;
+        bio += `- **${T.fCurrentRel}${_c}** Relationships in this period carry the energy of ` + (_PATTERN_NAME_EN[patternType] || patternType) + ` — worth noticing who shows up now.\n\n`;
     } else {
         bio += `- **${T.fCurrentRel}（${gz.yearGan}${gz.yearZhi}年·${gz.monthZhi}月）${_c}** ${gz.shiTrait}\n\n`;
     }
