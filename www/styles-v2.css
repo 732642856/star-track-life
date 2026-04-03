@@ -82,7 +82,7 @@ body {
    导航栏 - 参照线上版
    ======================================== */
 .main-nav {
-    position: fixed;
+    position: relative;
     top: 0;
     left: 0;
     right: 0;
@@ -90,6 +90,7 @@ body {
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--color-border-light);
+    padding-top: 20px; /* 刘海屏下方留出空间 */
 }
 
 .nav-container {
@@ -1614,7 +1615,7 @@ body {
 
 /* compare-section 改为全屏固定覆盖层 */
 #compare-section {
-    position: fixed;
+    position: relative;
     inset: 0;
     z-index: 9000;
     background: var(--color-bg, #f5f0eb);
@@ -1627,7 +1628,7 @@ body {
 
 /* 右上角浮动关闭按钮（iOS 悬浮圆形风格） */
 .cmp-close-fab {
-    position: fixed;
+    position: relative;
     top: calc(env(safe-area-inset-top, 0px) + 16px);
     right: 16px;
     z-index: 9100;
@@ -2623,7 +2624,7 @@ body {
    关闭按钮 - 避开 iPhone 刘海
    ═══════════════════════════════════════════════════════════ */
 .cmp-close-btn {
-    position: fixed;
+    position: relative;
     top: calc(env(safe-area-inset-top, 20px) + 12px);
     right: 16px;
     z-index: 9100;

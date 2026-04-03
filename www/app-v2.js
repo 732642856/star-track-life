@@ -9,148 +9,14 @@ let selectedChart = null;
 let userInputs = {};
 let eightAttributes = {};
 let selectedEra = null;
-let selectedSubPattern = null;  // 驱动力标签（野心者/执念者等8种）
-let selectedSubPatternIdx = -1; // 驱动力索引（0-7，语言无关的存储key）
-let selectedKeIdx = 0;          // 时辰刻（0-7，初刻→末刻，独立于驱动力）
+let selectedSubPattern = null;
 let currentCharacterBio = '';
 let savedCharacters = [];
-
-// ==================== i18n 翻译辅助函数 ====================
-/**
- * _getStarNameI18n(zhName)
- * 将中文星名转为当前语言的星名（用于显示）
- * 存储始终用中文key，显示时翻译
- */
-function _getStarNameI18n(zhName) {
-    if (!zhName) return zhName;
-    var lang = (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG ? CURRENT_LANG : (typeof window !== 'undefined' && window.CURRENT_LANG ? window.CURRENT_LANG : 'zh'));
-
-    if (lang === 'zh') return zhName;
-    // 繁体映射
-    var TW_STARS = {
-        '紫微':'紫微','天机':'天機','太阳':'太陽','武曲':'武曲','天同':'天同','廉贞':'廉貞',
-        '天府':'天府','太阴':'太陰','贪狼':'貪狼','巨门':'巨門','天相':'天相','天梁':'天梁',
-        '七杀':'七殺','破军':'破軍'
-    };
-    // 英文映射（来自 MAIN_STARS_I18N，此处内联常用部分）
-    var EN_STARS = {
-        '紫微':'Zi Wei','天机':'Tian Ji','太阳':'Tai Yang','武曲':'Wu Qu','天同':'Tian Tong',
-        '廉贞':'Lian Zhen','天府':'Tian Fu','太阴':'Tai Yin','贪狼':'Tan Lang','巨门':'Ju Men',
-        '天相':'Tian Xiang','天梁':'Tian Liang','七杀':'Qi Sha','破军':'Po Jun'
-    };
-    if (lang === 'zh-TW') return TW_STARS[zhName] || zhName;
-    if (lang === 'en') return EN_STARS[zhName] || zhName;
-    return zhName;
-}
-
-/**
- * _getPatternTypeI18n(zhType)
- * 将格局类型（杀破狼/紫府廉武相/机月同梁/巨日）翻译为当前语言
- */
-function _getPatternTypeI18n(zhType) {
-    if (!zhType) return zhType;
-    var lang = (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG ? CURRENT_LANG : (typeof window !== 'undefined' && window.CURRENT_LANG ? window.CURRENT_LANG : 'zh'));
-
-    var TW = { '杀破狼':'殺破狼','紫府廉武相':'紫府廉武相','机月同梁':'機月同梁','巨日':'巨日' };
-    var EN = {
-        '杀破狼':'Sha-Po-Lang (The Trailblazers)',
-        '紫府廉武相':'Zi-Fu-Lian-Wu-Xiang (The Architects)',
-        '机月同梁':'Ji-Yue-Tong-Liang (The Guardians)',
-        '巨日':'Ju-Ri (The Visionaries)'
-    };
-    if (lang === 'zh-TW') return TW[zhType] || zhType;
-    if (lang === 'en') return EN[zhType] || zhType;
-    return zhType;
-}
-
-/**
- * _getDriveLabelI18n(zhLabel)
- * 将驱动力中文标签转为当前语言标签
- * 优先用 getDynamic().drive8 的精确翻译
- */
-function _getDriveLabelI18n(zhLabel) {
-    if (!zhLabel) return zhLabel;
-    var lang = (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG ? CURRENT_LANG : (typeof window !== 'undefined' && window.CURRENT_LANG ? window.CURRENT_LANG : 'zh'));
-
-    if (lang === 'zh') return zhLabel;
-    // 中文label → 索引 → 当前语言label
-    var ZH_LABELS = ['野心者','执念者','谋局者','享乐者','守护者','破局者','漂泊者','隐忍者'];
-    var idx = ZH_LABELS.indexOf(zhLabel);
-    if (idx === -1) {
-        // 繁体也可能作为输入
-        var TW_LABELS = ['野心者','執念者','謀局者','享樂者','守護者','破局者','漂泊者','隱忍者'];
-        idx = TW_LABELS.indexOf(zhLabel);
-    }
-    if (idx === -1) return zhLabel; // 找不到索引，原样返回
-    if (typeof getDynamic === 'function') {
-        var d = getDynamic();
-        if (d && d.drive8 && d.drive8[idx]) return d.drive8[idx].label;
-    }
-    return zhLabel;
-}
-
-/**
- * _getDriveLabelByIdx(idx)
- * 通过数字索引直接获取当前语言的驱动力标签（存储时保存idx更稳健）
- */
-function _getDriveLabelByIdx(idx) {
-    if (idx < 0 || idx > 7) return '';
-    if (typeof getDynamic === 'function') {
-        var d = getDynamic();
-        if (d && d.drive8 && d.drive8[idx]) return d.drive8[idx].label;
-    }
-    var ZH_LABELS = ['野心者','执念者','谋局者','享乐者','守护者','破局者','漂泊者','隐忍者'];
-    return ZH_LABELS[idx] || '';
-}
-
-/**
- * _getPatternNameI18n(stars, lang)
- * 将格局名（如"七杀独坐"）翻译：把中文星名替换为对应语言星名
- */
-function _getPatternNameI18n(zhName) {
-    if (!zhName) return zhName;
-    var lang = (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG ? CURRENT_LANG : (typeof window !== 'undefined' && window.CURRENT_LANG ? window.CURRENT_LANG : 'zh'));
-
-    if (lang === 'zh') return zhName;
-    var STAR_PAIRS = [
-        ['七杀','破军'],['七杀','贪狼'],['破军','贪狼'],
-        ['紫微','天府'],['紫微','天相'],['紫微','贪狼'],['紫微','七杀'],['紫微','破军'],
-        ['廉贞','天府'],['廉贞','天相'],['廉贞','贪狼'],['廉贞','七杀'],['廉贞','破军'],
-        ['武曲','天府'],['武曲','天相'],['武曲','贪狼'],['武曲','七杀'],['武曲','破军'],
-        ['天机','太阴'],['天机','天梁'],['天机','巨门'],
-        ['天同','太阴'],['天同','天梁'],['天同','巨门'],
-        ['太阳','太阴'],['太阳','天梁'],['太阳','巨门'],['太阳','天府'],
-        ['紫微'],['天机'],['太阳'],['武曲'],['天同'],['廉贞'],
-        ['天府'],['太阴'],['贪狼'],['巨门'],['天相'],['天梁'],['七杀'],['破军']
-    ];
-    var TW_SUFFIX = { '独坐':'獨坐','同宫':'同宮','命格':'命格','格局':'格局' };
-    var EN_SUFFIX = { '独坐':' (Solo)','同宫':' (Paired)','命格':' Chart','格局':' Pattern' };
-    var result = zhName;
-    // 替换星名
-    var STAR_LIST = ['紫微','天机','太阳','武曲','天同','廉贞','天府','太阴','贪狼','巨门','天相','天梁','七杀','破军'];
-    for (var i = 0; i < STAR_LIST.length; i++) {
-        if (result.indexOf(STAR_LIST[i]) !== -1) {
-            result = result.split(STAR_LIST[i]).join(_getStarNameI18n(STAR_LIST[i]));
-        }
-    }
-    // 替换后缀
-    var suffixes = lang === 'zh-TW' ? TW_SUFFIX : EN_SUFFIX;
-    for (var k in suffixes) {
-        result = result.split(k).join(suffixes[k]);
-    }
-    return result;
-}
-
-// ==================== 对比按钮测试函数 ====================
-function testButtonClick() {
-    console.log('!!! 对比按钮点击事件已触发 !!!');
-    console.trace('按钮点击堆栈追踪');
-}
 
 // ==================== 全局 Toast 提示 ====================
 function showToast(msg, type) {
     var bg = (type === 'success') ? 'rgba(39,174,96,0.92)' : 'rgba(220,50,50,0.92)';
-    var icon = (type === 'success') ? '' : '';
+    var icon = (type === 'success') ? '✅ ' : '⚠️ ';
     var t = document.createElement('div');
     t.textContent = icon + msg;
     t.style.cssText = [
@@ -186,27 +52,16 @@ function showToast(msg, type) {
 
 // ==================== 8种人物驱动力 ====================
 // 每个选项是小传差异化的核心触发器，选哪个决定角色叙事方向
-// 数据从 i18n-ui.js UI_DYNAMIC 取，支持三语言动态切换
-function _getDrive8() {
-    if (typeof getDynamic === 'function') {
-        return getDynamic().drive8.map(function(d, i) {
-            return Object.assign({ keIdx: i }, d);
-        });
-    }
-    // 降级：返回简体中文硬编码（仅在 i18n 未加载时生效）
-    return [
-        { label: '野心者', keIdx: 0, desc: '想要更多，永不满足，代价是很难真正停下来', coreConflict: '得到了还想要 vs 已经够了还不知道', wound: '曾经一无所有，或曾被人看不起', starHint: '七杀/破军/贪狼命格最常见' },
-        { label: '执念者', keIdx: 1, desc: '有一件事/一个人放不下，整个人生都在绕着它转', coreConflict: '放不下那个执念 vs 执念正在吞噬自己', wound: '曾经失去过某样东西，从此无法真正接受"失去"', starHint: '化忌入夫妻宫/命宫的格局，巨门/廉贞命格' },
-        { label: '谋局者', keIdx: 2, desc: '凡事都在布局，极少暴露真实意图，连身边人也未必读得懂', coreConflict: '算计一切 vs 算计了所有人却算计不了孤独', wound: '曾经因为"天真"而被伤害，从此再不轻易信任', starHint: '天机/紫微命格，权忌叠加格局' },
-        { label: '享乐者', keIdx: 3, desc: '活在当下，本能地回避痛苦，不太愿意为明天透支今天', coreConflict: '活在当下是智慧 vs 逃避是另一种懦弱', wound: '某段经历让他学会：未来是假的，只有现在是真的', starHint: '天同/贪狼/太阴命格，化禄入命宫' },
-        { label: '守护者', keIdx: 4, desc: '为某人或某件事活着，习惯把自己放在最后', coreConflict: '守护了所有人 vs 谁来守护我', wound: '曾经没有守护好某个重要的人，从此以守护赎罪', starHint: '天府/太阳/天梁命格，夫妻宫/子女宫有重要星' },
-        { label: '破局者', keIdx: 5, desc: '天生看不惯既有秩序，不打破什么就浑身难受', coreConflict: '不破不立 vs 打破了之后空留一地碎片', wound: '曾被一个不公平的规则深深伤害，立誓要推翻它', starHint: '破军/七杀命格，忌权叠加' },
-        { label: '漂泊者', keIdx: 6, desc: '找不到真正意义上的根，永远在路上，停下来反而迷茫', coreConflict: '渴望归属 vs 真正定下来时又觉得窒息', wound: '从小就没有一个真正意义上的"家"', starHint: '天机/贪狼迁移宫强旺，命宫有空宫/化忌' },
-        { label: '隐忍者', keIdx: 7, desc: '能扛，扛到极限才会爆发，平时看起来比任何人都稳', coreConflict: '忍耐是力量 vs 忍耐也是在慢慢消灭自己', wound: '曾经爆发过，结果失去了太多，从此学会了压抑', starHint: '天相/太阴/武曲命格，化忌入福德宫' },
-    ];
-}
-// 运行时驱动力数组（由 _getDrive8() 生成，语言切换时需刷新）
-var DRIVE_8_TYPES = _getDrive8();
+var DRIVE_8_TYPES = [
+    { label: '野心者', keIdx: 0, desc: '想要更多，永不满足，代价是很难真正停下来' },
+    { label: '执念者', keIdx: 1, desc: '有一件事/一个人放不下，整个人生都在绕着它转' },
+    { label: '谋局者', keIdx: 2, desc: '凡事都在布局，极少暴露真实意图，连身边人也未必读得懂' },
+    { label: '享乐者', keIdx: 3, desc: '活在当下，本能地回避痛苦，不太愿意为明天透支今天' },
+    { label: '守护者', keIdx: 4, desc: '为某人或某件事活着，习惯把自己放在最后' },
+    { label: '破局者', keIdx: 5, desc: '天生看不惯既有秩序，不打破什么就浑身难受' },
+    { label: '漂泊者', keIdx: 6, desc: '找不到真正意义上的根，永远在路上，停下来反而迷茫' },
+    { label: '隐忍者', keIdx: 7, desc: '能扛，扛到极限才会爆发，平时看起来比任何人都稳' },
+];
 
 // ==================== 144盘数据库 ====================
 const CHART_DATABASE = {
@@ -223,10 +78,7 @@ const CHART_DATABASE = {
         traits: {
             positive: ['勇敢果断', '开创力强', '冒险精神', '威望高', '执行力强'],
             negative: ['冲动', '急躁', '缺乏耐心', '好胜心强', '不服输'],
-            psychology: '追求突破和变革，内心渴望征服和掌控',
-            positiveEN: ['Brave & decisive', 'Creative power', 'Risk-taker', 'High prestige', 'Strong execution'],
-            negativeEN: ['Impulsive', 'Impatient', 'No patience', 'Competitive', 'Won\'t accept loss'],
-            psychologyEN: 'Seeks breakthrough and transformation; craves conquest and control'
+            psychology: '追求突破和变革，内心渴望征服和掌控'
         }
     },
     // 紫府廉武相系列 (36盘)
@@ -246,10 +98,7 @@ const CHART_DATABASE = {
         traits: {
             positive: ['稳重', '有领导力', '务实', '有计划', '执行力强'],
             negative: ['过于保守', '控制欲强', '不够灵活', '压力大'],
-            psychology: '追求稳定和掌控，内心渴望成就和认可',
-            positiveEN: ['Steady', 'Strong leadership', 'Pragmatic', 'Strategic', 'Reliable execution'],
-            negativeEN: ['Overly cautious', 'Controlling', 'Inflexible', 'High pressure'],
-            psychologyEN: 'Seeks stability and mastery; craves achievement and recognition'
+            psychology: '追求稳定和掌控，内心渴望成就和认可'
         }
     },
     // 机月同梁系列 (36盘)
@@ -265,10 +114,7 @@ const CHART_DATABASE = {
         traits: {
             positive: ['温和', '善良', '有同情心', '人缘好', '适应力强'],
             negative: ['优柔寡断', '过于敏感', '缺乏主见', '容易妥协'],
-            psychology: '追求和谐和安稳，内心渴望被理解和接纳',
-            positiveEN: ['Gentle', 'Kind-hearted', 'Empathetic', 'Good with people', 'Adaptable'],
-            negativeEN: ['Indecisive', 'Overly sensitive', 'Lacks assertiveness', 'Prone to compromise'],
-            psychologyEN: 'Seeks harmony and calm; craves understanding and acceptance'
+            psychology: '追求和谐和安稳，内心渴望被理解和接纳'
         }
     },
     // 巨日系列 (36盘)
@@ -281,10 +127,7 @@ const CHART_DATABASE = {
         traits: {
             positive: ['正义感强', '表达能力强', '有理想', '光明磊落'],
             negative: ['过于理想化', '容易争议', '固执己见'],
-            psychology: '追求正义和表达，内心渴望改变世界',
-            positiveEN: ['Strong sense of justice', 'Articulate', 'Idealistic', 'Open & upright'],
-            negativeEN: ['Overly idealistic', 'Invites controversy', 'Stubborn'],
-            psychologyEN: 'Seeks justice and expression; craves to change the world'
+            psychology: '追求正义和表达，内心渴望改变世界'
         }
     }
 };
@@ -373,10 +216,17 @@ function showStep(step) {
     
     currentStep = step;
 
-    // 切换步骤时统一滚到该步骤顶部
-    if (step === 3 || step === 4 || step === 5) {
+    // 切换到步骤3时，自动滚到「选择细分星盘」区块顶部
+    if (step === 3) {
         requestAnimationFrame(function() {
-            var el = document.getElementById('step-' + step);
+            var el = document.getElementById('step-3');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }
+    // 切换到步骤5时，自动滚到顶部（确保loading动效可见）
+    if (step === 5) {
+        requestAnimationFrame(function() {
+            var el = document.getElementById('step-5');
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     }
@@ -396,7 +246,6 @@ function resetForm() {
     selectedEra = null;
     selectedChart = null;
     selectedSubPattern = null;
-    selectedKeIdx = 0;
     document.getElementById('character-name').value = '';
     document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
     document.querySelectorAll('.era-card').forEach(c => c.classList.remove('selected'));
@@ -416,7 +265,7 @@ function initEraCards() {
 
 function confirmEra() {
     if (!selectedEra) {
-        showToast(tUI('toastSelectEra'));
+        showToast('请选择一个时代背景');
         return;
     }
     userInputs.era = selectedEra;
@@ -465,7 +314,7 @@ function confirmBasicInfo() {
     }
 
     if (!name) {
-        showFieldError('name-error', tUI('toastFillName'));
+        showFieldError('name-error', '请填写角色名字');
         var inp = document.getElementById('character-name');
         if (inp) {
             inp.focus();
@@ -479,43 +328,43 @@ function confirmBasicInfo() {
         return;
     }
     if (!userInputs.gender) {
-        showToast(tUI('toastSelectGender'));
+        showToast('⚠️ 请选择性别');
         var genderEl = document.querySelector('[data-field="gender"]');
         if (genderEl) genderEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
     if (!userInputs.age) {
-        showToast(tUI('toastSelectAge'));
+        showToast('⚠️ 请选择年龄段');
         var ageEl = document.querySelector('[data-field="age"]');
         if (ageEl) ageEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
     if (!userInputs.profession) {
-        showToast(tUI('toastSelectProfession'));
+        showToast('⚠️ 请选择职业');
         var profEl = document.querySelector('[data-field="profession"]');
         if (profEl) profEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
     if (!userInputs.family) {
-        showToast(tUI('toastSelectFamily'));
+        showToast('⚠️ 请选择家庭背景');
         var famEl = document.querySelector('[data-field="family"]');
         if (famEl) famEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
     if (!userInputs.social) {
-        showToast(tUI('toastSelectSocial'));
+        showToast('⚠️ 请选择社会地位');
         var socEl = document.querySelector('[data-field="social"]');
         if (socEl) socEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
     if (!userInputs.parents) {
-        showToast(tUI('toastSelectParents'));
+        showToast('⚠️ 请选择父母关系');
         var parEl = document.querySelector('[data-field="parents"]');
         if (parEl) parEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
     if (!userInputs.siblings) {
-        showToast(tUI('toastSelectSiblings'));
+        showToast('⚠️ 请选择手足关系');
         var sibEl = document.querySelector('[data-field="siblings"]');
         if (sibEl) sibEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
@@ -534,26 +383,14 @@ function matchChart() {
     // 保存到全局（使用统一代理结构）
     selectedChart = buildChartProxy(chartData);
     
-    // 更新显示（i18n：始终用翻译函数，不直接输出中文key）
-    var _lang = (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG : 'zh');
-    var _sep = _lang === 'en' ? ' / ' : '、';
+    // 更新显示
     var _setEl = function(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; };
-    _setEl('main-pattern-name', _getPatternNameI18n(chartData.pattern.name));
+    _setEl('main-pattern-name', chartData.pattern.name);
     _setEl('main-pattern-desc', chartData.pattern.desc);
-    _setEl('main-star', (chartData.pattern.stars || []).map(_getStarNameI18n).join(_sep));
-    _setEl('pattern-type', _getPatternTypeI18n(chartData.patternType));
-    _setEl('era', ((typeof getDynamic === 'function' && getDynamic().eraMap) ? getDynamic().eraMap[userInputs.era] : null) || ({ancient:'古代', modern:'近代', contemporary:'现代'}[userInputs.era] || userInputs.era));
-    _setEl('era-display', ((typeof getDynamic === 'function' && getDynamic().eraMap) ? getDynamic().eraMap[userInputs.era] : null) || ({ancient:'古代', modern:'近代', contemporary:'现代'}[userInputs.era] || userInputs.era));
-    // 命盘匹配度：确定性计算，相同输入永远得到相同分数
-    // 基础分90，根据格局类型+职业+性别微调（总在87-99之间）
-    var _scoreHash = function(s) {
-        var h = 0;
-        for (var i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
-        return Math.abs(h);
-    };
-    var _scoreKey = (chartData.patternType || '') + (userInputs.profession || userInputs.career || '') + (userInputs.gender || '');
-    var _matchScore = 87 + (_scoreHash(_scoreKey) % 13);
-    _setEl('match-score', _matchScore + '%');
+    _setEl('main-star', (chartData.pattern.stars || []).join('、'));
+    _setEl('pattern-type', chartData.patternType);
+    _setEl('era-display', ({ancient:'古代', modern:'近代', contemporary:'现代'}[userInputs.era] || userInputs.era));
+    _setEl('match-score', Math.floor(85 + Math.random() * 15) + '%');
     
     // 生成8种人格类型选项（每项=一个时辰刻坐标）
     generate8PersonalityTypes(chartData);
@@ -567,81 +404,15 @@ function generate8PersonalityTypes(chartData) {
     const personalityTypes = (chartData.personalityTypes && chartData.personalityTypes.length > 0)
         ? chartData.personalityTypes
         : DRIVE_8_TYPES;
-
-    // ── ★ 命盘算法驱动：计算8种驱动力的命盘亲和度向量 ──────────────────
-    // 通过 ChartBridge.calcDriveAffinityVector（三方四正+四化+夹宫+大限）
-    let affinityVector = null;          // 8元素数组，0-100
-    let topDriveIdx    = 0;             // 亲和度最高的驱动力下标
-    let topDriveIdx2   = 1;             // 第二高
-
-    try {
-        const fc = chartData._fullChart || (chartData._creativeParams && chartData._fullChart);
-        const fullChart = fc || (chartData._fullChart);
-        if (
-            window.ChartBridge &&
-            typeof window.ChartBridge.calcDriveAffinityVector === 'function' &&
-            fullChart && fullChart.palaces
-        ) {
-            const mingIdx = fullChart.mingPalace && fullChart.mingPalace.index !== undefined
-                            ? fullChart.mingPalace.index : 0;
-            affinityVector = window.ChartBridge.calcDriveAffinityVector(fullChart, mingIdx);
-            // 找最高&第二高亲和度下标
-            if (affinityVector) {
-                const sorted = affinityVector
-                    .map((v, i) => ({ v, i }))
-                    .sort((a, b) => b.v - a.v);
-                topDriveIdx  = sorted[0] ? sorted[0].i : 0;
-                topDriveIdx2 = sorted[1] ? sorted[1].i : 1;
-            }
-        }
-    } catch (e) {
-        console.warn('[generate8PersonalityTypes] 亲和度计算出错（非致命）:', e);
-    }
-
-    // ── 渲染驱动力卡片（命盘亲和度标注） ────────────────────────────────
-    // 简体中文8种标签（固定顺序，用于内部逻辑 key，不受语言切换影响）
-    var _ZH_DRIVE_LABELS = ['野心者','执念者','谋局者','享乐者','守护者','破局者','漂泊者','隐忍者'];
-    const _dyn = (typeof getDynamic === 'function') ? getDynamic() : {};
+    
     grid.innerHTML = personalityTypes.map((type, i) => {
-        const label         = (typeof type === 'object') ? type.label : type;
-        // zhLabel：简体中文标签（用于 relationMap / _resolveSihuaType 等内部匹配，不受语言影响）
-        const zhLabel       = _ZH_DRIVE_LABELS[i] || label;
-        const keIdx         = (typeof type === 'object') ? (type.keIdx !== undefined ? type.keIdx : i) : i;
-        const desc          = (typeof type === 'object' && type.desc) ? type.desc : label;
-        const coreConflict  = (typeof type === 'object' && type.coreConflict) ? type.coreConflict : '';
-        const wound         = (typeof type === 'object' && type.wound) ? type.wound : '';
-        const starHint      = (typeof type === 'object' && type.starHint) ? type.starHint : '';
-
-        // 命盘亲和度标签
-        const affScore  = affinityVector ? affinityVector[i] : null;
-        const isTop1    = affinityVector && i === topDriveIdx;
-        const isTop2    = affinityVector && i === topDriveIdx2;
-        const isSelected = i === 0;
-
-        // 亲和度角标（三语言）
-        let affinityBadge = '';
-        if (isTop1) {
-            affinityBadge = `<div class="drive-affinity-badge top1" style="position:absolute;top:6px;right:6px;background:linear-gradient(135deg,#8B0000,#B8860B);color:#fff;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:700;letter-spacing:0.03em;box-shadow:0 2px 8px rgba(139,0,0,0.35);">${_dyn.badgeTop1 || '✦ 命盘首选'}</div>`;
-        } else if (isTop2) {
-            affinityBadge = `<div class="drive-affinity-badge top2" style="position:absolute;top:6px;right:6px;background:linear-gradient(135deg,#B8860B,#d4a830);color:#fff;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600;letter-spacing:0.03em;opacity:0.9;">${_dyn.badgeTop2 || '◈ 次选'}</div>`;
-        } else if (affScore !== null) {
-            affinityBadge = `<div class="drive-affinity-badge" style="position:absolute;top:6px;right:6px;color:#999;font-size:9px;padding:1px 5px;border-radius:20px;border:1px solid rgba(150,150,150,0.25);">${affScore}%</div>`;
-        }
-
-        // 亲和度进度条（底部）
-        const progressBar = affScore !== null
-            ? `<div style="margin-top:6px;height:3px;border-radius:3px;background:rgba(139,0,0,0.08);overflow:hidden;"><div style="height:100%;width:${affScore}%;background:${isTop1 ? 'linear-gradient(90deg,#8B0000,#B8860B)' : isTop2 ? 'rgba(184,134,11,0.6)' : 'rgba(150,150,150,0.3)'};border-radius:3px;transition:width 0.6s ease;"></div></div>`
-            : '';
-
+        const label = (typeof type === 'object') ? type.label : type;
+        const keIdx = (typeof type === 'object') ? (type.keIdx !== undefined ? type.keIdx : i) : i;
+        const desc  = (typeof type === 'object' && type.desc) ? type.desc : label;
         return `
-            <div class="star-card ${isSelected ? 'selected' : ''}" data-personality="${zhLabel}" data-display-label="${label}" data-ke-idx="${keIdx}"
-                 style="position:relative;${isTop1 ? 'border-color:rgba(139,0,0,0.45);box-shadow:0 0 0 2px rgba(139,0,0,0.12);' : ''}">
-                ${affinityBadge}
+            <div class="star-card ${i === 0 ? 'selected' : ''}" data-personality="${label}" data-ke-idx="${keIdx}">
                 <div class="star-name">${label}</div>
                 <div class="star-desc">${desc}</div>
-                ${coreConflict ? `<div class="star-conflict" style="font-size:11px;color:#e74c3c;margin-top:4px;line-height:1.4;opacity:0.9;">${coreConflict}</div>` : ''}
-                ${wound ? `<div class="star-wound" style="font-size:10px;color:#999;margin-top:3px;line-height:1.3;font-style:italic;">${typeof tDyn === 'function' ? (tDyn('woundLabel') || '伤') : '伤'}：${wound}</div>` : ''}
-                ${progressBar}
             </div>
         `;
     }).join('');
@@ -652,8 +423,6 @@ function generate8PersonalityTypes(chartData) {
             grid.querySelectorAll('.star-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
             selectedSubPattern = card.dataset.personality;
-            // 同时保存数字索引（语言无关key，用于i18n存储）
-            selectedSubPatternIdx = parseInt(card.dataset.driveIdx || card.dataset.keIdx || '0');
             
             // 把keIdx存入userInputs，锁定时辰刻 → 精确到1152分之一的命盘
             const keIdx = parseInt(card.dataset.keIdx || '0');
@@ -665,26 +434,21 @@ function generate8PersonalityTypes(chartData) {
         });
     });
     
-    // 默认选第0个（selectedSubPattern 始终存简体标签，用于内部逻辑）
-    selectedSubPattern = _ZH_DRIVE_LABELS[0] || ((typeof personalityTypes[0] === 'object') ? personalityTypes[0].label : (personalityTypes[0] || ''));
+    // 默认选第0个
+    const firstType = personalityTypes[0];
+    selectedSubPattern = (typeof firstType === 'object') ? firstType.label : (firstType || '');
     userInputs.keIdx = 0;
 }
 
 /** 把排盘结果包装为selectedChart格式（兼容旧UI字段） */
-// buildChartProxy：兼容 chart-to-bio-bridge.js 的命盘数据格式
-// selectedChart.name 不再从 pattern.name 读取（pattern.name 是对象会导致 [object Object]）
-// chart.name 在 generateZiweiCharacterBio 中从 userData.name（表单输入）读取
-// buildChartProxy：chart.name 可能是对象，强制置空字符串，由 userData.name 接管角色名
-// pattern.name 是对象，导致 [object Object]，在 _normalizeChart 中强制处理
 function buildChartProxy(chartData) {
     return {
         ...chartData,
-        // 强制清空 name，防止对象渗入英文小传
-        name: '',
-        stars: (chartData.pattern && Array.isArray(chartData.pattern.stars)) ? chartData.pattern.stars : (chartData.stars || []),
-        desc: (chartData.pattern && typeof chartData.pattern.desc === 'string') ? chartData.pattern.desc : (chartData.desc || ''),
-        type: chartData.patternType || chartData.type || '',
-        chartId: chartData.chartUid || chartData.chartId || '',
+        name: chartData.pattern.name,
+        stars: chartData.pattern.stars,
+        desc: chartData.pattern.desc,
+        type: chartData.patternType,
+        chartId: chartData.chartUid || chartData.chartId,
         _fullChart: chartData,
     };
 }
@@ -699,134 +463,31 @@ function confirmSubPattern() {
     showStep(4);
 }
 
-// ── 三语言八属性选项（全局常量，初始化时创建一次）─────────────
-// 对照原则：同一索引位 = 同一含义，8维度 × 6选项 × 3语言严格同步
-var FALLBACK_OPTIONS = {
-    zh: {
-        appearance: ['威严霸气', '温和儒雅', '锐利干练', '柔和亲和', '独特个性', '普通平凡'],
-        speech:     ['简洁有力', '温和委婉', '热情洋溢', '沉稳冷静', '幽默风趣', '寡言少语'],
-        behavior:   ['雷厉风行', '深思熟虑', '随性而为', '谨慎小心', '有条不紊', '自由散漫'],
-        emotion:    ['外露直白', '内敛含蓄', '丰富多变', '稳定平和', '理性克制', '感性冲动'],
-        social:     ['主动热情', '被动等待', '理性交往', '感性相交', '圆滑世故', '直率真诚'],
-        crisis:     ['冷静分析', '果断行动', '寻求帮助', '逃避回避', '慌乱无措', '坚定抵抗'],
-        learning:   ['快速学习', '稳步积累', '依赖经验', '善于应变', '固执己见', '灵活调整'],
-        growth:     ['追求成就', '追求自由', '追求安稳', '追求真理', '追求情感', '追求平衡']
-    },
-    'zh-TW': {
-        appearance: ['威嚴霸氣', '溫和儒雅', '銳利幹練', '柔和親和', '獨特個性', '普通平凡'],
-        speech:     ['簡潔有力', '溫和委婉', '熱情洋溢', '沉穩冷靜', '幽默風趣', '寡言少語'],
-        behavior:   ['雷厲風行', '深思熟慮', '隨性而為', '謹慎小心', '有條不紊', '自由散漫'],
-        emotion:    ['外露直白', '內斂含蓄', '豐富多變', '穩定平和', '理性克制', '感性衝動'],
-        social:     ['主動熱情', '被動等待', '理性交往', '感性相交', '圓滑世故', '直率真誠'],
-        crisis:     ['冷靜分析', '果斷行動', '尋求幫助', '逃避回避', '慌亂無措', '堅定抵抗'],
-        learning:   ['快速學習', '穩步積累', '依賴經驗', '善於應變', '固執己見', '靈活調整'],
-        growth:     ['追求成就', '追求自由', '追求安穩', '追求真理', '追求情感', '追求平衡']
-    },
-    en: {
-        appearance: ['Commanding', 'Gentle', 'Sharp', 'Warm', 'Distinctive', 'Ordinary'],
-        speech:     ['Concise', 'Tactful', 'Enthusiastic', 'Calm', 'Humorous', 'Reserved'],
-        behavior:   ['Decisive', 'Thoughtful', 'Spontaneous', 'Cautious', 'Methodical', 'Free-spirited'],
-        emotion:    ['Expressive', 'Reserved', 'Changeable', 'Stable', 'Controlled', 'Impulsive'],
-        social:     ['Proactive', 'Passive', 'Rational', 'Emotional', 'Diplomatic', 'Frank'],
-        crisis:     ['Calm', 'Decisive', 'Seeking Help', 'Avoidant', 'Panics', 'Resolute'],
-        learning:   ['Fast', 'Steady', 'Experiential', 'Adaptable', 'Stubborn', 'Flexible'],
-        growth:     ['Achievement', 'Freedom', 'Stability', 'Truth', 'Connection', 'Balance']
-    }
-};
-
-function getFallbackOptions(attrId) {
-    var lang = (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG :
-                (typeof window !== 'undefined' && typeof window.CURRENT_LANG !== 'undefined' ? window.CURRENT_LANG : 'zh'));
-    var opts = FALLBACK_OPTIONS[lang] || FALLBACK_OPTIONS.zh;
-    return opts[attrId] || opts.appearance;
-}
-
 // ==================== 步骤4: 8属性细化 ====================
 function initEightAttributes() {
     const container = document.getElementById('step-4-content');
     
-    // 从 i18n 动态数据层取8属性（三语言）
-    const dyn = (typeof getDynamic === 'function') ? getDynamic() : null;
+    const attributes = [
+        { id: 'appearance', name: '外貌特征', options: ['威严霸气', '温和儒雅', '锐利干练', '柔和亲和', '独特个性', '普通平凡'] },
+        { id: 'speech', name: '说话方式', options: ['简洁有力', '温和委婉', '热情洋溢', '沉稳冷静', '幽默风趣', '寡言少语'] },
+        { id: 'behavior', name: '行为习惯', options: ['雷厉风行', '深思熟虑', '随性而为', '谨慎小心', '有条不紊', '自由散漫'] },
+        { id: 'emotion', name: '情感表达', options: ['外露直白', '内敛含蓄', '丰富多变', '稳定平和', '理性克制', '感性冲动'] },
+        { id: 'social', name: '社交风格', options: ['主动热情', '被动等待', '理性交往', '感性相交', '圆滑世故', '直率真诚'] },
+        { id: 'crisis', name: '应对危机', options: ['冷静分析', '果断行动', '寻求帮助', '逃避回避', '慌乱无措', '坚定抵抗'] },
+        { id: 'learning', name: '学习适应', options: ['快速学习', '稳步积累', '依赖经验', '善于应变', '固执己见', '灵活调整'] },
+        { id: 'growth', name: '成长方向', options: ['追求成功', '追求自由', '追求安稳', '追求真理', '追求情感', '追求平衡'] }
+    ];
     
-    // ── 8维度名称（硬编码本地化，不依赖 UI_DYNAMIC）──
-    // UI_DYNAMIC 只有 zh/zh-TW，没有 en 块，所以维度名必须硬编码
-    const DIM_NAMES = {
-        zh:     ['外貌特征', '说话方式', '行为习惯', '情感表达', '社交风格', '应对危机', '学习适应', '成长方向'],
-        'zh-TW': ['外貌特徵', '說話方式', '行為習慣', '情感表達', '社交風格', '應對危機', '學習適應', '成長方向'],
-        en:     ['Appearance', 'Speaking Style', 'Habits', 'Emotion', 'Social Style', 'Crisis Response', 'Learning', 'Growth']
-    };
-    const DIM_IDS = ['appearance', 'speech', 'behavior', 'emotion', 'social', 'crisis', 'learning', 'growth'];
-    var langKey = (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG :
-                   (typeof window !== 'undefined' && typeof window.CURRENT_LANG !== 'undefined' ? window.CURRENT_LANG : 'zh'));
-    var dimNames = DIM_NAMES[langKey] || DIM_NAMES.zh;
-    var attributeDefs = DIM_IDS.map(function(id, i) { return { id: id, name: dimNames[i] }; });
-    
-    // ── 动态词库生成（用于 Step 5 输出，不进 Step 4 选项列表）─────────────
-    // RichZiweiWordLibrary.generateAllDimensionsVocabulary() 已在 UI 层修复为返回短词
-    // 此处代码保留仅为 Step 5 输出的参考数据，无实际渲染影响
-    // try {
-    //     if (selectedChart) { /* ... */ }
-    // } catch (e) {}
-    
-    // ── Step 4 选项列表：只用 FALLBACK_OPTIONS 四字短词 ───────────────
-    // 核心：让用户看到短词（6选1），长词/精准词库只进 Step 5 命盘印证输出
-    var _faLang = (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG ? CURRENT_LANG :
-                   (typeof window !== 'undefined' && window.CURRENT_LANG ? window.CURRENT_LANG : 'zh'));
-    var _faOpts = FALLBACK_OPTIONS[_faLang] || FALLBACK_OPTIONS.zh;
-    var attributes = DIM_IDS.map(function(id, i) {
-        return { id: id, name: dimNames[i], options: (_faOpts[id] || []).slice(0, 6) };
-    });
-
-    // ── ★ 命盘算法驱动：获取8属性命盘推荐 ────────────────────────────
-    let attrRec = null;
-    try {
-        const fullChart = selectedChart && (selectedChart._fullChart || selectedChart._creativeParams && selectedChart);
-        const fc = selectedChart && selectedChart._fullChart;
-        if (
-            fc && fc.palaces &&
-            window.ChartBridge &&
-            typeof window.ChartBridge.calcAttributeRecommendations === 'function'
-        ) {
-            const mingIdx = fc.mingPalace && fc.mingPalace.index !== undefined ? fc.mingPalace.index : 0;
-            attrRec = window.ChartBridge.calcAttributeRecommendations(
-                fc, mingIdx, selectedChart.patternType || ''
-            );
-        }
-    } catch (e) {
-        console.warn('[initEightAttributes] 命盘推荐计算出错（非致命）:', e);
-    }
-    
-    container.innerHTML = attributes.map(attr => {
-        const rec = attrRec && attrRec[attr.id];
-        const _dyn2 = (typeof getDynamic === 'function') ? getDynamic() : {};
-        const badgeSrc = (_dyn2.badgeSource && typeof _dyn2.badgeSource === 'function') ? _dyn2.badgeSource(rec && rec.source) : ((rec && rec.source || 'Chart') + ': ');
-        const badgeAttrLabel = _dyn2.badgeAttr || 'Chart Tendency';
-        return `
+    container.innerHTML = attributes.map(attr => `
         <div class="attribute-group">
-            <div class="attribute-label">
-                ${attr.name}
-                ${rec ? `<span style="font-size:10px;color:#B8860B;font-weight:400;margin-left:6px;opacity:0.85;">✦ ${badgeSrc}${rec.recommend}</span>` : ''}
-            </div>
+            <div class="attribute-label">${attr.name}</div>
             <div class="attribute-options">
-                ${attr.options.map(opt => {
-                    const isRecommended = rec && rec.recommend === opt;
-                    const recStyle = isRecommended
-                        ? 'border-color:rgba(139,0,0,0.5);box-shadow:0 0 0 2px rgba(139,0,0,0.1);position:relative;'
-                        : '';
-                    const recBadge = isRecommended
-                        ? `<span style="position:absolute;top:-7px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#8B0000,#B8860B);color:#fff;font-size:8px;padding:1px 5px;border-radius:10px;white-space:nowrap;font-weight:600;pointer-events:none;">${badgeAttrLabel}</span>`
-                        : '';
-                    return `
-                    <div class="attribute-option" data-attr="${attr.id}" data-value="${opt}"
-                         title="${isRecommended && rec ? rec.reason : ''}"
-                         style="${recStyle}">
-                        ${recBadge}
-                        ${opt}
-                    </div>`;
-                }).join('')}
+                ${attr.options.map(opt => `
+                    <div class="attribute-option" data-attr="${attr.id}" data-value="${opt}">${opt}</div>
+                `).join('')}
             </div>
-        </div>`;
-    }).join('');
+        </div>
+    `).join('');
     
     container.querySelectorAll('.attribute-option').forEach(option => {
         option.addEventListener('click', () => {
@@ -845,12 +506,12 @@ function initEightAttributes() {
 function generateFinalBio() {
     try {
         if (!selectedChart) {
-            showToast(tUI('toastFinishChartMatch'));
+            showToast('请先完成星盘匹配');
             showStep(3);
             return;
         }
         if (!selectedSubPattern) {
-            showToast(tUI('toastSelectSihua'));
+            showToast('请选择四化类型');
             showStep(3);
             return;
         }
@@ -859,8 +520,7 @@ function generateFinalBio() {
         var missingAttrs = ['appearance','speech','behavior','emotion','social','crisis','learning','growth']
             .filter(function(id) { return !eightAttributes[id]; });
         if (missingAttrs.length > 0 && missingAttrs.length < 8) {
-            var _toastAttrs = tUI('toastAttrsPartial');
-            showToast(typeof _toastAttrs === 'function' ? _toastAttrs(missingAttrs.length) : ('💡 ' + missingAttrs.length + ' 项未选择，对应内容将以模糊风格呈现'));
+            showToast('💡 ' + missingAttrs.length + ' 项未选择，对应内容将以模糊风格呈现');
         }
 
         // ── 先跳到步骤5，显示loading动效 ──
@@ -878,8 +538,7 @@ function generateFinalBio() {
                         resultDiv.innerHTML = renderMarkdown(bio);
                     } catch (err) {
                         resultDiv.innerHTML = '';
-                        var _toastErr = tUI('toastGenerateError');
-                        showToast(typeof _toastErr === 'function' ? _toastErr(err.message) : ('生成出错，请重试（' + err.message + '）'));
+                        showToast('生成出错，请重试（' + err.message + '）');
                     }
                 }, 300);
             });
@@ -887,8 +546,7 @@ function generateFinalBio() {
 
     } catch (error) {
         console.error('生成人物小传时出错:', error);
-        var _toastErr2 = tUI('toastGenerateError');
-        showToast(typeof _toastErr2 === 'function' ? _toastErr2(error.message) : ('生成出错，请重试（' + error.message + '）'));
+        showToast('生成出错，请重试（' + error.message + '）');
     }
 }
 
@@ -899,21 +557,19 @@ function _buildLoadingHTML() {
 
         // 星盘旋转图
         '<div style="position:relative;width:80px;height:80px;">' +
-            '<div style="position:absolute;inset:0;border-radius:50%;border:3px solid rgba(139,0,0,0.12);"></div>' +
+            '<div style="position:absolute;inset:0;border-radius:50%;border:3px solid rgba(108,99,255,0.15);"></div>' +
             '<div style="position:absolute;inset:0;border-radius:50%;border:3px solid transparent;' +
-                'border-top-color:#8B0000;animation:bioSpinOuter 1.1s linear infinite;"></div>' +
+                'border-top-color:#6c63ff;animation:bioSpinOuter 1.1s linear infinite;"></div>' +
             '<div style="position:absolute;inset:12px;border-radius:50%;border:2px solid transparent;' +
-                'border-bottom-color:#B8860B;animation:bioSpinInner 0.8s linear infinite reverse;"></div>' +
+                'border-bottom-color:#a78bfa;animation:bioSpinInner 0.8s linear infinite reverse;"></div>' +
             '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;' +
                 'font-size:26px;">✦</div>' +
         '</div>' +
 
         // 文字动效
         '<div id="bio-loading-text" style="' +
-            'font-size:15px;color:#8B0000;font-weight:500;letter-spacing:0.05em;' +
-            'animation:bioTextPulse 1.4s ease-in-out infinite;">' +
-            (typeof tUI === 'function' ? tUI('loading') : '推算命盘星曜中…') +
-        '</div>' +
+            'font-size:15px;color:#6c63ff;font-weight:500;letter-spacing:0.05em;' +
+            'animation:bioTextPulse 1.4s ease-in-out infinite;">推算命盘星曜中…</div>' +
 
         '<style>' +
             '@keyframes bioSpinOuter{to{transform:rotate(360deg)}}' +
@@ -936,13 +592,6 @@ function renderMarkdown(markdown) {
         // 标题
         if (/^### (.+)/.test(line)) {
             html += '<h3>' + line.replace(/^### /, '') + '</h3>';
-            i++; continue;
-        }
-
-        // blockquote（命格标签行）
-        if (/^> (.*)/.test(line)) {
-            var bqContent = line.replace(/^> /, '');
-            html += '<blockquote><p>' + renderInline(bqContent) + '</p></blockquote>';
             i++; continue;
         }
         if (/^## (.+)/.test(line)) {
@@ -1029,94 +678,62 @@ function renderInline(text) {
 // ==================== 桥接新排盘引擎 ====================
 
 /**
- * generate144Chart：调用排盘引擎生成精准命盘
- * ─────────────────────────────────────────────────
- * 优先级：
- *   1. ChartBridge.generateEnrichedChart() —— 骨架→肉通道（完整飞星/大限）
- *   2. FineChartEngine.generateChart()     —— 基础排盘
- *   3. 旧版 CHART_DATABASE 回退（不应触发）
+ * generate144Chart：调用 FineChartEngine（新排盘引擎）生成精准命盘
+ * 向后兼容旧版 CHART_DATABASE 数据结构
  */
 function generate144Chart(inputs) {
-  const keIdx = typeof inputs.keIdx === 'number' ? inputs.keIdx : 0;
-
-  // ── 优先：ChartBridge 完整通道（真实飞星/大限/四化数据→编创参数）──
-  if (typeof window.ChartBridge !== 'undefined' && typeof window.ChartBridge.generateEnrichedChart === 'function') {
-    try {
-      const enriched = window.ChartBridge.generateEnrichedChart(inputs, keIdx);
-      if (enriched) {
-        console.log('[generate144Chart] ✅ 使用 ChartBridge 完整通道，命宫主星:', enriched.pattern.stars);
-        return enriched;
-      }
-    } catch (e) {
-      console.warn('[generate144Chart] ChartBridge 出错，降级:', e);
-    }
-  }
-
-  // ── 次选：FineChartEngine 基础排盘 ──
+  // 优先使用新排盘引擎
   if (window.FineChartEngine) {
     try {
       const engine = window.FineChartEngine;
       const result = engine.generateChart({
-        birthYear:  inputs.birthYear  || new Date().getFullYear() - (parseInt(inputs.age) || 25),
+        birthYear: inputs.birthYear || new Date().getFullYear() - (parseInt(inputs.age) || 25),
         birthMonth: inputs.birthMonth || 6,
-        birthDay:   inputs.birthDay   || 15,
-        birthHour:  inputs.birthHour  || 12,
-        gender:     inputs.gender     || '男',
-        era:        inputs.era        || '当代都市',
+        birthDay: inputs.birthDay || 15,
+        birthHour: inputs.birthHour || 12,
+        gender: inputs.gender || '男',
+        era: inputs.era || '当代都市',
       });
 
-      // 从完整飞星结果中提取命宫主星
-      const mingIdx   = result.mingPalace && result.mingPalace.index !== undefined ? result.mingPalace.index : 0;
-      const mingPalace = result.palaces ? result.palaces[mingIdx] : {};
-      const mainStars = (mingPalace && mingPalace.mainStars) || [];
+      // 适配旧版数据结构
+      const mainStars = result.mingGong?.stars || [];
       const patternName = mainStars.join('') || '命主格局';
-
-      // 格局类型推断
-      const STAR_TO_PAT = {
-          '七杀':'杀破狼','破军':'杀破狼','贪狼':'杀破狼',
-          '紫微':'紫府廉武相','天府':'紫府廉武相','廉贞':'紫府廉武相',
-          '武曲':'紫府廉武相','天相':'紫府廉武相',
-          '天机':'机月同梁','太阴':'机月同梁','天同':'机月同梁','天梁':'机月同梁',
-          '太阳':'巨日','巨门':'巨日'
-      };
-      const patternType = STAR_TO_PAT[mainStars[0]] || '杀破狼';
-
-      console.log('[generate144Chart] ✅ 使用 FineChartEngine 基础排盘，命宫主星:', mainStars);
       return {
-        pattern:      { name: patternName, stars: mainStars, desc: '命盘格局独特' },
-        patternType,
-        shiChen:      result.mingPalace ? result.mingPalace.dizhi : '午',
-        ke:           keIdx,
-        chartId:      (result._meta && result._meta.generatedAt) || Date.now().toString(36),
-        personalityTypes: DRIVE_8_TYPES,
-        sihua:        result.fourTransformations || {},
-        mingGong:     { stars: mainStars, desc: '' },
-        fuqiGong:     { stars: (result.palaces && result.palaces[(mingIdx + 2) % 12]
-                               ? result.palaces[(mingIdx + 2) % 12].mainStars : []) },
-        _fullChart:   result,
+        pattern: {
+          name: patternName,
+          stars: mainStars,
+          desc: result.mingGong?.desc || '命盘格局独特',
+        },
+        patternType: result.patternType || '主星格',
+        shiChen: result.shiChen || '未知',
+        ke: result.ke || 0,
+        chartId: result.chartId || Math.random().toString(36).slice(2),
+        personalityTypes: result.personalityTypes || DRIVE_8_TYPES,
+        sihua: result.sihua || {},
+        mingGong: result.mingGong || {},
+        fuqiGong: result.fuqiGong || {},
+        _fullChart: result,
       };
     } catch (e) {
-      console.warn('[generate144Chart] FineChartEngine 出错，回退:', e);
+      console.warn('新排盘引擎出错，回退旧逻辑:', e);
     }
   }
 
-  // ── 回退：使用旧版 CHART_DATABASE（降级兜底，不应正常触发）──
-  console.warn('[generate144Chart] ⚠️ 所有引擎不可用，使用旧版 CHART_DATABASE');
+  // 回退：使用旧版 CHART_DATABASE
   const typeKeys = Object.keys(CHART_DATABASE);
-  const _h = function(s) { var h=0; for(var i=0;i<s.length;i++) h=Math.imul(31,h)+s.charCodeAt(i)|0; return Math.abs(h); };
-  const idx = _h(inputs.name || inputs.era || 'default') % typeKeys.length;
+  const idx = Math.abs((inputs.name || '').charCodeAt(0) || 0) % typeKeys.length;
   const typeKey = typeKeys[idx];
   const typeData = CHART_DATABASE[typeKey];
   const patterns = typeData.patterns;
-  const patternIdx = (_h((inputs.gender||'') + (inputs.age||'') + keIdx) % patterns.length);
+  const patternIdx = Math.floor(Math.random() * patterns.length);
   const pattern = patterns[patternIdx];
 
   return {
     pattern,
     patternType: typeKey,
     shiChen: '午',
-    ke: keIdx,
-    chartId: `legacy-${idx}-${patternIdx}-k${keIdx}`,
+    ke: 0,
+    chartId: `legacy-${idx}-${patternIdx}`,
     personalityTypes: DRIVE_8_TYPES,
     sihua: {},
     mingGong: { stars: pattern.stars, desc: pattern.desc },
@@ -1142,12 +759,9 @@ function generateZiweiCharacterBio(inputs, chart, eightAttrs, subPattern) {
         family:     inputs.family   || '',
         socialClass:inputs.social   || '',   // 注意：步骤2的"社会地位"叫social，8属性里的"社交风格"也叫social，这里用socialClass区分
         parents:    inputs.parents  || '',
-        siblings:   inputs.siblings || '',
-        // ⚡ 传递完整驱动力数据（含核心冲突/伤口/星曜提示）
-        driveLabel: subPattern || '',
-        driveData:  _getDriveData(subPattern)
+        siblings:   inputs.siblings || ''
       };
-      // 解析四化类型：subPattern → 8种精细子类型（保留阳/阴差异）
+      // 解析四化类型：subPattern 可能是驱动力名称，需映射到四化
       var sihuaType = _resolveSihuaType(subPattern, chart);
       // chart 整形：保证 stars/type/name/desc/mainStar 字段存在
       var chartObj = _normalizeChart(chart);
@@ -1181,7 +795,6 @@ function generateZiweiCharacterBio(inputs, chart, eightAttrs, subPattern) {
 }
 
 // 将 subPattern（驱动力名称）映射到四化类型
-// ⚡ 关键：8种驱动力各自有独立的"四化子类型"，不再压缩成4种
 function _resolveSihuaType(subPattern, chart) {
   if (!subPattern) return '化禄型';
   // 直接是四化类型名
@@ -1189,45 +802,20 @@ function _resolveSihuaType(subPattern, chart) {
     var m = subPattern.match(/化[禄权科忌]/);
     return m ? m[0] + '型' : '化禄型';
   }
-  // 8种驱动力 → 精细四化子类型（阳/阴区分，保留差异化）
-  var driveMap = {
-    '野心者':   '掌控主导型（化权阳）',  // 化权·外显·扩张
-    '执念者':   '执念深重型（化忌阳）',  // 化忌·外显·执着
-    '谋局者':   '声誉理想型（化科阳）',  // 化科·外显·算计
-    '享乐者':   '天赋优势型（化禄阳）',  // 化禄·外显·感受
-    '守护者':   '天赋内秀型（化禄阴）',  // 化禄·内隐·给予
-    '破局者':   '掌控内敛型（化权阴）',  // 化权·内隐·颠覆
-    '漂泊者':   '执念内化型（化忌阴）',  // 化忌·内隐·游离
-    '隐忍者':   '声誉内修型（化科阴）',  // 化科·内隐·承压
-  };
-  if (driveMap[subPattern]) return driveMap[subPattern];
-  // 兼容旧版4类名称
-  var legacyMap = {
+  // 驱动力名称 → 四化映射
+  var map = {
+    '野心者':'化权型', '执念者':'化忌型', '谋局者':'化科型',
     '天才型':'化禄型', '流浪者':'化权型', '救赎者':'化科型',
-    '复仇者':'化忌型',
+    '复仇者':'化忌型', '守护者':'化科型',
     '天赋优势型':'化禄型', '掌控主导型':'化权型',
     '声誉理想型':'化科型', '执念深重型':'化忌型',
     '天赋内秀型':'化禄型', '掌控内敛型':'化权型',
     '声誉内修型':'化科型', '执念内化型':'化忌型'
   };
-  for (var key in legacyMap) {
-    if (subPattern.indexOf(key) !== -1) return legacyMap[key];
+  for (var key in map) {
+    if (subPattern.indexOf(key) !== -1) return map[key];
   }
   return '化禄型';
-}
-
-// 根据驱动力名称取完整驱动力对象（含核心冲突/伤口/星曜提示）
-function _getDriveData(subPattern) {
-  if (!subPattern) return null;
-  // 先在 DRIVE_8_TYPES 里查
-  for (var i = 0; i < DRIVE_8_TYPES.length; i++) {
-    if (DRIVE_8_TYPES[i].label === subPattern) return DRIVE_8_TYPES[i];
-  }
-  // 再在 PERSONALITY_8_TYPES（ziwei-bio-core.js）里查
-  if (window.PERSONALITY_8_TYPES && window.PERSONALITY_8_TYPES[subPattern]) {
-    return window.PERSONALITY_8_TYPES[subPattern];
-  }
-  return null;
 }
 
 // 整形 chart 对象，保证字段统一
@@ -1236,28 +824,13 @@ function _normalizeChart(chart) {
   var pattern = chart.pattern || {};
   var stars   = pattern.stars || chart.stars || (chart.mainStar ? [chart.mainStar] : ['紫微']);
   var type    = chart.patternType || chart.type || (pattern.name ? _guessPatternType(stars) : '杀破狼');
-  // ── 保留所有 ChartBridge 扩展字段（_creativeParams / _fullChart / _palaces 等）──
-  // 这些字段是骨架→肉通道的核心数据，不能在整形时丢弃
-  var normalized = {
+  return {
     stars:    stars,
     type:     type,
     name:     pattern.name  || chart.name  || stars[0] + '格局',
     desc:     pattern.desc  || chart.desc  || '',
-    mainStar: stars[0],
-    // 透传命宫宫位结构（_getPalaceStars 在 ziwei-bio-core 中会用到 mingIdx）
-    mingIdx:  chart.mingIdx !== undefined ? chart.mingIdx : undefined,
-    mainStars: chart.mainStars || undefined,
-    fourTrans: chart.fourTrans || undefined,
+    mainStar: stars[0]
   };
-  // 透传所有下划线开头的扩展字段（_creativeParams / _fullChart / _palaces / _sihuaProfile 等）
-  var keys = Object.keys(chart);
-  for (var i = 0; i < keys.length; i++) {
-    var k = keys[i];
-    if (k.charAt(0) === '_') {
-      normalized[k] = chart[k];
-    }
-  }
-  return normalized;
 }
 
 function _guessPatternType(stars) {
@@ -1277,21 +850,13 @@ function _guessPatternType(stars) {
 // ==================== 角色保存系统 ====================
 function saveCharacter() {
     if (savedCharacters.length >= 10) {
-        showToast(tUI('toastSavedFull'));
+        showToast('最多只能保存10个角色，请先删除一些');
         return;
     }
     
     const name = userInputs.name || '未命名角色';
     const timestamp = new Date().toLocaleString('zh-CN');
     
-    // driveIndex：驱动力数字索引（0-7），语言无关，是真正的存储key
-    // sihua：当时语言的标签（用于bio内容兼容，但显示时不直接用）
-    const driveIdx = selectedSubPatternIdx >= 0 ? selectedSubPatternIdx : (() => {
-        var ZH = ['野心者','执念者','谋局者','享乐者','守护者','破局者','漂泊者','隐忍者'];
-        var idx = ZH.indexOf(selectedSubPattern);
-        return idx >= 0 ? idx : 0;
-    })();
-
     const character = {
         id: Date.now(),
         name: name,
@@ -1300,21 +865,19 @@ function saveCharacter() {
         chart: { ...selectedChart },
         attributes: { ...eightAttributes },
         sihua: selectedSubPattern,
-        driveIndex: driveIdx,          // ← 语言无关key
         bio: currentCharacterBio
     };
     
     savedCharacters.push(character);
     localStorage.setItem('starTrackCharacters', JSON.stringify(savedCharacters));
     
-    var _toastSaved = tUI('toastSavedSuccess');
-    showToast(typeof _toastSaved === 'function' ? _toastSaved(name, savedCharacters.length) : ('「' + name + '」已保存 (' + savedCharacters.length + '/10)'), 'success');
+    showToast('「' + name + '」已保存 (' + savedCharacters.length + '/10)', 'success');
     displaySavedCharacters();
 }
 
 function copyCharacterBio() {
     if (!currentCharacterBio) {
-        showToast(tUI('toastNoBio'));
+        showToast('请先生成人物小传');
         return;
     }
     
@@ -1327,10 +890,10 @@ function copyCharacterBio() {
         .replace(/^---$/gm, '\n' + '='.repeat(50) + '\n');  // 分割线
     
     navigator.clipboard.writeText(plainText).then(() => {
-        showToast(tUI('toastCopied'), 'success');
+        showToast('已复制到剪贴板', 'success');
     }).catch(err => {
         console.error('复制失败:', err);
-        showToast(tUI('toastCopyFail'));
+        showToast('复制失败，请手动长按选择');
     });
 }
 
@@ -1356,32 +919,21 @@ function displaySavedCharacters() {
     }
     
     section.style.display = 'block';
-    console.log('保存角色数量:', savedCharacters.length, '至少2个才能显示对比按钮');
-    var shouldShow = savedCharacters.length >= 2;
-    console.log('对比按钮是否显示:', shouldShow);
-    compareBtn.style.display = shouldShow ? 'block' : 'none';
+    compareBtn.style.display = savedCharacters.length >= 2 ? 'block' : 'none';
     
-    list.innerHTML = savedCharacters.map(char => {
-        // i18n：格局名翻译（存的是中文，显示时按当前语言翻译）
-        var chartNameDisplay = _getPatternNameI18n(char.chart ? char.chart.name : '');
-        // i18n：驱动力标签翻译（优先用driveIndex，否则用sihua中文label反查）
-        var driveDisplay = (char.driveIndex !== undefined)
-            ? _getDriveLabelByIdx(char.driveIndex)
-            : _getDriveLabelI18n(char.sihua || '');
-        return `
+    list.innerHTML = savedCharacters.map(char => `
         <div class="saved-character-item">
             <input type="checkbox" class="compare-checkbox" data-id="${char.id}" style="margin-right: 10px;">
             <div class="character-info">
                 <div class="character-name-display">${char.name}</div>
-                <div class="character-meta">${chartNameDisplay} · ${driveDisplay} · ${char.timestamp}</div>
+                <div class="character-meta">${char.chart.name} · ${char.sihua} · ${char.timestamp}</div>
             </div>
             <div class="character-actions">
-                <button class="btn btn-small" onclick="loadCharacter(${char.id})">${tUI('btnView')}</button>
-                <button class="btn btn-small btn-outline" onclick="deleteCharacter(${char.id})">${tUI('btnDelete')}</button>
+                <button class="btn btn-small" onclick="loadCharacter(${char.id})">查看</button>
+                <button class="btn btn-small btn-outline" onclick="deleteCharacter(${char.id})">删除</button>
             </div>
         </div>
-    `;
-    }).join('');
+    `).join('');
 }
 
 function loadCharacter(id) {
@@ -1415,15 +967,13 @@ function deleteCharacter(id) {
         if (savedCharacters.length === 0) {
             document.getElementById('saved-characters-section').style.display = 'none';
         }
-        var _toastDel = tUI('toastDeleted');
-        showToast(typeof _toastDel === 'function' ? _toastDel(name) : ('「' + name + '」已删除'), 'success');
+        showToast('「' + name + '」已删除', 'success');
         return;
     }
 
     // 第一次点击：标记待确认，提示用户再点一次
     window._pendingDeleteId = id;
-    var _toastDelConf = tUI('toastDeleteConfirm');
-    showToast(typeof _toastDelConf === 'function' ? _toastDelConf(name) : ('再次点击「删除」确认删除「' + name + '」'));
+    showToast('再次点击「删除」确认删除「' + name + '」');
     // 3秒后清除待确认状态
     setTimeout(function() {
         if (window._pendingDeleteId === id) window._pendingDeleteId = null;
@@ -1431,34 +981,16 @@ function deleteCharacter(id) {
 }
 
 function showCompare() {
-    console.log('=== showCompare 函数被调用 ===');
-    console.log('当前时间:', new Date().toISOString());
-    
-    // 检查是否有保存的角色
-    console.log('保存的角色数量:', savedCharacters.length);
-    console.log('保存的角色:', savedCharacters);
-    
     const checkboxes = document.querySelectorAll('.compare-checkbox:checked');
-    console.log('找到的已选中复选框数量:', checkboxes.length);
-    console.log('所有复选框:', document.querySelectorAll('.compare-checkbox'));
-    
-    // 遍历复选框，检查每个的状态和数据
-    document.querySelectorAll('.compare-checkbox').forEach((cb, i) => {
-        console.log(`复选框${i}: checked=${cb.checked}, data-id=${cb.dataset.id}`);
-    });
-    
     const selectedIds = Array.from(checkboxes).map(cb => parseInt(cb.dataset.id));
-    console.log('选中的角色ID:', selectedIds);
     
     if (selectedIds.length < 2) {
-        console.log('❌ 需要至少2个角色，当前:', selectedIds.length);
-        showToast(tUI('toastMinCompare'));
+        showToast('请至少选择2个角色进行对比');
         return;
     }
     
     if (selectedIds.length > 3) {
-        console.log('❌ 最多3个角色，当前:', selectedIds.length);
-        showToast(tUI('toastMaxCompare'));
+        showToast('最多对比3个角色');
         return;
     }
     
@@ -1474,66 +1006,50 @@ function showCompare() {
 }
 
 function generateComparison(chars) {
-    const _dyn = (typeof getDynamic === 'function') ? getDynamic() : {};
-    var eraMap = (_dyn.eraMap) ? _dyn.eraMap : {ancient:'古代', modern:'近代', contemporary:'现代'};
-    var ageMap = (_dyn.ageMap) ? _dyn.ageMap : {youth:'青年', middle:'中年', senior:'老年'};
+    var eraMap = {ancient:'古代', modern:'近代', contemporary:'现代'};
+    var ageMap = {youth:'青年', middle:'中年', senior:'老年'};
 
     // ── 顶部摘要条 ──
     var summaryItems = chars.map(function(char) {
         var sihua = char.sihua || '';
-        // i18n：比较视图也要翻译驱动力标签
-        var driveLabel = (char.driveIndex !== undefined && typeof _getDriveLabelByIdx === 'function')
-            ? _getDriveLabelByIdx(char.driveIndex)
-            : (typeof _getDriveLabelI18n === 'function' ? _getDriveLabelI18n(sihua) : sihua);
         var era   = eraMap[char.inputs.era] || '';
-        // i18n：性别标签翻译
-        var gender = char.inputs.gender === 'female' 
-            ? (tUI('genderFemale') || '女') 
-            : (tUI('genderMale') || '男');
+        var gender = char.inputs.gender === 'female' ? '女' : '男';
         var age   = ageMap[char.inputs.age] || '';
         return '<div class="cmp-summary-item">' +
             '<span class="cmp-summary-name">' + (char.name || '角色') + '</span>' +
-            '<span class="cmp-summary-meta">' + era + ' · ' + gender + ' · ' + age + ' · ' + driveLabel + '</span>' +
+            '<span class="cmp-summary-meta">' + era + ' · ' + gender + ' · ' + age + ' · ' + sihua + '</span>' +
         '</div>';
     }).join('');
 
     // ── 戏剧关系分析 ──
-    var _unknown = '–';
-    // sihuaList 和 relationMap 使用中文key，需要翻译显示，但关系映射查找仍用中文key
-    var sihuaKeyList = chars.map(function(c) { return c.sihua || _unknown; });
-    // 翻译 sihua 类型名称（用于显示）
-    var sihuaLabelMap = _dyn.sihuaLabelMap || {
-        '野心者': 'Ambition', '执念者': 'Obsessed', '谋局者': 'Strategist', '守护者': 'Guardian', '游荡者': 'Wanderer', '隐忍者': 'Endurer',
-        '化禄型': 'Lu Type', '化权型': 'Quan Type', '化科型': 'Ke Type', '化忌型': 'Ji Type'
-    };
-    var sihuaLabelList = sihuaKeyList.map(function(s) { return sihuaLabelMap[s] || s; });
-    var genderList = chars.map(function(c) { return c.inputs.gender === 'female' ? tUI('genderFemale') : tUI('genderMale'); });
-    var ageList  = chars.map(function(c) { return ageMap[c.inputs.age] || c.inputs.age || _unknown; });
-    var eraList  = chars.map(function(c) { return eraMap[c.inputs.era] || c.inputs.era || _unknown; });
-    var nameList = chars.map(function(c) { return c.name || (tUI('cmpCharLabel') || 'Char'); });
+    var sihuaList = chars.map(function(c) { return c.sihua || '未知'; });
+    var genderList = chars.map(function(c) { return c.inputs.gender === 'female' ? '女' : '男'; });
+    var ageList  = chars.map(function(c) { return ageMap[c.inputs.age] || c.inputs.age || '未知'; });
+    var eraList  = chars.map(function(c) { return eraMap[c.inputs.era] || c.inputs.era || '未知'; });
+    var nameList = chars.map(function(c) { return c.name || '角色'; });
 
-    var relationMap = _dyn.relationMap || {};
-    var sihuaKey = sihuaKeyList[0] + '_' + sihuaKeyList[1];
-    var relationDesc = relationMap[sihuaKey] || (_dyn.relationDefault || '这几种类型并置，核心戏剧张力来自各自动机的碰撞——目标交叉时冲突自然产生，合作也带着裂缝。');
+    var relationMap = {
+        '野心者_执念者': '两人都是目标导向型，容易在同一条路上竞争，甚至互为镜像——外向扩张对内向执着，张力极强。',
+        '执念者_野心者': '两人都是目标导向型，容易在同一条路上竞争，甚至互为镜像——外向扩张对内向执着，张力极强。',
+        '野心者_隐忍者': '一个主动出击，一个蓄力待发。表面强弱，实则隐忍者的爆发往往比野心者更彻底。适合设计从依附到反转的关系弧。',
+        '隐忍者_野心者': '一个主动出击，一个蓄力待发。表面强弱，实则隐忍者的爆发往往比野心者更彻底。适合设计从依附到反转的关系弧。',
+        '谋局者_执念者': '一个算计全局，一个死磕一点。前者容易把后者当棋子，后者往往是最后翻盘的变量。适合设计利用与被利用、最终失控的关系。',
+        '执念者_谋局者': '一个算计全局，一个死磕一点。前者容易把后者当棋子，后者往往是最后翻盘的变量。适合设计利用与被利用、最终失控的关系。',
+        '隐忍者_执念者': '两人都有强烈内驱力，一个向内消化，一个向外固着。放在亲密关系里尤其有戏——彼此理解却互相消耗。',
+        '执念者_隐忍者': '两人都有强烈内驱力，一个向内消化，一个向外固着。放在亲密关系里尤其有戏——彼此理解却互相消耗。',
+    };
+    var sihuaKey = sihuaList[0] + '_' + sihuaList[1];
+    var relationDesc = relationMap[sihuaKey] || '这几种类型并置，核心戏剧张力来自各自动机的碰撞——目标交叉时冲突自然产生，合作也带着裂缝。';
 
     var contextNote = '';
     if (eraList.some(function(e){ return e !== eraList[0]; })) {
-        contextNote = (_dyn.contextCrossEra && typeof _dyn.contextCrossEra === 'function')
-            ? _dyn.contextCrossEra(eraList)
-            : eraList.join(' / ');
+        contextNote = '角色处于不同时代（' + eraList.join(' / ') + '），若需同框需设计跨时代叙事结构。';
     } else if (ageList.some(function(a){ return a !== ageList[0]; })) {
-        var nameAgeStr = nameList.map(function(n,i){ return n + ageList[i]; }).join('、');
-        contextNote = (_dyn.contextCrossAge && typeof _dyn.contextCrossAge === 'function')
-            ? _dyn.contextCrossAge(nameAgeStr)
-            : nameAgeStr;
+        contextNote = '年龄段不同（' + nameList.map(function(n,i){ return n + ageList[i]; }).join('、') + '），适合设计代际传承或对抗关系。';
     } else if (genderList.some(function(g){ return g !== genderList[0]; })) {
-        contextNote = (_dyn.contextCrossGender && typeof _dyn.contextCrossGender === 'function')
-            ? _dyn.contextCrossGender(eraList[0])
-            : eraList[0];
+        contextNote = '性别构成混合，' + eraList[0] + '背景下，性别带来的社会处境差异本身就是戏剧资源。';
     } else {
-        contextNote = (_dyn.contextSame && typeof _dyn.contextSame === 'function')
-            ? _dyn.contextSame(eraList[0], ageList[0])
-            : eraList[0] + ' ' + ageList[0];
+        contextNote = '背景相近（' + eraList[0] + '，' + ageList[0] + '），关系张力主要来自内在驱动力与价值观差异，适合设计同类相斥的竞争。';
     }
 
     // ── 相性评分 HTML（2人/3人均显示，两两配对）──
@@ -1546,8 +1062,8 @@ function generateComparison(chars) {
             }
         }
         var pairHtmls = pairs.map(function(pair) {
-            var nameA = pair[0].inputs.name || (tUI('cmpCharLabel') || 'Character ' + (chars.indexOf(pair[0]) + 1));
-            var nameB = pair[1].inputs.name || (tUI('cmpCharLabel') || 'Character ' + (chars.indexOf(pair[1]) + 1));
+            var nameA = pair[0].inputs.name || ('角色' + (chars.indexOf(pair[0]) + 1));
+            var nameB = pair[1].inputs.name || ('角色' + (chars.indexOf(pair[1]) + 1));
             return '<div class="cmp-compat-pair">' +
                 '<div class="cmp-compat-pair-title">' + nameA + ' × ' + nameB + '</div>' +
                 _calcCompat(pair[0], pair[1]) +
@@ -1556,137 +1072,33 @@ function generateComparison(chars) {
         compatHtml = '<div class="cmp-compat">' + pairHtmls + '</div>';
     }
 
-    // ── 三列完整小传（只显示小传本身，相性评分移出列外）──
+    // ── 三列完整小传（相性评分追加到每列末尾，随列滚动可见）──
     var colsHtml = chars.map(function(char) {
-        var meta = [eraMap[char.inputs.era]||'', char.inputs.gender==='female' ? tUI('genderFemale') : tUI('genderMale'), ageMap[char.inputs.age]||'', char.chart.name||''].filter(Boolean).join(' · ');
+        var meta = [eraMap[char.inputs.era]||'', char.inputs.gender==='female'?'女':'男', ageMap[char.inputs.age]||'', char.chart.name||''].filter(Boolean).join(' · ');
         return '<div class="cmp-bio-col">' +
             '<div class="cmp-bio-col-header">' +
-                '<p class="cmp-bio-name">' + (char.name || (tUI('cmpCharLabel') || 'Char')) + '</p>' +
+                '<p class="cmp-bio-name">' + (char.name||'角色') + '</p>' +
                 '<p class="cmp-bio-meta">' + meta + '</p>' +
             '</div>' +
             '<div class="cmp-bio-col-body">' +
                 renderMarkdown(char.bio) +
+                compatHtml +
             '</div>' +
         '</div>';
     }).join('');
 
-    var interpersonalHtml = _buildInterpersonalCompareHTML(chars);
-
     return (
         '<div class="cmp-summary-bar">' + summaryItems + '</div>' +
-        // 折叠面板：默认折叠，点击展开
-        '<div class="cmp-analysis-toggle" onclick="this.classList.toggle(\'open\'); this.nextElementSibling.classList.toggle(\'open\');">' +
-            '<span class="cmp-toggle-label">▶ ' + (_dyn.cmpToggleLabel || tUI('cmpToggleLabel') || 'Compatibility & Drama') + '</span>' +
-            '<span class="cmp-toggle-hint">(' + (_dyn.cmpToggleHint || tUI('cmpToggleHint') || 'click to expand') + ')</span>' +
-        '</div>' +
-        '<div class="cmp-analysis cmp-analysis-collapsible">' +
-            compatHtml +
-            '<p><strong>' + (_dyn.cmpSectionRelation || tUI('cmpSectionRelation') || 'Transformation Type') + '：</strong>' + sihuaLabelList.join(' vs ') + '　<strong>' + (_dyn.cmpSectionDrama || tUI('cmpSectionDrama') || 'Dramatic Dynamic') + '：</strong>' + relationDesc + '</p>' +
-            '<p><strong>' + (_dyn.cmpSectionContext || tUI('cmpSectionContext') || 'Context') + '：</strong>' + contextNote + '</p>' +
-            interpersonalHtml +
+        '<div class="cmp-analysis">' +
+            '<p><strong>四化类型：</strong>' + sihuaList.join(' vs ') + '　<strong>戏剧关系：</strong>' + relationDesc + '</p>' +
+            '<p><strong>背景处境：</strong>' + contextNote + '</p>' +
         '</div>' +
         '<div class="cmp-bio-columns">' + colsHtml + '</div>'
     );
 }
 
-/**
- * 飞星人际关系对比分析 HTML
- * 基于每个角色的 _creativeParams.interpersonalProfile
- * 融合《人际合盘占星全书》核心理论：
- *  - 夫妻宫 = 对方是你投影的阴影
- *  - 化忌飞入人际宫 = 关系中的执念所在（凯龙星伤口概念）
- */
-function _buildInterpersonalCompareHTML(chars) {
-    if (!chars || chars.length < 2) return '';
-
-    const _dyn = (typeof getDynamic === 'function') ? getDynamic() : {};
-    var rows = [];
-    chars.forEach(function(char) {
-        var cp = char.chart && char.chart._creativeParams;
-        if (!cp) return;
-        var ip = cp.interpersonalProfile;
-        var name = char.name || (tUI('cmpCharLabel') || 'Char');
-
-        var items = [];
-
-        if (ip && ip.fuqiProjection) {
-            items.push('<li><strong>' + (_dyn.interpersonalFuqi || 'Romantic Projection') + '：</strong>' + ip.fuqiProjection + '</li>');
-        }
-        if (ip && ip.jiaoYouStyle) {
-            items.push('<li><strong>' + (_dyn.interpersonalJiaoyou || 'Social Drive') + '：</strong>' + ip.jiaoYouStyle + '</li>');
-        }
-        if (ip && ip.mingFlyImpact) {
-            items.push('<li><strong>' + (_dyn.interpersonalFly || 'Fixation Star') + '：</strong>' + ip.mingFlyImpact + '</li>');
-        }
-        if (cp.attachmentType) {
-            items.push('<li><strong>' + (_dyn.interpersonalAttach || 'Attachment Style') + '：</strong>' + cp.attachmentType + '</li>');
-        }
-
-        if (items.length > 0) {
-            var relMapLabel = (_dyn.interpersonalRelMap && typeof _dyn.interpersonalRelMap === 'function')
-                ? _dyn.interpersonalRelMap(name) : (name + ' · Profile');
-            rows.push(
-                '<div style="margin-bottom:14px;">' +
-                '<p style="font-weight:700;font-size:14px;color:#8B0000;margin:0 0 6px;">' + relMapLabel + '</p>' +
-                '<ul style="list-style:none;padding:0;margin:0;font-size:13px;line-height:1.8;color:#444;">' +
-                items.join('') +
-                '</ul></div>'
-            );
-        }
-    });
-
-    if (rows.length === 0) return '';
-
-    // 双角色"交叉投影"分析（心理占星合盘核心：A的夫妻宫星 vs B的命宫星是否呼应）
-    var crossNote = '';
-    if (chars.length === 2) {
-        var cpA = chars[0].chart && chars[0].chart._creativeParams;
-        var cpB = chars[1].chart && chars[1].chart._creativeParams;
-        if (cpA && cpB) {
-            var ipA = cpA.interpersonalProfile;
-            var ipB = cpB.interpersonalProfile;
-            var nameA = chars[0].name || 'A';
-            var nameB = chars[1].name || 'B';
-
-            // 检测夫妻宫互投影：如果A的夫妻宫主星 = B的命宫主星，或B的夫妻宫主星 = A的命宫主星
-            var fuqiA = ipA && ipA.fuqiStar;
-            var fuqiB = ipB && ipB.fuqiStar;
-            var mingA = cpA.mingMainStar;
-            var mingB = cpB.mingMainStar;
-
-            if (fuqiA && fuqiA === mingB) {
-                var resText = (_dyn.interpersonalResonance && typeof _dyn.interpersonalResonance === 'function')
-                    ? _dyn.interpersonalResonance(nameA, fuqiA, nameB)
-                    : ('<strong>Chart Resonance:</strong> ' + nameA + '\'s Spouse Palace star (' + fuqiA + ') = ' + nameB + '\'s Life Palace star.');
-                crossNote += '<p style="background:#fff8e7;border-left:3px solid #f39c12;padding:8px 12px;margin:8px 0;font-size:13px;">' + resText + '</p>';
-            }
-            if (fuqiB && fuqiB === mingA) {
-                var resText2 = (_dyn.interpersonalResonance && typeof _dyn.interpersonalResonance === 'function')
-                    ? _dyn.interpersonalResonance(nameB, fuqiB, nameA)
-                    : ('<strong>Chart Resonance:</strong> ' + nameB + '\'s Spouse Palace star (' + fuqiB + ') = ' + nameA + '\'s Life Palace star.');
-                crossNote += '<p style="background:#fff8e7;border-left:3px solid #f39c12;padding:8px 12px;margin:8px 0;font-size:13px;">' + resText2 + '</p>';
-            }
-
-            // 检测化忌互入（凯龙星伤口理论：你的伤碰到了对方的伤）
-            if (ipA && ipA.mingFlyImpact && ipB && ipB.mingFlyImpact) {
-                var doubleWoundText = _dyn.interpersonalDoubleWound ||
-                    '<strong>Double Wound:</strong> Both charts carry flying-star fixations — this relationship activates each other\'s deepest wounds.';
-                crossNote += '<p style="background:#fef5f5;border-left:3px solid #e74c3c;padding:8px 12px;margin:8px 0;font-size:13px;">' + doubleWoundText + '</p>';
-            }
-        }
-    }
-
-    var interpersonalTitleText = _dyn.interpersonalTitle || '🌐 Flying-Star Relationship Map';
-    return '<div style="margin-top:14px;padding:14px;background:#fdf9f2;border-radius:10px;">' +
-        '<p style="font-weight:700;font-size:15px;color:#333;margin:0 0 12px;">' + interpersonalTitleText + '</p>' +
-        rows.join('') +
-        crossNote +
-        '</div>';
-}
-
 // ── 相性计算 ──
 function _calcCompat(charA, charB) {
-    const _dyn = (typeof getDynamic === 'function') ? getDynamic() : {};
     var sihuaA = charA.sihua || '';
     var sihuaB = charB.sihua || '';
     var eraA   = charA.inputs.era || '';
@@ -1700,52 +1112,55 @@ function _calcCompat(charA, charB) {
     var score = 60;
     var reasons = [];
 
-    // 四化匹配（从i18n动态层取，支持三语言）
-    var sihuaScoreMap = _dyn.sihuaScoreMap || {};
+    // 四化匹配：禄权 / 科忌 / 禄科 / 权科 正向；忌×2负向；忌vs禄冲突最大
+    var sihuaScoreMap = {
+        '化禄型_化权型': [+12, '禄权相辅，一方给力一方掌局，合作有天然驱动力'],
+        '化权型_化禄型': [+12, '禄权相辅，一方给力一方掌局，合作有天然驱动力'],
+        '化禄型_化科型': [+10, '禄科组合，务实与理想相得益彰，互相成就'],
+        '化科型_化禄型': [+10, '禄科组合，务实与理想相得益彰，互相成就'],
+        '化权型_化科型': [+8,  '权科并立，一方主导一方疏通，运转顺畅'],
+        '化科型_化权型': [+8,  '权科并立，一方主导一方疏通，运转顺畅'],
+        '化忌型_化忌型': [-15, '双忌叠加，两人执念互相放大，容易陷入消耗战'],
+        '化禄型_化忌型': [+5,  '禄忌对撞，一方给予一方执念，张力十足但易耗尽'],
+        '化忌型_化禄型': [+5,  '禄忌对撞，一方给予一方执念，张力十足但易耗尽'],
+        '化权型_化忌型': [-5,  '权忌相遇，掌控欲对执念，双方都不愿妥协'],
+        '化忌型_化权型': [-5,  '权忌相遇，掌控欲对执念，双方都不愿妥协'],
+        '化科型_化忌型': [+3,  '科忌之间有微妙拉力，理性试图理解执念，难以稳定'],
+        '化忌型_化科型': [+3,  '科忌之间有微妙拉力，理性试图理解执念，难以稳定'],
+    };
     var sihuaKey = sihuaA + '_' + sihuaB;
     var sihuaResult = sihuaScoreMap[sihuaKey];
-    if (sihuaResult) {
-        score += sihuaResult[0];
-        reasons.push(sihuaResult[1]);
-    } else {
-        // 无对应配对表项，不加减分，不加冗余文字，由对比面板的「戏剧关系」栏说明
-    }
+    if (sihuaResult) { score += sihuaResult[0]; reasons.push(sihuaResult[1]); }
+    else { reasons.push('四化类型各异，关系走向取决于二人的磨合意愿'); }
 
-    // 时代：同代+8，跨代-5（文案由对比面板 contextNote 承载，此处仅计分+加标签）
+    // 时代：同代+8，跨代-5
     if (eraA && eraB) {
-        if (eraA === eraB) {
-            score += 8;
-            reasons.push((_dyn.compatEraScore && typeof _dyn.compatEraScore === 'function') ? _dyn.compatEraScore(true) : '时代背景：同框 +8');
-        } else {
-            score -= 5;
-            reasons.push((_dyn.compatEraScore && typeof _dyn.compatEraScore === 'function') ? _dyn.compatEraScore(false) : '时代背景：跨时代 −5（需叙事支撑）');
-        }
+        if (eraA === eraB) { score += 8; reasons.push('同一时代，共同语境让理解成本低'); }
+        else               { score -= 5; reasons.push('跨时代背景，需要额外的叙事设计来支撑同框'); }
     }
 
     // 年龄：同段+5，相差一段0，相差两段-5
     var ageOrder = {youth:0, middle:1, senior:2};
     var ageDiff = Math.abs((ageOrder[ageA]||0) - (ageOrder[ageB]||0));
-    if (ageDiff === 0)      { score += 5; reasons.push(_dyn.compatAgeNear || '年龄段：相近 +5'); }
-    else if (ageDiff === 2) { score -= 5; reasons.push(_dyn.compatAgeFar  || '年龄段：代际错位 −5'); }
+    if (ageDiff === 0) { score += 5; reasons.push('年龄相近，处境相似，共鸣感强'); }
+    else if (ageDiff === 2) { score -= 5; reasons.push('年龄差距大，人生阶段错位，需设计代际关系'); }
 
     // 性别异同
-    if (genA !== genB) { score += 5; reasons.push(_dyn.compatGenderDiff || '性别：异性互补 +5'); }
+    if (genA !== genB) { score += 5; reasons.push('性别互补，在任何时代都能产生天然叙事张力'); }
 
     // 限制在0-100
     score = Math.max(0, Math.min(100, score));
 
-    // 评语（从i18n取）
-    const _cl = _dyn.compatLabels || { high:'Highly Compatible', good:'Good Dynamic', tension:'Charged Tension', conflict:'Conflict-Driven' };
-    var label = score >= 85 ? _cl.high : score >= 70 ? _cl.good : score >= 50 ? _cl.tension : _cl.conflict;
+    // 评语
+    var label = score >= 85 ? '高度契合' : score >= 70 ? '关系良好' : score >= 50 ? '张力显著' : '冲突型组合';
     var labelColor = score >= 85 ? '#27ae60' : score >= 70 ? '#2980b9' : score >= 50 ? '#e67e22' : '#e74c3c';
 
-    var barFill = '<div style="height:8px;border-radius:4px;background:linear-gradient(90deg,' + labelColor + ',rgba(184,134,11,0.3));' +
+    var barFill = '<div style="height:8px;border-radius:4px;background:linear-gradient(90deg,' + labelColor + ',rgba(108,99,255,0.3));' +
         'width:' + score + '%;transition:width 0.6s ease;"></div>';
 
-    var compatTitleText = _dyn.compatTitle || tUI('compareTitle') || 'Compatibility';
     return '<div style="margin-bottom:2px;">' +
         '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">' +
-            '<span style="font-size:13px;font-weight:600;color:#333;">' + compatTitleText + '</span>' +
+            '<span style="font-size:13px;font-weight:600;color:#333;">命盘相性</span>' +
             '<span style="font-size:22px;font-weight:700;color:' + labelColor + ';">' + score + '</span>' +
             '<span style="font-size:12px;color:' + labelColor + ';font-weight:600;padding:2px 8px;' +
                 'background:' + labelColor + '22;border-radius:10px;">' + label + '</span>' +
@@ -1766,83 +1181,63 @@ function closeCompare() {
 function showBioCompare() {}
 function closeBioCompare() {}
 
-// ==================== 语言切换响应 ====================
-/**
- * 由 index.html 的 switchLang() 在切换语言后调用。
- * 负责刷新 app 层中无法通过 data-i18n 属性覆盖的动态区域：
- *   - 已保存角色区域标题
- *   - 对比区域标题
- *   - 重新开始按钮文字
- *   - DRIVE_8_TYPES（驱动力数组，语言切换后重建）
- * 深度内容（命盘传记正文）需要重新生成，此处仅刷新固定文案。
- */
-function onLangChange(lang) {
-    // 刷新所有 data-i18n DOM
-    if (typeof applyI18nToDOM === 'function') applyI18nToDOM();
+// ==================== 国际化语言切换 ====================
 
-    // 刷新驱动力数组（语言切换后重建，下次打开步骤3时生效）
-    DRIVE_8_TYPES = _getDrive8();
-
-    // 若步骤3当前可见，立即重渲染驱动力卡片 + era 显示 + 格局卡片
-    if (currentStep === 3 && selectedChart) {
-        generate8PersonalityTypes(selectedChart);
-        // 刷新格局卡片（主星名/格局类型翻译）
-        if (selectedChart) {
-            var _cd = selectedChart;
-            var _lang3 = (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG : 'zh');
-            var _sep3 = _lang3 === 'en' ? ' / ' : '、';
-            var _setEl3 = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
-            var _pat3 = (_cd.pattern || {});
-            _setEl3('main-pattern-name', _getPatternNameI18n(_pat3.name || _cd.name || ''));
-            _setEl3('main-star', (_pat3.stars || _cd.stars || []).map(_getStarNameI18n).join(_sep3));
-            _setEl3('pattern-type', _getPatternTypeI18n(_cd.patternType || _cd.type || ''));
-        }
-        var _dyn = (typeof getDynamic === 'function') ? getDynamic() : {};
-        var _eraEl = document.getElementById('era');
-        if (_eraEl && userInputs && userInputs.era && _dyn.eraMap) {
-            _eraEl.textContent = _dyn.eraMap[userInputs.era] || userInputs.era;
-        }
-        var _eraDispEl = document.getElementById('era-display');
-        if (_eraDispEl && userInputs && userInputs.era && _dyn.eraMap) {
-            _eraDispEl.textContent = _dyn.eraMap[userInputs.era] || userInputs.era;
-        }
+function switchLanguage(lang) {
+    if (typeof I18nCore === 'undefined') {
+        console.error('[i18n] I18nCore 未加载');
+        return;
     }
+    const oldLang = I18nCore.getLanguage();
+    if (!I18nCore.setLanguage(lang)) return;
+    updateLanguageButtons(lang);
+    updatePageLanguage(lang);
+    showLanguageToast(lang);
+    console.log('[i18n] 语言已切换:', oldLang, '→', lang);
+}
 
-    // 若步骤4当前可见，立即重渲染8属性
-    if (currentStep === 4) {
-        initEightAttributes();
-    }
+function updateLanguageButtons(activeLang) {
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === activeLang);
+    });
+}
 
-    // 保存列表语言切换后重渲染（格局名/驱动力标签跟随语言）
-    if (savedCharacters.length > 0) {
-        displaySavedCharacters();
-    }
+function updatePageLanguage(lang) {
+    if (typeof I18nCore === 'undefined' || typeof UI_TEXT === 'undefined') return;
+    const ui = UI_TEXT[lang] || UI_TEXT['zh'];
+    document.title = ui.appName + ' - ' + ui.appSlogan;
+    document.documentElement.lang = lang === 'zh-TW' ? 'zh-TW' : lang === 'en' ? 'en' : 'zh-CN';
+}
 
-    // 动态渲染的文字节点（不带 data-i18n，直接用 tUI 更新）
-    const savedTitle = document.querySelector('#saved-characters-section .card-title');
-    if (savedTitle && typeof tUI === 'function') savedTitle.textContent = tUI('savedTitle');
+function showLanguageToast(lang) {
+    const langNames = { 'zh': '简体中文', 'zh-TW': '繁體中文', 'en': 'English' };
+    const toast = document.createElement('div');
+    toast.className = 'lang-toast';
+    toast.textContent = '🌐 ' + langNames[lang];
+    toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:12px 24px;background:rgba(0,0,0,0.8);color:#fff;border-radius:24px;font-size:14px;z-index:10000;';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 1500);
+}
 
-    const compareTitle = document.querySelector('#compare-section .cmp-top-title');
-    if (compareTitle && typeof tUI === 'function') compareTitle.textContent = tUI('compareTitle');
-
-    const compareClose = document.querySelector('#compare-section .cmp-close-btn');
-    if (compareClose && typeof tUI === 'function') compareClose.textContent = tUI('btnCloseCompare');
-
-    const compareTrigger = document.querySelector('#compare-btn-section button');
-    if (compareTrigger && typeof tUI === 'function') compareTrigger.textContent = tUI('btnCompare');
-
-    // ── 步骤5：语言切换后自动重新生成小传 ──
-    // 小传内容是语言相关的叙述性文本，必须重新生成才能切换语言
-    if (currentStep === 5 && selectedChart && selectedSubPattern) {
-        // 已在步骤5 → 直接重新生成
-        generateFinalBio();
-    } else if (currentCharacterBio && selectedChart && selectedSubPattern) {
-        // 不在步骤5但已生成过 → 标记为需要重生成
-        // 下次用户进入步骤5时会看到旧语言内容，清空提示重生成
-        var _resultDiv = document.getElementById('result-content');
-        if (_resultDiv) {
-            _resultDiv.innerHTML = '';
-        }
-        currentCharacterBio = '';
+function initLanguage() {
+    if (typeof I18nCore !== 'undefined') {
+        I18nCore.init();
+        updateLanguageButtons(I18nCore.getLanguage());
+        updatePageLanguage(I18nCore.getLanguage());
     }
 }
+
+function t(key) { return typeof I18nCore !== 'undefined' ? I18nCore.t(key) : key; }
+function tStar(starName) { return typeof I18nCore !== 'undefined' ? I18nCore.getStarName(starName) : starName; }
+function tPalace(palaceName) { return typeof I18nCore !== 'undefined' ? I18nCore.getPalaceName(palaceName) : palaceName; }
+
+window.addEventListener('languageChanged', function(e) {
+    updateLanguageButtons(e.detail.lang);
+    updatePageLanguage(e.detail.lang);
+});
+
+document.addEventListener('DOMContentLoaded', function() { setTimeout(initLanguage, 100); });
+window.switchLanguage = switchLanguage;
+window.t = t;
+window.tStar = tStar;
+window.tPalace = tPalace;

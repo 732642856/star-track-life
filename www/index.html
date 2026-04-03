@@ -10,7 +10,7 @@
     <meta name="description" content="星轨人生 - 专为艺术创作者提供人物塑造辅助工具 · 576盘精细排盘系统 · 三时代人物设计工具">
     <title>星轨人生 - 艺术创作者的人物塑造工具</title>
     
-    <link rel="stylesheet" href="styles-v2.css">
+    <link rel="stylesheet" href="styles-v2.css?v=20260404NEW">
 <style>
     /* ══ 开屏语言选择层 - 磨砂玻璃风格 ══ */
     #lang-picker-screen {
@@ -225,9 +225,14 @@
     <!-- 语言切换样式 -->
     <style>
     .lang-switcher {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
         display: flex;
         align-items: center;
         gap: 4px;
+        z-index: 9999;
     }
     .lang-btn {
         background: none;
@@ -418,21 +423,21 @@
                     <span class="logo-icon">◈</span>
                     <span class="logo-text" data-i18n="appName">星轨人生</span>
                 </div>
-                <!-- 语言切换 -->
-                <div class="lang-switcher" id="lang-switcher">
-                    <button class="lang-btn active" data-lang="zh" onclick="switchLang('zh')">简体</button>
-                    <button class="lang-btn" data-lang="zh-TW" onclick="switchLang('zh-TW')">繁體</button>
-                    <button class="lang-btn" data-lang="en" onclick="switchLang('en')">EN</button>
-                </div>
             </div>
         </nav>
 
         <!-- 主视觉区 -->
         <header class="hero-section">
             <div class="hero-content">
-                <h1 class="hero-title">
+                <h1 class="hero-title" style="position: relative;">
                     <span class="title-line" data-i18n="heroTitle">星轨人生</span>
                     <span class="title-line title-highlight" data-i18n="heroSubtitle">艺术创作者的人物塑造工具</span>
+                    <!-- 语言切换 - 标题右上方 -->
+                    <div class="lang-floating" style="position: absolute; top: -25px; right: -10px; display: flex; gap: 4px;">
+                        <button class="lang-btn active" data-lang="zh" onclick="switchLang('zh')">简体</button>
+                        <button class="lang-btn" data-lang="zh-TW" onclick="switchLang('zh-TW')">繁體</button>
+                        <button class="lang-btn" data-lang="en" onclick="switchLang('en')">EN</button>
+                    </div>
                 </h1>
                 <p class="hero-subtitle" data-i18n="heroSubtitleMeta">紫微斗数 × 编剧理论 × 星盘精细排盘</p>
                 <div class="hero-meta">
@@ -928,8 +933,8 @@
         
         if (typeof setLanguage === 'function') setLanguage(lang);
 
-        // 更新按钮高亮
-        document.querySelectorAll('#lang-switcher .lang-btn').forEach(btn => {
+        // 更新按钮高亮（支持新旧两种结构的按钮）
+        document.querySelectorAll('.lang-btn, .lang-floating .lang-btn').forEach(btn => {
             btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
         });
 
