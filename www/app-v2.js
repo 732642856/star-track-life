@@ -1569,7 +1569,7 @@ function generateComparison(chars) {
     return (
         '<div class="cmp-summary-bar">' + summaryItems + '</div>' +
         // 折叠面板：默认折叠，点击展开
-        '<div class="cmp-analysis-toggle" onclick="this.classList.toggle(\'open\')">' +
+        '<div class="cmp-analysis-toggle" onclick="this.classList.toggle(\'open\'); this.nextElementSibling.classList.toggle(\'open\');">' +
             '<span class="cmp-toggle-label">▶ ' + (_dyn.cmpToggleLabel || tUI('cmpToggleLabel') || 'Compatibility & Drama') + '</span>' +
             '<span class="cmp-toggle-hint">(' + (_dyn.cmpToggleHint || tUI('cmpToggleHint') || 'click to expand') + ')</span>' +
         '</div>' +

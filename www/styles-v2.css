@@ -1715,12 +1715,53 @@ body {
     flex-shrink: 0;
 }
 
-/* 对比分析条 */
+/* 对比分析条 - 默认折叠，不占用空间 */
 .cmp-analysis {
-    padding: 10px var(--space-4) 12px;
+    padding: 0 var(--space-4);
     background: var(--color-surface-alt, #faf7f4);
     border-bottom: 1px solid var(--color-border);
     flex-shrink: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+}
+.cmp-analysis.open {
+    max-height: 500px;
+    padding: 10px var(--space-4) 12px;
+}
+
+/* 折叠按钮 */
+.cmp-analysis-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px var(--space-4);
+    background: var(--color-surface, #fff);
+    border-bottom: 1px solid var(--color-border);
+    cursor: pointer;
+    user-select: none;
+    flex-shrink: 0;
+}
+.cmp-analysis-toggle:hover {
+    background: var(--color-surface-alt, #faf7f4);
+}
+.cmp-analysis-toggle.open {
+    background: var(--color-surface-alt, #faf7f4);
+}
+.cmp-toggle-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text);
+}
+.cmp-toggle-hint {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+.cmp-analysis-toggle.open .cmp-toggle-label::before {
+    content: '▼ ';
+}
+.cmp-analysis-toggle:not(.open) .cmp-toggle-label::before {
+    content: '▶ ';
 }
 
 .cmp-archetype-tag {
@@ -1795,6 +1836,8 @@ body {
     flex: 1;
     overflow: hidden;
     min-height: 0;
+    /* 确保小传区域获得最大可用高度 */
+    height: 100%;
 }
 
 .cmp-bio-col {
