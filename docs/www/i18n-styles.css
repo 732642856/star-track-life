@@ -1,0 +1,258 @@
+/**
+ * 星轨人生 Pro - 语言切换按钮样式
+ * Language Switcher Styles for Star Track Life Pro
+ */
+
+/* ═══════════════════════════════════════════════════════════
+   语言切换器容器
+   ═══════════════════════════════════════════════════════════ */
+
+.lang-switcher {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 10001;
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+/* 悬停效果 */
+.lang-switcher:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   语言按钮
+   ═══════════════════════════════════════════════════════════ */
+
+.lang-btn {
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #666;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", 
+                 "PingFang SC", "Microsoft YaHei", sans-serif;
+    letter-spacing: 0.3px;
+}
+
+/* 按钮悬停 */
+.lang-btn:hover {
+    color: #333;
+    background: rgba(0, 0, 0, 0.04);
+}
+
+/* 激活状态 */
+.lang-btn.active {
+    color: #fff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+    font-weight: 600;
+}
+
+/* 按钮按下效果 */
+.lang-btn:active {
+    transform: scale(0.96);
+}
+
+/* 焦点状态 */
+.lang-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   深色模式适配
+   ═══════════════════════════════════════════════════════════ */
+
+@media (prefers-color-scheme: dark) {
+    .lang-switcher {
+        background: rgba(30, 30, 30, 0.95);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .lang-switcher:hover {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+    
+    .lang-btn {
+        color: #aaa;
+    }
+    
+    .lang-btn:hover {
+        color: #eee;
+        background: rgba(255, 255, 255, 0.08);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   响应式设计
+   ═══════════════════════════════════════════════════════════ */
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .lang-switcher {
+        top: 10px;
+        right: 10px;
+        padding: 3px;
+        border-radius: 10px;
+    }
+    
+    .lang-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+        border-radius: 6px;
+    }
+}
+
+/* 小屏手机 */
+@media (max-width: 375px) {
+    .lang-btn {
+        padding: 5px 8px;
+        font-size: 11px;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   动画效果
+   ═══════════════════════════════════════════════════════════ */
+
+@keyframes langSwitchFade {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.lang-switcher {
+    animation: langSwitchFade 0.4s ease-out;
+}
+
+/* 语言切换时的淡入淡出 */
+.lang-transitioning {
+    transition: opacity 0.3s ease;
+}
+
+.lang-transitioning.fade-out {
+    opacity: 0;
+}
+
+.lang-transitioning.fade-in {
+    opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   菜单栏语言选择器（用于 Electron）
+   ═══════════════════════════════════════════════════════════ */
+
+.lang-menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.lang-menu-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.lang-menu-item.active::after {
+    content: '✓';
+    color: #667eea;
+    font-weight: bold;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   语言切换提示 Toast
+   ═══════════════════════════════════════════════════════════ */
+
+.lang-toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    padding: 12px 24px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10000;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.lang-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Mac 原生风格变体
+   ═══════════════════════════════════════════════════════════ */
+
+.lang-switcher.mac-native {
+    padding: 2px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.03);
+    box-shadow: none;
+}
+
+.lang-switcher.mac-native:hover {
+    background: rgba(0, 0, 0, 0.05);
+    transform: none;
+}
+
+.lang-switcher.mac-native .lang-btn {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.lang-switcher.mac-native .lang-btn.active {
+    background: rgba(0, 0, 0, 0.1);
+    color: #333;
+    box-shadow: none;
+}
+
+/* Mac 深色模式 */
+@media (prefers-color-scheme: dark) {
+    .lang-switcher.mac-native {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .lang-switcher.mac-native:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+    
+    .lang-switcher.mac-native .lang-btn {
+        color: #ccc;
+    }
+    
+    .lang-switcher.mac-native .lang-btn.active {
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+    }
+}

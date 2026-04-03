@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">星轨人生</string>
+    <string name="title_activity_main">星轨人生</string>
+    <string name="package_name">com.yinan.xingguirensheng</string>
+    <string name="custom_url_scheme">com.yinan.xinggui0</string>
+</resources>

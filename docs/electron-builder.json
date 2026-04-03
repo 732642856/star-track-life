@@ -1,0 +1,43 @@
+{
+  "appId": "com.yinan.xinggui0",
+  "productName": "星轨人生",
+  "directories": {
+    "output": "dist"
+  },
+  "files": [
+    "www/**/*",
+    "main.js",
+    "package.json"
+  ],
+  "mac": {
+    "category": "public.app-category.lifestyle",
+    "target": [
+      {
+        "target": "dmg",
+        "arch": ["x64", "arm64"]
+      }
+    ],
+    "icon": "icon-512x512.png",
+    "entitlements": "entitlements.plist",
+    "entitlementsInherit": "entitlements.plist",
+    "hardenedRuntime": true,
+    "gatekeeperAssess": false,
+    "identity": "73665ABEE8F20F0025FC3C8134E6812151DB63D0"
+  },
+  "dmg": {
+    "title": "星轨人生",
+    "contents": [
+      {
+        "x": 130,
+        "y": 220
+      },
+      {
+        "x": 410,
+        "y": 220,
+        "type": "link",
+        "path": "/Applications"
+      }
+    ]
+  },
+  "publish": null
+}
