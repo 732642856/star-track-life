@@ -23,7 +23,8 @@ let savedCharacters = [];
  */
 function _getStarNameI18n(zhName) {
     if (!zhName) return zhName;
-    var lang = (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG : 'zh');
+    var lang = (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG ? CURRENT_LANG : (typeof window !== 'undefined' && window.CURRENT_LANG ? window.CURRENT_LANG : 'zh'));
+
     if (lang === 'zh') return zhName;
     // 繁体映射
     var TW_STARS = {
@@ -48,7 +49,8 @@ function _getStarNameI18n(zhName) {
  */
 function _getPatternTypeI18n(zhType) {
     if (!zhType) return zhType;
-    var lang = (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG : 'zh');
+    var lang = (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG ? CURRENT_LANG : (typeof window !== 'undefined' && window.CURRENT_LANG ? window.CURRENT_LANG : 'zh'));
+
     var TW = { '杀破狼':'殺破狼','紫府廉武相':'紫府廉武相','机月同梁':'機月同梁','巨日':'巨日' };
     var EN = {
         '杀破狼':'Sha-Po-Lang (The Trailblazers)',
@@ -68,7 +70,8 @@ function _getPatternTypeI18n(zhType) {
  */
 function _getDriveLabelI18n(zhLabel) {
     if (!zhLabel) return zhLabel;
-    var lang = (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG : 'zh');
+    var lang = (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG ? CURRENT_LANG : (typeof window !== 'undefined' && window.CURRENT_LANG ? window.CURRENT_LANG : 'zh'));
+
     if (lang === 'zh') return zhLabel;
     // 中文label → 索引 → 当前语言label
     var ZH_LABELS = ['野心者','执念者','谋局者','享乐者','守护者','破局者','漂泊者','隐忍者'];
@@ -106,7 +109,8 @@ function _getDriveLabelByIdx(idx) {
  */
 function _getPatternNameI18n(zhName) {
     if (!zhName) return zhName;
-    var lang = (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG : 'zh');
+    var lang = (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG ? CURRENT_LANG : (typeof window !== 'undefined' && window.CURRENT_LANG ? window.CURRENT_LANG : 'zh'));
+
     if (lang === 'zh') return zhName;
     var STAR_PAIRS = [
         ['七杀','破军'],['七杀','贪狼'],['破军','贪狼'],
@@ -738,20 +742,18 @@ function initEightAttributes() {
     // 从 i18n 动态数据层取8属性（三语言）
     const dyn = (typeof getDynamic === 'function') ? getDynamic() : null;
     
-    // 基础属性定义（从动态数据获取）
-    const attributeDefs = (dyn && dyn.attr) ? dyn.attr.map(attr => ({
-        id: attr.id,
-        name: attr.name
-    })) : [
-        { id: 'appearance', name: '外貌特征' },
-        { id: 'speech',     name: '说话方式' },
-        { id: 'behavior',   name: '行为习惯' },
-        { id: 'emotion',    name: '情感表达' },
-        { id: 'social',     name: '社交风格' },
-        { id: 'crisis',     name: '应对危机' },
-        { id: 'learning',   name: '学习适应' },
-        { id: 'growth',     name: '成长方向' },
-    ];
+    // ── 8维度名称（硬编码本地化，不依赖 UI_DYNAMIC）──
+    // UI_DYNAMIC 只有 zh/zh-TW，没有 en 块，所以维度名必须硬编码
+    const DIM_NAMES = {
+        zh:     ['外貌特征', '说话方式', '行为习惯', '情感表达', '社交风格', '应对危机', '学习适应', '成长方向'],
+        'zh-TW': ['外貌特徵', '說話方式', '行為習慣', '情感表達', '社交風格', '應對危機', '學習適應', '成長方向'],
+        en:     ['Appearance', 'Speaking Style', 'Habits', 'Emotion', 'Social Style', 'Crisis Response', 'Learning', 'Growth']
+    };
+    const DIM_IDS = ['appearance', 'speech', 'behavior', 'emotion', 'social', 'crisis', 'learning', 'growth'];
+    var langKey = (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG :
+                   (typeof window !== 'undefined' && typeof window.CURRENT_LANG !== 'undefined' ? window.CURRENT_LANG : 'zh'));
+    var dimNames = DIM_NAMES[langKey] || DIM_NAMES.zh;
+    var attributeDefs = DIM_IDS.map(function(id, i) { return { id: id, name: dimNames[i] }; });
     
     // ── ★ 紫微斗数丰富动态词库：根据命盘生成丰富选项 ────────────────────────────
     let dynamicOptions = {};
