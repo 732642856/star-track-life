@@ -133,7 +133,18 @@ jobs:
             -skipUnavailableModels
 
       - name: 导出 IPA
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_KEY_BASE64 }}
         run: |
+          # 解码 App Store Connect 密钥
+          if [ -n "$APP_STORE_CONNECT_KEY_BASE64" ]; then
+            echo "$APP_STORE_CONNECT_KEY_BASE64" | base64 --decode > $RUNNER_TEMP/app_store_connect_key.p8
+            echo "已解码 App Store Connect 密钥"
+            ls -la $RUNNER_TEMP/app_store_connect_key.p8
+          fi
+
           PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
           PP_UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID raw -)
           PP_TEAM_ID=$(security cms -D -i $PP_PATH | plutil -extract TeamIdentifier.0 raw -)
@@ -165,10 +176,23 @@ jobs:
           </plist>
           EOF
 
-          xcodebuild -exportArchive \
-            -archivePath $RUNNER_TEMP/App.xcarchive \
-            -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist \
-            -exportPath $RUNNER_TEMP/export
+          # 如果有 App Store Connect 密钥，添加到导出选项
+          if [ -n "$APP_STORE_CONNECT_KEY_ID" ] && [ -n "$APP_STORE_CONNECT_KEY_BASE64" ]; then
+            echo "使用 App Store Connect API 密钥导出"
+            xcodebuild -exportArchive \
+              -archivePath $RUNNER_TEMP/App.xcarchive \
+              -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist \
+              -exportPath $RUNNER_TEMP/export \
+              -authenticationKeyID "$APP_STORE_CONNECT_KEY_ID" \
+              -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID" \
+              -authenticationKeyPath "$RUNNER_TEMP/app_store_connect_key.p8"
+          else
+            echo "使用无密钥导出（可能需要手动上传）"
+            xcodebuild -exportArchive \
+              -archivePath $RUNNER_TEMP/App.xcarchive \
+              -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist \
+              -exportPath $RUNNER_TEMP/export
+          fi
 
       - name: 保存 IPA 为 Artifact
         uses: actions/upload-artifact@v4
