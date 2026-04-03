@@ -1,0 +1,49 @@
+name: iOS Build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          npm install
+          npm install -g @capacitor/cli
+
+      - name: Sync Capacitor
+        run: npx cap sync ios
+
+      - name: Setup Apple Developer certificate
+        env:
+          CERTIFICATE: ${{ secrets.CERTIFICATE }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          # Create certificate
+          echo -n "$CERTIFICATE" | base64 --decode -o certificate.p12
+          # Import to keychain
+          security create-keychain -p "$KEY_PASSWORD" ios-build.keychain
+          security default-keychain -s ios-build.keychain
+          security unlock-keychain -p "$KEY_PASSWORD" ios-build.keychain
+          security import certificate.p12 -P "$KEY_PASSWORD" -A -t cert
+
+      - name: Build iOS
+        run: xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Release -sdk iphoneos build CODE_SIGN_IDENTITY="${{ secrets.CODE_SIGN_IDENTITY }}" PROVISIONING_PROFILE_SPECIFIER="${{ secrets.PROVISIONING_PROFILE_SPECIFIER }}" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v3
+        with:
+          name: ios-ipa
+          path: ios/App/build/Build/Products/Release-iphoneos/*.ipa
