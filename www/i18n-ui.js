@@ -927,6 +927,10 @@ const UI_DYNAMIC = {
         interpersonalDoubleWound: '<strong>Double Wound:</strong> Both charts carry flying-star fixations. This relationship activates each other\'s deepest wounds — the most dramatically potent combination. Write them healing each other in the other\'s language, while deepening each other\'s pain.',
         toastSelectDrive: 'Please choose a drive type first',
         woundLabel: 'Wound',
+        sihuaLabelMap: {
+            '野心者': 'Ambition', '执念者': 'Obsessed', '谋局者': 'Strategist', '守护者': 'Guardian', '游荡者': 'Wanderer', '隐忍者': 'Endurer',
+            '化禄型': 'Lu Type', '化权型': 'Quan Type', '化科型': 'Ke Type', '化忌型': 'Ji Type'
+        },
     },
 };
 

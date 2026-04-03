@@ -1501,6 +1501,12 @@ function generateComparison(chars) {
     var _unknown = '–';
     // sihuaList 和 relationMap 使用中文key，需要翻译显示，但关系映射查找仍用中文key
     var sihuaKeyList = chars.map(function(c) { return c.sihua || _unknown; });
+    // 翻译 sihua 类型名称（用于显示）
+    var sihuaLabelMap = _dyn.sihuaLabelMap || {
+        '野心者': 'Ambition', '执念者': 'Obsessed', '谋局者': 'Strategist', '守护者': 'Guardian', '游荡者': 'Wanderer', '隐忍者': 'Endurer',
+        '化禄型': 'Lu Type', '化权型': 'Quan Type', '化科型': 'Ke Type', '化忌型': 'Ji Type'
+    };
+    var sihuaLabelList = sihuaKeyList.map(function(s) { return sihuaLabelMap[s] || s; });
     var genderList = chars.map(function(c) { return c.inputs.gender === 'female' ? tUI('genderFemale') : tUI('genderMale'); });
     var ageList  = chars.map(function(c) { return ageMap[c.inputs.age] || c.inputs.age || _unknown; });
     var eraList  = chars.map(function(c) { return eraMap[c.inputs.era] || c.inputs.era || _unknown; });
@@ -1575,7 +1581,7 @@ function generateComparison(chars) {
         '</div>' +
         '<div class="cmp-analysis cmp-analysis-collapsible">' +
             compatHtml +
-            '<p><strong>' + (_dyn.cmpSectionRelation || tUI('cmpSectionRelation') || 'Transformation Type') + '：</strong>' + sihuaKeyList.join(' vs ') + '　<strong>' + (_dyn.cmpSectionDrama || tUI('cmpSectionDrama') || 'Dramatic Dynamic') + '：</strong>' + relationDesc + '</p>' +
+            '<p><strong>' + (_dyn.cmpSectionRelation || tUI('cmpSectionRelation') || 'Transformation Type') + '：</strong>' + sihuaLabelList.join(' vs ') + '　<strong>' + (_dyn.cmpSectionDrama || tUI('cmpSectionDrama') || 'Dramatic Dynamic') + '：</strong>' + relationDesc + '</p>' +
             '<p><strong>' + (_dyn.cmpSectionContext || tUI('cmpSectionContext') || 'Context') + '：</strong>' + contextNote + '</p>' +
             interpersonalHtml +
         '</div>' +

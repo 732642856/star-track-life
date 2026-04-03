@@ -4352,8 +4352,9 @@ function generateZiweiCharacterBio(userData, chart, attributes, sihuaType) {
     bio += `## ${T.s5}\n\n`;
     // 剧作功能
     bio += `- **${T.fFunction}${_c}** ${crossDramatic}\n`;
-    // 情节推动（转折事件）
-    bio += `- **${T.fPlot}${_c}** ${crossTurning}\n`;
+    // 情节推动（星曜伤痕 - 与 Turning Point 区分）
+    var crossWound = (_lang === 'en' ? ((STAR_SIHUA_WOUND_EN[mainStar] || {})[sihuaKeyFull]) : ((STAR_SIHUA_WOUND[mainStar] || {})[sihuaKeyFull])) || crossTurning;
+    bio += `- **${T.fPlot}${_c}** ${crossWound}\n`;
     // 主题表达（生命主题）
     if (cp && cp.lifeTheme) {
         bio += `- **${T.fTheme}${_c}** ${cp.lifeTheme}\n`;
