@@ -123,6 +123,12 @@ jobs:
           echo "使用描述文件 UUID: $PP_UUID"
           echo "描述文件 Team ID: $PP_TEAM_ID"
 
+          # 检查签名环境
+          echo "=== 检查证书 ==="
+          security find-identity -v -p codesigning || echo "无证书"
+          echo "=== 检查描述文件 ==="
+          ls ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "无描述文件"
+
           xcodebuild archive \
             -project ios/App/App.xcodeproj \
             -scheme App \
@@ -133,7 +139,8 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE="$PP_UUID" \
-            -allowProvisioningUpdates
+            -allowProvisioningUpdates \
+            -skipUnavailableModels
 
       - name: 导出 IPA
         run: |
