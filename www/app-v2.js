@@ -674,10 +674,13 @@ function generate8PersonalityTypes(chartData) {
 // buildChartProxy：兼容 chart-to-bio-bridge.js 的命盘数据格式
 // selectedChart.name 不再从 pattern.name 读取（pattern.name 是对象会导致 [object Object]）
 // chart.name 在 generateZiweiCharacterBio 中从 userData.name（表单输入）读取
+// buildChartProxy：chart.name 可能是对象，强制置空字符串，由 userData.name 接管角色名
+// pattern.name 是对象，导致 [object Object]，在 _normalizeChart 中强制处理
 function buildChartProxy(chartData) {
     return {
         ...chartData,
-        // name: chartData.name || '',  // 移除，表单name从 userInputs 传入，不从命盘读取
+        // 强制清空 name，防止对象渗入英文小传
+        name: '',
         stars: (chartData.pattern && Array.isArray(chartData.pattern.stars)) ? chartData.pattern.stars : (chartData.stars || []),
         desc: (chartData.pattern && typeof chartData.pattern.desc === 'string') ? chartData.pattern.desc : (chartData.desc || ''),
         type: chartData.patternType || chartData.type || '',
