@@ -133,7 +133,6 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE="$PP_UUID" \
-            -allowProvisioningUpdates
             -skipUnavailableModels
 
       - name: 导出 IPA
@@ -143,51 +142,30 @@ jobs:
           PP_TEAM_ID=$(security cms -D -i $PP_PATH | plutil -extract TeamIdentifier.0 raw -)
           echo "导出用 UUID: $PP_UUID, Team: $PP_TEAM_ID"
 
+          # 验证 archive 存在
+          echo "检查 archive:"
+          ls -la $RUNNER_TEMP/App.xcarchive
+
+          # 使用 enterprise 方式导出（不需要 App Store Connect 认证）
           cat > $RUNNER_TEMP/ExportOptions.plist << EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
             <key>method</key>
-            <string>app-store</string>
+            <string>enterprise</string>
             <key>teamID</key>
             <string>$PP_TEAM_ID</string>
-            <key>signingStyle</key>
-            <string>manual</string>
-            <key>signingCertificate</key>
-            <string>Apple Distribution</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>com.yinan.xinggui0</key>
-              <string>$PP_UUID</string>
-            </dict>
-            <key>uploadBitcode</key>
-            <false/>
-            <key>compileBitcode</key>
-            <false/>
             <key>signingStyle</key>
             <string>manual</string>
           </dict>
           </plist>
           EOF
 
-          # 先验证能否读取archive
-          ls -la $RUNNER_TEMP/App.xcarchive
-
-          # 尝试导出
           xcodebuild -exportArchive \
             -archivePath $RUNNER_TEMP/App.xcarchive \
             -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist \
-            -exportPath $RUNNER_TEMP/export \
-            -allowProvisioningUpdates 2>&1 || {
-            # 如果失败，尝试使用 ad-hoc 方式
-            echo "app-store方式失败，尝试 enterprise 方式"
-            sed -i '' 's/app-store/enterprise/g' $RUNNER_TEMP/ExportOptions.plist
-            xcodebuild -exportArchive \
-              -archivePath $RUNNER_TEMP/App.xcarchive \
-              -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist \
-              -exportPath $RUNNER_TEMP/export
-          }
+            -exportPath $RUNNER_TEMP/export
 
       - name: 保存 IPA 为 Artifact
         uses: actions/upload-artifact@v4
