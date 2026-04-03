@@ -1,0 +1,37 @@
+{
+  "name": "star-track-life",
+  "version": "2.0.0",
+  "description": "星轨人生 - 紫微斗数角色设计工具",
+  "main": "main.js",
+  "scripts": {
+    "build": "echo 'Static web app, no build needed'",
+    "dev": "electron .",
+    "build:mac": "electron-builder --mac",
+    "build:all": "electron-builder --mac --win --linux",
+    "cap:init": "npx cap init",
+    "cap:add:ios": "npx cap add ios",
+    "cap:sync": "npx cap sync ios",
+    "cap:open": "npx cap open ios"
+  },
+  "keywords": [
+    "ziwei",
+    "astrology",
+    "character-design"
+  ],
+  "author": "Yinan",
+  "license": "MIT",
+  "build": {
+    "appId": "com.yinan.xingguirensheng",
+    "productName": "星轨人生"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/cli": "^8.3.0",
+    "@capacitor/core": "^8.3.0",
+    "@capacitor/ios": "^8.3.0"
+  },
+  "devDependencies": {
+    "electron": "^41.1.1",
+    "electron-builder": "^26.8.1"
+  }
+}
