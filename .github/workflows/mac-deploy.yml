@@ -84,6 +84,7 @@ jobs:
             -configuration Release \
             -archivePath $RUNNER_TEMP/App-Mac.xcarchive \
             -destination 'generic/platform=macOS' \
+            CODE_SIGN_ENTITLEMENTS="" \
             SUPPORTS_MACCATALYST=YES \
             DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER=NO \
             MACCATALYST_DEPLOYMENT_TARGET=12.0 \
