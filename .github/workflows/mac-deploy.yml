@@ -58,10 +58,6 @@ jobs:
 
           security list-keychain -d user -s $KEYCHAIN_PATH
 
-          # Set keychain to always trust
-          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-
           # Install provisioning profile
           PP_PATH=$RUNNER_TEMP/mac_pp.provisionprofile
           echo "$MAC_PROVISION_PROFILE_BASE64" | tr -d '\n' | base64 --decode > $PP_PATH
