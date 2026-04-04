@@ -58,6 +58,10 @@ jobs:
 
           security list-keychain -d user -s $KEYCHAIN_PATH
 
+          # Set keychain to always trust
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
           # Install provisioning profile
           PP_PATH=$RUNNER_TEMP/mac_pp.provisionprofile
           echo "$MAC_PROVISION_PROFILE_BASE64" | tr -d '\n' | base64 --decode > $PP_PATH
@@ -83,11 +87,11 @@ jobs:
             -scheme App \
             -configuration Release \
             -archivePath $RUNNER_TEMP/App-Mac.xcarchive \
-            -destination 'generic/platform=macOS' \
+            -destination 'platform=macOS' \
             CODE_SIGN_ENTITLEMENTS="" \
             SUPPORTS_MACCATALYST=YES \
             DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER=NO \
-            MACCATALYST_DEPLOYMENT_TARGET=12.0 \
+            MACCATALYST_DEPLOYMENT_TARGET=14.0 \
             DEVELOPMENT_TEAM="$PP_TEAM_ID" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
