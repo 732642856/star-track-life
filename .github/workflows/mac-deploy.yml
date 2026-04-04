@@ -83,7 +83,7 @@ jobs:
             -scheme App \
             -configuration Release \
             -archivePath $RUNNER_TEMP/App-Mac.xcarchive \
-            -destination 'platform=macOS' \
+            -destination 'platform=macOS,name=My Mac' \
             DEVELOPMENT_TEAM="$PP_TEAM_ID" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
