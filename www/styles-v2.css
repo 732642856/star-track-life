@@ -1623,26 +1623,51 @@ body {
     overflow: hidden;
     /* iOS 动态视口高度，避免地址栏影响可用高度 */
     height: 100dvh;
+    /* 确保内容从安全区域开始 */
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* 右上角浮动关闭按钮（iOS 悬浮圆形风格） */
-.cmp-close-fab {
-    position: fixed;
-    top: calc(env(safe-area-inset-top, 0px) + 16px);
-    right: 16px;
-    z-index: 9100;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: none;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+/* 顶栏 - 避免刘海 */
+.cmp-top-bar {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    padding-top: calc(env(safe-area-inset-top, 0px) + 8px);
+    background: var(--color-surface, #fff);
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+    min-height: 50px;
+}
+
+.cmp-top-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text);
+    text-align: center;
+    flex: 1;
+}
+
+/* 关闭按钮 - 避开 iPhone 刘海 */
+.cmp-close-btn {
+    position: relative;
+    z-index: 9100;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #ddd;
+    border-radius: 16px;
+    font-size: 14px;
+    color: #333;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* 右上角浮动关闭按钮（已禁用，改用 cmp-top-bar 中的关闭按钮）
+.cmp-close-fab {
+    display: none;
+}*/
     font-size: 17px;
     color: #3a3a3a;
     transition: transform 0.15s, box-shadow 0.15s;
@@ -1710,6 +1735,7 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: var(--space-3) var(--space-4);
+    padding-top: calc(env(safe-area-inset-top, 0px) + var(--space-3));
     background: var(--color-surface, #fff);
     border-bottom: 1px solid var(--color-border);
     flex-shrink: 0;
