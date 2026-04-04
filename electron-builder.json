@@ -22,7 +22,8 @@
     "entitlementsInherit": "entitlements.plist",
     "hardenedRuntime": true,
     "gatekeeperAssess": false,
-    "identity": "73665ABEE8F20F0025FC3C8134E6812151DB63D0"
+    "identity": "73665ABEE8F20F0025FC3C8134E6812151DB63D0",
+    "teamId": "2DM78YY6PM"
   },
   "dmg": {
     "title": "星轨人生",
