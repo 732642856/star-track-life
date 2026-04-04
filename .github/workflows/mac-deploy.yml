@@ -91,8 +91,6 @@ jobs:
             DEVELOPMENT_TEAM="$PP_TEAM_ID" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
             PROVISIONING_PROFILE="$PP_UUID"
 
           echo "=== Archive created ==="
