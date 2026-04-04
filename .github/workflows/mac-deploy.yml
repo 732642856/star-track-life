@@ -136,10 +136,8 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: StarTrackLife-Mac-IPAs
-          path: |
-            ${{ runner.temp }}/export-mac/*.ipa
-            ${{ runner.temp }}/export-mac/*.app
+          name: StarTrackLife-Mac-App
+          path: ${{ runner.temp }}/export-mac/*.app
           retention-days: 30
 
       - name: Cleanup
