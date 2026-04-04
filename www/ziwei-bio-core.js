@@ -280,6 +280,7 @@ var ATTR_LABEL_TO_ZH = {
     '自由散漫':           '自由散漫',
     // emotion / 情感表达
     'Openly Expressive':  '外露直白',
+    'Reserved':           '内敛含蓄',
     'Changeable':         '丰富多变',
     'Stable':             '稳定平和',
     'Rationally Controlled': '理性克制',

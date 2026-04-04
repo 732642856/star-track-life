@@ -1602,23 +1602,26 @@ function _buildInterpersonalCompareHTML(chars) {
     const _dyn = (typeof getDynamic === 'function') ? getDynamic() : {};
     var rows = [];
     chars.forEach(function(char) {
-        var cp = char.chart && char.chart._creativeParams;
+        // 安全检查：防止访问 undefined 属性
+        if (!char || !char.chart) return;
+        var cp = char.chart._creativeParams;
         if (!cp) return;
         var ip = cp.interpersonalProfile;
         var name = char.name || (tUI('cmpCharLabel') || 'Char');
 
         var items = [];
 
-        if (ip && ip.fuqiProjection) {
+        // 安全检查每个属性
+        if (ip && typeof ip.fuqiProjection === 'string') {
             items.push('<li><strong>' + (_dyn.interpersonalFuqi || 'Romantic Projection') + '：</strong>' + ip.fuqiProjection + '</li>');
         }
-        if (ip && ip.jiaoYouStyle) {
+        if (ip && typeof ip.jiaoYouStyle === 'string') {
             items.push('<li><strong>' + (_dyn.interpersonalJiaoyou || 'Social Drive') + '：</strong>' + ip.jiaoYouStyle + '</li>');
         }
-        if (ip && ip.mingFlyImpact) {
+        if (ip && typeof ip.mingFlyImpact === 'string') {
             items.push('<li><strong>' + (_dyn.interpersonalFly || 'Fixation Star') + '：</strong>' + ip.mingFlyImpact + '</li>');
         }
-        if (cp.attachmentType) {
+        if (cp && typeof cp.attachmentType === 'string') {
             items.push('<li><strong>' + (_dyn.interpersonalAttach || 'Attachment Style') + '：</strong>' + cp.attachmentType + '</li>');
         }
 
@@ -1640,35 +1643,36 @@ function _buildInterpersonalCompareHTML(chars) {
     // 双角色"交叉投影"分析（心理占星合盘核心：A的夫妻宫星 vs B的命宫星是否呼应）
     var crossNote = '';
     if (chars.length === 2) {
-        var cpA = chars[0].chart && chars[0].chart._creativeParams;
-        var cpB = chars[1].chart && chars[1].chart._creativeParams;
+        // 安全检查
+        var cpA = (chars[0] && chars[0].chart) ? chars[0].chart._creativeParams : null;
+        var cpB = (chars[1] && chars[1].chart) ? chars[1].chart._creativeParams : null;
         if (cpA && cpB) {
             var ipA = cpA.interpersonalProfile;
             var ipB = cpB.interpersonalProfile;
-            var nameA = chars[0].name || 'A';
-            var nameB = chars[1].name || 'B';
+            var nameA = (chars[0] && chars[0].name) || 'A';
+            var nameB = (chars[1] && chars[1].name) || 'B';
 
-            // 检测夫妻宫互投影：如果A的夫妻宫主星 = B的命宫主星，或B的夫妻宫主星 = A的命宫主星
-            var fuqiA = ipA && ipA.fuqiStar;
-            var fuqiB = ipB && ipB.fuqiStar;
-            var mingA = cpA.mingMainStar;
-            var mingB = cpB.mingMainStar;
+            // 检测夫妻宫互投影：安全访问
+            var fuqiA = (ipA && typeof ipA.fuqiStar === 'string') ? ipA.fuqiStar : null;
+            var fuqiB = (ipB && typeof ipB.fuqiStar === 'string') ? ipB.fuqiStar : null;
+            var mingA = (cpA && typeof cpA.mingMainStar === 'string') ? cpA.mingMainStar : null;
+            var mingB = (cpB && typeof cpB.mingMainStar === 'string') ? cpB.mingMainStar : null;
 
-            if (fuqiA && fuqiA === mingB) {
+            if (fuqiA && mingB && fuqiA === mingB) {
                 var resText = (_dyn.interpersonalResonance && typeof _dyn.interpersonalResonance === 'function')
                     ? _dyn.interpersonalResonance(nameA, fuqiA, nameB)
                     : ('<strong>Chart Resonance:</strong> ' + nameA + '\'s Spouse Palace star (' + fuqiA + ') = ' + nameB + '\'s Life Palace star.');
                 crossNote += '<p style="background:#fff8e7;border-left:3px solid #f39c12;padding:8px 12px;margin:8px 0;font-size:13px;">' + resText + '</p>';
             }
-            if (fuqiB && fuqiB === mingA) {
+            if (fuqiB && mingA && fuqiB === mingA) {
                 var resText2 = (_dyn.interpersonalResonance && typeof _dyn.interpersonalResonance === 'function')
                     ? _dyn.interpersonalResonance(nameB, fuqiB, nameA)
                     : ('<strong>Chart Resonance:</strong> ' + nameB + '\'s Spouse Palace star (' + fuqiB + ') = ' + nameA + '\'s Life Palace star.');
                 crossNote += '<p style="background:#fff8e7;border-left:3px solid #f39c12;padding:8px 12px;margin:8px 0;font-size:13px;">' + resText2 + '</p>';
             }
 
-            // 检测化忌互入（凯龙星伤口理论：你的伤碰到了对方的伤）
-            if (ipA && ipA.mingFlyImpact && ipB && ipB.mingFlyImpact) {
+            // 检测化忌互入（凯龙星伤口理论）
+            if (ipA && typeof ipA.mingFlyImpact === 'string' && ipB && typeof ipB.mingFlyImpact === 'string') {
                 var doubleWoundText = _dyn.interpersonalDoubleWound ||
                     '<strong>Double Wound:</strong> Both charts carry flying-star fixations — this relationship activates each other\'s deepest wounds.';
                 crossNote += '<p style="background:#fef5f5;border-left:3px solid #e74c3c;padding:8px 12px;margin:8px 0;font-size:13px;">' + doubleWoundText + '</p>';

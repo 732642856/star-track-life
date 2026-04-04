@@ -188,6 +188,7 @@ const UI_TEXT = {
         sihuaTypeName: { '化禄型': '化禄型', '化权型': '化权型', '化科型': '化科型', '化忌型': '化忌型' },
         btnView: '查看',
         btnDelete: '删除',
+        unnamedChar: '未命名角色',
 
         // 对比面板
         cmpToggleLabel: '相性评分 & 戏剧分析',
@@ -359,6 +360,7 @@ const UI_TEXT = {
         sihuaTypeName: { '化禄型': '化祿型', '化权型': '化權型', '化科型': '化科型', '化忌型': '化忌型' },
         btnView: '查看',
         btnDelete: '刪除',
+        unnamedChar: '未命名角色',
 
         // 對比面板
         cmpToggleLabel: '相性評分 & 戲劇分析',
@@ -530,6 +532,7 @@ const UI_TEXT = {
         sihuaTypeName: { '化禄型': 'Lu (Prosperity)', '化权型': 'Quan (Authority)', '化科型': 'Ke (Wisdom)', '化忌型': 'Ji (Obstruction)' },
         btnView: 'View',
         btnDelete: 'Delete',
+        unnamedChar: 'Unnamed Character',
 
         // Compare panel
         cmpToggleLabel: 'Compatibility & Drama Analysis',
@@ -952,4 +955,12 @@ function getDynamic() {
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { UI_TEXT, tUI, applyI18nToDOM, UI_DYNAMIC, tDyn, getDynamic };
+}
+// 浏览器环境显式挂载到 window
+if (typeof window !== 'undefined') {
+    window.UI_TEXT = UI_TEXT;
+    window.UI_DYNAMIC = UI_DYNAMIC;
+    window.tUI = tUI;
+    window.tDyn = tDyn;
+    window.getDynamic = getDynamic;
 }
