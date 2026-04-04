@@ -83,10 +83,7 @@ jobs:
             -scheme App \
             -configuration Release \
             -archivePath $RUNNER_TEMP/App-Mac.xcarchive \
-            -destination 'generic/platform=macOS,variant=Mac Catalyst' \
-            SUPPORTS_MACCATALYST=YES \
-            DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER=NO \
-            MACCATALYST_DEPLOYMENT_TARGET=12.0 \
+            -destination 'platform=macOS' \
             DEVELOPMENT_TEAM="$PP_TEAM_ID" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
