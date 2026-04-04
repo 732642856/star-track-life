@@ -22,7 +22,22 @@
   "license": "MIT",
   "build": {
     "appId": "com.yinan.xingguirensheng",
-    "productName": "星轨人生"
+    "productName": "星轨人生",
+    "mac": {
+      "category": "public.app-category.lifestyle",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "icon": "icon-512x512.png",
+      "entitlements": "entitlements.plist",
+      "entitlementsInherit": "entitlements.plist",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "identity": "73665ABEE8F20F0025FC3C8134E6812151DB63D0"
+    }
   },
   "dependencies": {
     "@capacitor/android": "^8.3.0",
@@ -32,6 +47,6 @@
   },
   "devDependencies": {
     "electron": "^41.1.1",
-    "electron-builder": "^26.8.1"
+    "electron-builder": "^25.0.0"
   }
 }
