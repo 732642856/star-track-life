@@ -84,12 +84,15 @@ jobs:
             -configuration Release \
             -archivePath $RUNNER_TEMP/App-Mac.xcarchive \
             -destination 'generic/platform=macOS' \
+            -entitlements ios/App/App/App.entitlements \
             SUPPORTS_MACCATALYST=YES \
             DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER=NO \
             MACCATALYST_DEPLOYMENT_TARGET=12.0 \
             DEVELOPMENT_TEAM="$PP_TEAM_ID" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
             PROVISIONING_PROFILE="$PP_UUID"
 
           echo "=== Archive created ==="

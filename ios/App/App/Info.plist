@@ -47,5 +47,17 @@
 	<true/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.lifestyle</string>
+	<key>NSSupportsMacCatalyst</key>
+	<true/>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
+	<key>UIStatusBarHidden</key>
+	<false/>
+	<key>UIRequiresFullScreen</key>
+	<false/>
 </dict>
 </plist>
