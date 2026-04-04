@@ -35,5 +35,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: StarTrackLife-Mac-App
-          path: dist/mac/*.app
+          path: dist/mac/*
           retention-days: 30
