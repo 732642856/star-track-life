@@ -14,6 +14,15 @@
 | `cert_base64.txt` | 项目根目录 | iOS证书Base64 |
 | `entitlements.plist` | 项目根目录 | iOS权限配置 |
 
+### 英文命名证书 (StarTrackLife)
+
+| 文件 | 位置 | 用途 |
+|------|------|------|
+| `StarTrackLifeAppStore.mobileprovision` | ~/🦞办公室/ | iOS App Store |
+| `StarTrackLifeAppStore0.mobileprovision` | ~/🦞办公室/ | iOS 分发 |
+| `StarTrackLifeMacAppStore.provisionprofile` | ~/星轨人生-整合版/证书材料/ | Mac App Store |
+| `StarTrackLifeMacInstaller.provisionprofile` | ~/星轨人生-整合版/证书材料/ | Mac Installer |
+
 ### 备份证书
 
 | 文件 | 位置 |
