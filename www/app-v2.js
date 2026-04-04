@@ -387,7 +387,7 @@ function matchChart() {
     var _setEl = function(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; };
     _setEl('main-pattern-name', chartData.pattern.name);
     _setEl('main-pattern-desc', chartData.pattern.desc);
-    _setEl('main-star', (chartData.pattern.stars || []).join('、'));
+    _setEl('main-star', (chartData.pattern.stars || []).map(function(s) { return window.I18nCore ? I18nCore.getStarName(s) : s; }).join('、'));
     _setEl('pattern-type', chartData.patternType);
     _setEl('era-display', ({ancient:'古代', modern:'近代', contemporary:'现代'}[userInputs.era] || userInputs.era));
     _setEl('match-score', Math.floor(85 + Math.random() * 15) + '%');
@@ -400,10 +400,14 @@ function generate8PersonalityTypes(chartData) {
     const grid = document.getElementById('sub-patterns-grid');
     if (!grid) return;
     
+    // 获取当前语言的翻译
+    const uiDynamic = (typeof getDynamic === 'function') ? getDynamic() : null;
+    const translatedDrive8 = uiDynamic?.drive8 || DRIVE_8_TYPES;
+    
     // 始终使用8种驱动力，personalityTypes字段为备选
     const personalityTypes = (chartData.personalityTypes && chartData.personalityTypes.length > 0)
         ? chartData.personalityTypes
-        : DRIVE_8_TYPES;
+        : translatedDrive8;
     
     grid.innerHTML = personalityTypes.map((type, i) => {
         const label = (typeof type === 'object') ? type.label : type;
@@ -467,7 +471,10 @@ function confirmSubPattern() {
 function initEightAttributes() {
     const container = document.getElementById('step-4-content');
     
-    const attributes = [
+    // 从翻译系统获取8属性
+    const lang = typeof I18nCore !== 'undefined' ? I18nCore.getLanguage() : 'zh';
+    const ui = typeof UI_TEXT !== 'undefined' ? (UI_TEXT[lang] || UI_TEXT['zh']) : null;
+    const attributes = ui?.attributes || [
         { id: 'appearance', name: '外貌特征', options: ['威严霸气', '温和儒雅', '锐利干练', '柔和亲和', '独特个性', '普通平凡'] },
         { id: 'speech', name: '说话方式', options: ['简洁有力', '温和委婉', '热情洋溢', '沉稳冷静', '幽默风趣', '寡言少语'] },
         { id: 'behavior', name: '行为习惯', options: ['雷厉风行', '深思熟虑', '随性而为', '谨慎小心', '有条不紊', '自由散漫'] },
@@ -678,6 +685,43 @@ function renderInline(text) {
 // ==================== 桥接新排盘引擎 ====================
 
 /**
+ * 根据主星列表判断格局类型
+ */
+function getPatternType(stars) {
+  if (!stars || stars.length === 0) return '主星格';
+  
+  // 杀破狼格局
+  if (stars.includes('七杀') || stars.includes('破军') || stars.includes('贪狼')) {
+    return '杀破狼';
+  }
+  // 机月同梁格局
+  if (stars.includes('天机') || stars.includes('太阴') || stars.includes('天同') || stars.includes('天梁')) {
+    return '机月同梁';
+  }
+  // 府相朝垣格局
+  if (stars.includes('天府') || stars.includes('天相')) {
+    return '府相朝垣';
+  }
+  // 廉贪格局
+  if (stars.includes('廉贞') || stars.includes('贪狼')) {
+    return '廉贪';
+  }
+  // 日月格局
+  if (stars.includes('太阳') || stars.includes('太阴')) {
+    return '日月并明';
+  }
+  // 紫微格局
+  if (stars.includes('紫微')) {
+    return '紫微坐命';
+  }
+  // 武曲格局
+  if (stars.includes('武曲')) {
+    return '武曲坐命';
+  }
+  return '主星格';
+}
+
+/**
  * generate144Chart：调用 FineChartEngine（新排盘引擎）生成精准命盘
  * 向后兼容旧版 CHART_DATABASE 数据结构
  */
@@ -686,32 +730,40 @@ function generate144Chart(inputs) {
   if (window.FineChartEngine) {
     try {
       const engine = window.FineChartEngine;
+      // 时辰转换：数字转地支名
+      const SHICHEN_NAMES = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+      const shichenName = typeof inputs.birthHour === 'string' ? inputs.birthHour : 
+                          (SHICHEN_NAMES[inputs.birthHour] || SHICHEN_NAMES[Math.floor((inputs.birthHour || 12) / 2) % 12]);
+      
       const result = engine.generateChart({
         birthYear: inputs.birthYear || new Date().getFullYear() - (parseInt(inputs.age) || 25),
         birthMonth: inputs.birthMonth || 6,
         birthDay: inputs.birthDay || 15,
         birthHour: inputs.birthHour || 12,
-        gender: inputs.gender || '男',
-        era: inputs.era || '当代都市',
+        shichen: shichenName,
+        gender: inputs.gender === '男' ? 'male' : 'female',
       });
 
-      // 适配旧版数据结构
-      const mainStars = result.mingGong?.stars || [];
+      // 适配旧版数据结构 - 正确获取命宫主星
+      const mingPalaceIdx = result.mingPalace?.index;
+      const mingPalaceData = result.palaces?.[mingPalaceIdx];
+      const mainStars = mingPalaceData?.mainStars || [];
       const patternName = mainStars.join('') || '命主格局';
+      const patternType = getPatternType(mainStars);
       return {
         pattern: {
           name: patternName,
           stars: mainStars,
-          desc: result.mingGong?.desc || '命盘格局独特',
+          desc: mingPalaceData ? `${mainStars.join('、')}坐命` : '命盘格局独特',
         },
-        patternType: result.patternType || '主星格',
-        shiChen: result.shiChen || '未知',
-        ke: result.ke || 0,
-        chartId: result.chartId || Math.random().toString(36).slice(2),
+        patternType: patternType,
+        shiChen: result.input?.shichen || '未知',
+        ke: inputs.keIdx || 0,
+        chartId: result._meta?.generatedAt || Math.random().toString(36).slice(2),
         personalityTypes: result.personalityTypes || DRIVE_8_TYPES,
-        sihua: result.sihua || {},
-        mingGong: result.mingGong || {},
-        fuqiGong: result.fuqiGong || {},
+        sihua: result.fourTransformations || {},
+        mingGong: mingPalaceData || { stars: mainStars },
+        fuqiGong: result.palaces?.[(mingPalaceIdx + 2) % 12] || {},
         _fullChart: result,
       };
     } catch (e) {
@@ -849,12 +901,16 @@ function _guessPatternType(stars) {
 
 // ==================== 角色保存系统 ====================
 function saveCharacter() {
+    var lang = typeof I18nCore !== 'undefined' ? I18nCore.getLanguage() : 'zh';
+    var ui = typeof UI_TEXT !== 'undefined' ? (UI_TEXT[lang] || UI_TEXT['zh']) : {};
+    
     if (savedCharacters.length >= 10) {
-        showToast('最多只能保存10个角色，请先删除一些');
+        showToast(ui.toastSavedFull || '最多只能保存10个角色，请先删除一些');
         return;
     }
     
-    const name = userInputs.name || '未命名角色';
+    var unnamedText = ui.unnamedChar || '未命名角色';
+    const name = userInputs.name || unnamedText;
     const timestamp = new Date().toLocaleString('zh-CN');
     
     const character = {
@@ -871,7 +927,8 @@ function saveCharacter() {
     savedCharacters.push(character);
     localStorage.setItem('starTrackCharacters', JSON.stringify(savedCharacters));
     
-    showToast('「' + name + '」已保存 (' + savedCharacters.length + '/10)', 'success');
+    var successMsg = ui.toastSavedSuccess ? ui.toastSavedSuccess(name, savedCharacters.length) : '「' + name + '」已保存 (' + savedCharacters.length + '/10)';
+    showToast(successMsg, 'success');
     displaySavedCharacters();
 }
 
@@ -921,6 +978,12 @@ function displaySavedCharacters() {
     section.style.display = 'block';
     compareBtn.style.display = savedCharacters.length >= 2 ? 'block' : 'none';
     
+    // 获取翻译
+    var lang = typeof I18nCore !== 'undefined' ? I18nCore.getLanguage() : 'zh';
+    var ui = typeof UI_TEXT !== 'undefined' ? (UI_TEXT[lang] || UI_TEXT['zh']) : {};
+    var viewText = ui.btnView || '查看';
+    var deleteText = ui.btnDelete || '删除';
+    
     list.innerHTML = savedCharacters.map(char => `
         <div class="saved-character-item">
             <input type="checkbox" class="compare-checkbox" data-id="${char.id}" style="margin-right: 10px;">
@@ -929,8 +992,8 @@ function displaySavedCharacters() {
                 <div class="character-meta">${char.chart.name} · ${char.sihua} · ${char.timestamp}</div>
             </div>
             <div class="character-actions">
-                <button class="btn btn-small" onclick="loadCharacter(${char.id})">查看</button>
-                <button class="btn btn-small btn-outline" onclick="deleteCharacter(${char.id})">删除</button>
+                <button class="btn btn-small" onclick="loadCharacter(${char.id})">${viewText}</button>
+                <button class="btn btn-small btn-outline" onclick="deleteCharacter(${char.id})">${deleteText}</button>
             </div>
         </div>
     `).join('');
@@ -981,16 +1044,19 @@ function deleteCharacter(id) {
 }
 
 function showCompare() {
-    const checkboxes = document.querySelectorAll('.compare-checkbox:checked');
-    const selectedIds = Array.from(checkboxes).map(cb => parseInt(cb.dataset.id));
+    var checkboxes = document.querySelectorAll('.compare-checkbox:checked');
+    var selectedIds = Array.from(checkboxes).map(function(cb) { return parseInt(cb.dataset.id); });
+    
+    var lang = typeof I18nCore !== 'undefined' ? I18nCore.getLanguage() : 'zh';
+    var ui = typeof UI_TEXT !== 'undefined' ? (UI_TEXT[lang] || UI_TEXT['zh']) : {};
     
     if (selectedIds.length < 2) {
-        showToast('请至少选择2个角色进行对比');
+        showToast(ui.toastMinCompare || '请至少选择2个角色进行对比');
         return;
     }
     
     if (selectedIds.length > 3) {
-        showToast('最多对比3个角色');
+        showToast(ui.toastMaxCompare || '最多对比3个角色');
         return;
     }
     
@@ -1203,10 +1269,31 @@ function updateLanguageButtons(activeLang) {
 }
 
 function updatePageLanguage(lang) {
-    if (typeof I18nCore === 'undefined' || typeof UI_TEXT === 'undefined') return;
+    console.log('[updatePageLanguage] called with lang:', lang, 'I18nCore:', typeof I18nCore, 'UI_TEXT:', typeof UI_TEXT);
+    if (typeof I18nCore === 'undefined' || typeof UI_TEXT === 'undefined') {
+        console.warn('[updatePageLanguage] 依赖未加载，跳过');
+        return;
+    }
     const ui = UI_TEXT[lang] || UI_TEXT['zh'];
     document.title = ui.appName + ' - ' + ui.appSlogan;
     document.documentElement.lang = lang === 'zh-TW' ? 'zh-TW' : lang === 'en' ? 'en' : 'zh-CN';
+    
+    // 更新所有 data-i18n 元素
+    var updated = 0;
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        const key = el.getAttribute('data-i18n');
+        const text = I18nCore.t(key);
+        if (text && text !== key) {
+            el.textContent = text;
+            updated++;
+        }
+    });
+    console.log('[updatePageLanguage] 更新了', updated, '个元素');
+    
+    // 重新渲染动态内容
+    if (typeof renderDynamicContent === 'function') {
+        renderDynamicContent();
+    }
 }
 
 function showLanguageToast(lang) {
@@ -1231,6 +1318,30 @@ function t(key) { return typeof I18nCore !== 'undefined' ? I18nCore.t(key) : key
 function tStar(starName) { return typeof I18nCore !== 'undefined' ? I18nCore.getStarName(starName) : starName; }
 function tPalace(palaceName) { return typeof I18nCore !== 'undefined' ? I18nCore.getPalaceName(palaceName) : palaceName; }
 
+// 重新渲染动态内容（语言切换时调用）
+function renderDynamicContent() {
+    // 重新渲染步骤3的8种驱动力
+    if (selectedChart && document.getElementById('sub-patterns-grid')) {
+        generate8PersonalityTypes(selectedChart._fullChart || selectedChart);
+    }
+    // 重新渲染步骤4的8属性
+    if (document.getElementById('step-4-content') && document.getElementById('step-4-content').children.length > 0) {
+        initEightAttributes();
+        // 恢复已选择的属性
+        Object.keys(eightAttributes).forEach(attrId => {
+            const value = eightAttributes[attrId];
+            if (value) {
+                const opt = document.querySelector(`.attribute-option[data-attr="${attrId}"][data-value="${value}"]`);
+                if (opt) opt.classList.add('selected');
+            }
+        });
+    }
+    // 重新渲染保存角色列表
+    if (savedCharacters.length > 0) {
+        displaySavedCharacters();
+    }
+}
+
 window.addEventListener('languageChanged', function(e) {
     updateLanguageButtons(e.detail.lang);
     updatePageLanguage(e.detail.lang);
@@ -1241,3 +1352,15 @@ window.switchLanguage = switchLanguage;
 window.t = t;
 window.tStar = tStar;
 window.tPalace = tPalace;
+window.confirmEra = confirmEra;
+window.confirmBasicInfo = confirmBasicInfo;
+window.confirmSubPattern = confirmSubPattern;
+window.prevStep = prevStep;
+window.resetForm = resetForm;
+window.showToast = showToast;
+window.showStep = showStep;
+window.generateFinalBio = generateFinalBio;
+window.saveCharacter = saveCharacter;
+window.showCompare = showCompare;
+window.closeCompare = closeCompare;
+window.copyCharacterBio = copyCharacterBio;

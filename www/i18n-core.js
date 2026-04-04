@@ -33,10 +33,14 @@ const I18nCore = {
      * 优先级：localStorage > 浏览器语言 > 默认中文
      */
     init() {
-        // 1. 尝试从 localStorage 读取
-        const savedLang = localStorage.getItem('startrack-lang');
+        // 1. 尝试从 localStorage 读取（兼容两种键名）
+        var savedLang = localStorage.getItem('star_track_lang') || localStorage.getItem('startrack-lang');
         if (savedLang && this.supportedLangs.includes(savedLang)) {
             this.currentLang = savedLang;
+            // 同步到全局变量
+            if (typeof window !== 'undefined') {
+                window.CURRENT_LANG = savedLang;
+            }
             console.log(`[i18n] 从存储加载语言: ${savedLang}`);
             return;
         }
@@ -54,8 +58,13 @@ const I18nCore = {
             console.log(`[i18n] 检测到浏览器语言: ${browserLang} → ${this.currentLang}`);
         }
         
-        // 3. 保存到 localStorage
-        localStorage.setItem('startrack-lang', this.currentLang);
+        // 同步到全局变量
+        if (typeof window !== 'undefined') {
+            window.CURRENT_LANG = this.currentLang;
+        }
+        
+        // 3. 保存到 localStorage（使用统一的键名）
+        localStorage.setItem('star_track_lang', this.currentLang);
     },
 
     /**
@@ -69,7 +78,12 @@ const I18nCore = {
         }
         
         this.currentLang = lang;
-        localStorage.setItem('startrack-lang', lang);
+        // 同步更新全局变量（供 i18n-ui.js 的 getDynamic 使用）
+        if (typeof window !== 'undefined') {
+            window.CURRENT_LANG = lang;
+        }
+        // 使用统一的键名
+        localStorage.setItem('star_track_lang', lang);
         console.log(`[i18n] 语言切换为: ${lang}`);
         
         // 触发语言变更事件
@@ -421,6 +435,16 @@ if (typeof window !== 'undefined') {
 // 导出（供模块化使用）
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { I18nCore, t, tStar, tPalace, STAR_NAMES_I18N, PALACE_NAMES_I18N };
+}
+
+// 浏览器环境显式挂载到 window
+if (typeof window !== 'undefined') {
+    window.I18nCore = I18nCore;
+    window.t = t;
+    window.tStar = tStar;
+    window.tPalace = tPalace;
+    window.STAR_NAMES_I18N = STAR_NAMES_I18N;
+    window.PALACE_NAMES_I18N = PALACE_NAMES_I18N;
 }
 
 // ==================== 全局语言切换函数 ====================
