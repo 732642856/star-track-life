@@ -102,14 +102,14 @@ jobs:
           PP_UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID raw -)
           PP_TEAM_ID=$(security cms -D -i $PP_PATH | plutil -extract TeamIdentifier.0 raw -)
 
-          # 使用 app-store 方式导出为 IPA（Mac Catalyst 用 IPA 格式）
+          # 使用 mac-application 方式导出（Mac Catalyst）
           cat > $RUNNER_TEMP/ExportOptions.plist << EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
             <key>method</key>
-            <string>app-store</string>
+            <string>mac-application</string>
             <key>teamID</key>
             <string>$PP_TEAM_ID</string>
             <key>signingStyle</key>
