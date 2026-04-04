@@ -1623,47 +1623,66 @@ body {
     overflow: hidden;
     /* iOS 动态视口高度，避免地址栏影响可用高度 */
     height: 100dvh;
-    /* 确保内容从安全区域开始 */
-    padding-top: env(safe-area-inset-top, 0px);
+    /* 确保内容从安全区域开始 - 顶部留出两倍刘海区域 */
+    padding-top: calc(env(safe-area-inset-top, 0px) + 40px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* 顶栏 - 避免刘海 */
+/* 顶栏 - 隐藏 */
 .cmp-top-bar {
+    display: none;
+}
+
+/* 分析区域的关闭按钮 - 隐藏 */
+.cmp-top-bar .cmp-close-btn {
+    display: none;
+}
+
+/* 固定在右下角的关闭按钮 - 避开底部安全区域 */
+.cmp-fixed-close {
+    position: fixed;
+    bottom: calc(30px + env(safe-area-inset-bottom, 0px));
+    right: 20px;
+    z-index: 9100;
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #ddd;
+    border-radius: 24px;
+    font-size: 14px;
+    color: #333;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+}
+
+/* 折叠按钮 - 带关闭按钮在右侧 */
+.cmp-analysis-toggle {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 16px;
-    padding-top: calc(env(safe-area-inset-top, 0px) + 20px);
-    padding-bottom: 16px;
+    gap: 8px;
+    padding: 12px var(--space-4);
+    padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
     background: var(--color-surface, #fff);
     border-bottom: 1px solid var(--color-border);
+    cursor: pointer;
+    user-select: none;
     flex-shrink: 0;
-    min-height: 60px;
 }
 
-.cmp-top-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--color-text);
-    text-align: center;
-    flex: 1;
-}
-
-/* 关闭按钮 - 放在顶栏下方，更容易触摸 */
-.cmp-close-btn {
+/* 关闭按钮 - 在折叠按钮右侧 */
+.cmp-analysis-toggle .cmp-close-btn {
+    display: block;
     position: relative;
     z-index: 9100;
-    padding: 10px 18px;
+    padding: 8px 16px;
     background: rgba(255, 255, 255, 0.95);
     border: 1px solid #ddd;
-    border-radius: 18px;
-    font-size: 14px;
+    border-radius: 16px;
+    font-size: 13px;
     color: #333;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     cursor: pointer;
     flex-shrink: 0;
-    margin-top: 8px;
 }
 
 /* 右上角浮动关闭按钮（已禁用，改用 cmp-top-bar 中的关闭按钮）
@@ -1683,17 +1702,9 @@ body {
 .cmp-back-btn {
     display: none;
 }
+/* 顶部角色摘要栏 - 隐藏，因为与下方角色列重复 */
 .cmp-summary-bar {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-3) var(--space-4);
-    padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
-    padding-bottom: 16px;
-    background: var(--color-surface, #fff);
-    border-bottom: 1px solid var(--color-border);
-    flex-shrink: 0;
-    overflow-x: auto;
+    display: none;
 }
 
 /* 顶栏固定标题 */
@@ -1760,12 +1771,14 @@ body {
     padding: 10px var(--space-4) 12px;
 }
 
-/* 折叠按钮 */
+/* 折叠按钮 - 带关闭按钮 */
 .cmp-analysis-toggle {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 8px;
     padding: 8px var(--space-4);
+    padding-top: calc(env(safe-area-inset-top, 0px) + 8px);
     background: var(--color-surface, #fff);
     border-bottom: 1px solid var(--color-border);
     cursor: pointer;
