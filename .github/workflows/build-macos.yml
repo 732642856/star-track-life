@@ -11,6 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Delete old keychain
+        run: security delete-keychain signing_temp.keychain || true
+
       - name: Create keychain
         run: security create-keychain -p 123456 signing_temp.keychain
 
