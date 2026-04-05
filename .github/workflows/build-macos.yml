@@ -19,13 +19,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Decode provisioning profile
-        run: |
-          echo "${{ secrets.MAC_PROVISIONING_PROFILE_BASE64 }}" | base64 --decode > StarTrackLifeMacAppStore.provisionprofile
-          echo "=== 文件大小 ==="
-          ls -la StarTrackLifeMacAppStore.provisionprofile
-          echo "=== 文件头部（应该是 ASN.1 二进制，不是文本） ==="
-          head -c 8 StarTrackLifeMacAppStore.provisionprofile | xxd
+      - name: Verify provisioning profile exists
+        run: ls -la StarTrackLifeMacAppStore.provisionprofile
 
       - name: Import certificates
         run: |
