@@ -64,4 +64,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mas-package
-          path: dist/mac/*.pkg
+          path: dist/mas-arm64/*.pkg
