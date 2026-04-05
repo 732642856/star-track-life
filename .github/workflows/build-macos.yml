@@ -16,14 +16,16 @@ jobs:
         with:
           p12-file-base64: ${{ secrets.CSC_LINK }}
           p12-password: ${{ secrets.CSC_KEY_PASSWORD }}
-          keychain: ${{ runner.temp }}/build.keychain-db
+          create-keychain: false
+          keychain-name: sign
 
       - name: Import Installer Certificate
         uses: apple-actions/import-codesign-certs@v1
         with:
           p12-file-base64: ${{ secrets.MAC_INSTALLER_CERTIFICATE_BASE64 }}
           p12-password: ${{ secrets.MAC_INSTALLER_CERTIFICATE_PASSWORD }}
-          keychain: ${{ runner.temp }}/build.keychain-db
+          create-keychain: false
+          keychain-name: sign
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
