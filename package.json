@@ -28,7 +28,7 @@
       "target": [
         {
           "target": "mas",
-          "arch": ["arm64"]
+          "arch": ["x64", "arm64"]
         }
       ]
     },
