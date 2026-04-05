@@ -28,10 +28,10 @@
       "target": [
         {
           "target": "mas",
-          "arch": ["x64", "arm64"],
-          "provisioningProfile": "StarTrackLifeMacAppStore.provisionprofile"
+          "arch": ["x64", "arm64"]
         }
-      ]
+      ],
+      "provisioningProfile": "StarTrackLifeMacAppStore.provisionprofile"
     },
     "mas": {
       "type": "distribution",
