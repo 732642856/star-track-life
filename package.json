@@ -21,8 +21,50 @@
   "author": "Yinan",
   "license": "MIT",
   "build": {
-    "appId": "com.yinan.xingguirensheng",
-    "productName": "星轨人生"
+    "appId": "com.yinan.xinggui0",
+    "productName": "星轨人生",
+    "cscLink": "/Users/wuyongnaren/Downloads/证书.p12",
+    "cscKeyPassword": "5021865",
+    "mac": {
+      "category": "public.app-category.lifestyle",
+      "target": [
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "entitlements": "entitlements.plist",
+      "entitlementsInherit": "entitlements.plist",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
+    },
+    "mas": {
+      "sign": false,
+      "category": "public.app-category.lifestyle",
+      "entitlements": "entitlements.plist",
+      "entitlementsInherit": "entitlements.plist",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
+    },
+    "dmg": {
+      "title": "星轨人生",
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "publish": null
   },
   "dependencies": {
     "@capacitor/android": "^8.3.0",
