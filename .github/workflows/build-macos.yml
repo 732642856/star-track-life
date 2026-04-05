@@ -27,6 +27,9 @@ jobs:
           p12-password: ${{ secrets.CSC_KEY_PASSWORD }}
           create-keychain: true
 
+      - name: Unlock keychain
+        run: security unlock-keychain -p 123456 signing_temp.keychain || true
+
       - name: Import Installer Certificate
         uses: apple-actions/import-codesign-certs@v1
         with:
