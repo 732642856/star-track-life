@@ -32,12 +32,12 @@ jobs:
 
           # 导入 Developer 证书（Application）
           echo "${{ secrets.CSC_LINK }}" | base64 --decode > dev-cert.p12
-          security import dev-cert.p12 -k "$KEYCHAIN" -P "${{ secrets.CSC_KEY_PASSWORD }}" -T /usr/bin/codesign -T /usr/bin/productutil
+          security import dev-cert.p12 -k "$KEYCHAIN" -P "${{ secrets.CSC_KEY_PASSWORD }}" -T /usr/bin/codesign
           rm -f dev-cert.p12
 
           # 导入 Installer 证书
           echo "${{ secrets.MAC_INSTALLER_CERTIFICATE_BASE64 }}" | base64 --decode > installer-cert.p12
-          security import installer-cert.p12 -k "$KEYCHAIN" -P "${{ secrets.MAC_INSTALLER_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign -T /usr/bin/productutil
+          security import installer-cert.p12 -k "$KEYCHAIN" -P "${{ secrets.MAC_INSTALLER_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
           rm -f installer-cert.p12
 
           # 允许 codesign 访问私钥（必须）
