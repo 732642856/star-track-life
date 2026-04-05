@@ -34,6 +34,7 @@
     },
     "mas": {
       "type": "distribution",
+      "provisioningProfile": "star-track-life",
       "category": "public.app-category.lifestyle",
       "entitlements": "entitlements.plist",
       "entitlementsInherit": "entitlements.plist",
