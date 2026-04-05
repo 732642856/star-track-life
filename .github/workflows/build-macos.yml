@@ -19,6 +19,9 @@ jobs:
       - name: Decode certificate
         run: echo "${{ secrets.CSC_LINK }}" | base64 -d > "${{ github.workspace }}/certificate.p12"
         
+      - name: Decode installer certificate
+        run: echo "${{ secrets.MAC_INSTALLER_CERTIFICATE_BASE64 }}" | base64 -d > "${{ github.workspace }}/installer.p12"
+        
       - name: Install dependencies
         run: npm ci
         
@@ -27,8 +30,8 @@ jobs:
         env:
           CSC_LINK: ${{ github.workspace }}/certificate.p12
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          CSC_INSTALLER_LINK: ${{ github.workspace }}/certificate.p12
-          CSC_INSTALLER_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          CSC_INSTALLER_LINK: ${{ secrets.MAC_INSTALLER_CERTIFICATE_BASE64 }}
+          CSC_INSTALLER_KEY_PASSWORD: ${{ secrets.MAC_INSTALLER_CERTIFICATE_PASSWORD }}
           
       - name: Upload artifact
         uses: actions/upload-artifact@v4
