@@ -18,6 +18,7 @@ jobs:
         run: security create-keychain -p 123456 signing_temp.keychain
 
       - name: Import Apple Development Certificate
+        run: security delete-keychain signing_temp.keychain || true
         uses: apple-actions/import-codesign-certs@v1
         with:
           p12-file-base64: ${{ secrets.CSC_LINK }}
