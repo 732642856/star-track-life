@@ -19,6 +19,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Decode provisioning profile
+        run: echo "${{ secrets.MAC_PROVISIONING_PROFILE_BASE64 }}" | base64 --decode > StarTrackLifeMacAppStore.provisionprofile
+
       - name: Import certificates
         run: |
           KEYCHAIN=build.keychain
