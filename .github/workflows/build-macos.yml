@@ -30,7 +30,7 @@ jobs:
         env:
           CSC_LINK: ${{ github.workspace }}/certificate.p12
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          CSC_INSTALLER_LINK: ${{ secrets.MAC_INSTALLER_CERTIFICATE_BASE64 }}
+          CSC_INSTALLER_LINK: ${{ github.workspace }}/installer.p12
           CSC_INSTALLER_KEY_PASSWORD: ${{ secrets.MAC_INSTALLER_CERTIFICATE_PASSWORD }}
           
       - name: Upload artifact
