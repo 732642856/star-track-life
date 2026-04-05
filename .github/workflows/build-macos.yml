@@ -10,53 +10,54 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Delete old keychain
-        run: security delete-keychain signing_temp.keychain || true
-
-      - name: Create keychain
-        run: security create-keychain -p 123456 signing_temp.keychain || true
-
-      - name: Delete keychain before import
-        run: security delete-keychain signing_temp.keychain || true
-
-      - name: Import Apple Development Certificate
-        uses: apple-actions/import-codesign-certs@v1
-        with:
-          p12-file-base64: ${{ secrets.CSC_LINK }}
-          p12-password: ${{ secrets.CSC_KEY_PASSWORD }}
-          create-keychain: true
-
-      - name: Unlock keychain
-        run: security unlock-keychain -p 123456 signing_temp.keychain || true
-
-      - name: Delete old keychain before installer import
-        run: security delete-keychain signing_temp.keychain || true
-
-      - name: Import Installer Certificate
-        uses: apple-actions/import-codesign-certs@v1
-        with:
-          p12-file-base64: ${{ secrets.MAC_INSTALLER_CERTIFICATE_BASE64 }}
-          p12-password: ${{ secrets.MAC_INSTALLER_CERTIFICATE_PASSWORD }}
-          create-keychain: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          
+
       - name: Install dependencies
         run: npm ci
-        
+
+      - name: Decode and import certificates
+        run: |
+          # 创建专用 keychain
+          security create-keychain -p actions-password build.keychain
+          security set-keychain-search-list -s build.keychain
+          security unlock-keychain -p actions-password build.keychain
+          security set-key-partition-list -S apple-tool:,apple: -s -k actions-password build.keychain
+
+          # 解码 Developer 证书并导入
+          echo "${{ secrets.CSC_LINK }}" | base64 --decode > dev-cert.p12
+          security import dev-cert.p12 -k build.keychain -P "${{ secrets.CSC_KEY_PASSWORD }}" -T /usr/bin/codesign -T /usr/bin/productutil
+          rm -f dev-cert.p12
+
+          # 解码 Installer 证书并导入
+          echo "${{ secrets.MAC_INSTALLER_CERTIFICATE_BASE64 }}" | base64 --decode > installer-cert.p12
+          security import installer-cert.p12 -k build.keychain -P "${{ secrets.MAC_INSTALLER_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign -T /usr/bin/productutil
+          rm -f installer-cert.p12
+
+          # 设置 keychain 为默认并允许访问
+          security default-keychain -s build.keychain
+          security list-keychains -s build.keychain login.keychain
+          security unlock-keychain -p actions-password build.keychain
+
       - name: Build MAS pkg
         run: npx electron-builder --mac mas --publish never
         env:
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.P12_PASSWORD }}
-          CSC_INSTALLER_LINK: ${{ secrets.MAC_INSTALLER_CERTIFICATE_BASE64 }}
-          CSC_INSTALLER_KEY_PASSWORD: ${{ secrets.MAC_INSTALLER_CERTIFICATE_PASSWORD }}
-          TEAM_ID: ${{ secrets.TEAM_ID }}
-          
+          CSC_NAME: "${{ secrets.CSC_NAME }}"
+          CSC_KEY_PASSWORD: "${{ secrets.CSC_KEY_PASSWORD }}"
+          CSC_INSTALLER_NAME: "${{ secrets.CSC_INSTALLER_NAME }}"
+          CSC_INSTALLER_KEY_PASSWORD: "${{ secrets.MAC_INSTALLER_CERTIFICATE_PASSWORD }}"
+          TEAM_ID: "${{ secrets.TEAM_ID }}"
+          KEYCHAIN_PATH: build.keychain
+          KEYCHAIN_PASSWORD: actions-password
+
+      - name: List available signing identities
+        run: |
+          echo "Available code signing identities:"
+          security find-identity -v -p codesigning build.keychain
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
