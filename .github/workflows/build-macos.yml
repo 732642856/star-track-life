@@ -30,6 +30,9 @@ jobs:
       - name: Unlock keychain
         run: security unlock-keychain -p 123456 signing_temp.keychain || true
 
+      - name: Delete old keychain before installer import
+        run: security delete-keychain signing_temp.keychain || true
+
       - name: Import Installer Certificate
         uses: apple-actions/import-codesign-certs@v1
         with:
