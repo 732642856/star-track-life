@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Create keychain
-        run: security create-keychain -f -p 123456 signing_temp.keychain
+        run: security create-keychain -p 123456 signing_temp.keychain
 
       - name: Import Apple Development Certificate
         uses: apple-actions/import-codesign-certs@v1
