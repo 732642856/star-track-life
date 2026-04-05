@@ -37,4 +37,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: macos-package
-          path: dist/mas/*.zip
+          path: |
+            dist/mas/*.zip
+            dist/mas-arm64/*.zip
+            dist/*.zip
