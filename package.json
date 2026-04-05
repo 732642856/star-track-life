@@ -33,14 +33,7 @@
       ]
     },
     "mas": {
-      "type": "distribution"
-    },
-    "entitlements": "entitlements.plist",
-      "entitlementsInherit": "entitlements.plist",
-      "hardenedRuntime": false,
-      "gatekeeperAssess": false
-    },
-    "mas": {
+      "type": "distribution",
       "category": "public.app-category.lifestyle",
       "entitlements": "entitlements.plist",
       "entitlementsInherit": "entitlements.plist",
