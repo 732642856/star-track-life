@@ -25,13 +25,7 @@
     "productName": "星轨人生-v2",
     "icon": "iconset.png",
     "mac": {
-      "target": [
-        {
-          "target": "mas",
-          "arch": ["x64", "arm64"]
-        }
-      ],
-      "provisioningProfile": "StarTrackLifeMacAppStore.provisionprofile"
+      "target": "mas"
     },
     "mas": {
       "type": "distribution",
