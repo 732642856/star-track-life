@@ -11,33 +11,38 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Import Apple Development Certificate
+        uses: apple-actions/import-codesign-cert@v2
+        with:
+          p12-file-base64: ${{ secrets.CSC_LINK }}
+          p12-password: ${{ secrets.CSC_KEY_PASSWORD }}
+          keychain: ${{ runner.temp }}/build.keychain-db
+
+      - name: Import Installer Certificate
+        uses: apple-actions/import-codesign-cert@v2
+        with:
+          p12-file-base64: ${{ secrets.MAC_INSTALLER_CERTIFICATE_BASE64 }}
+          p12-password: ${{ secrets.MAC_INSTALLER_CERTIFICATE_PASSWORD }}
+          keychain: ${{ runner.temp }}/build.keychain-db
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           
-      - name: Decode certificate
-        run: echo "${{ secrets.CSC_LINK }}" | base64 -d > "${{ github.workspace }}/certificate.p12"
-        
-      - name: Decode installer certificate
-        run: echo "${{ secrets.MAC_INSTALLER_CERTIFICATE_BASE64 }}" | base64 -d > "${{ github.workspace }}/installer.p12"
-        
       - name: Install dependencies
         run: npm ci
         
-      - name: Build macOS app
+      - name: Build MAS pkg
         run: npx electron-builder --mac mas
         env:
-          CSC_LINK: ${{ github.workspace }}/certificate.p12
+          CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          CSC_INSTALLER_LINK: ${{ github.workspace }}/installer.p12
+          CSC_INSTALLER_LINK: ${{ secrets.MAC_INSTALLER_CERTIFICATE_BASE64 }}
           CSC_INSTALLER_KEY_PASSWORD: ${{ secrets.MAC_INSTALLER_CERTIFICATE_PASSWORD }}
           
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: macos-package
-          path: |
-            dist/mas/*.zip
-            dist/mas-arm64/*.zip
-            dist/*.zip
+          name: mas-package
+          path: dist/mas/*.pkg
