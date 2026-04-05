@@ -15,7 +15,7 @@ jobs:
         run: security delete-keychain signing_temp.keychain || true
 
       - name: Create keychain
-        run: security create-keychain -p 123456 signing_temp.keychain
+        run: security create-keychain -p 123456 signing_temp.keychain || true
 
       - name: Delete keychain before import
         run: security delete-keychain signing_temp.keychain || true
