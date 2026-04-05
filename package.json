@@ -26,7 +26,7 @@
     "icon": "iconset.png",
     "mac": {
       "target": "mas",
-      "provisioningProfile": "/StarTrackLifeMacAppStore.provisionprofile"
+      "provisioningProfile": "./StarTrackLifeMacAppStore.provisionprofile"
     },
     "mas": {
       "type": "distribution",
