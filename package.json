@@ -33,6 +33,7 @@
       "category": "public.app-category.lifestyle",
       "entitlements": "entitlements.plist",
       "entitlementsInherit": "entitlements.mas.inherit.plist",
+      "entitlementsLoginHelper": "entitlements.mas.loginhelper.plist",
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
       "asarUnpack": "**/*.node"
