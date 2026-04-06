@@ -34,7 +34,8 @@
       "entitlements": "entitlements.plist",
       "entitlementsInherit": "entitlements.mas.inherit.plist",
       "hardenedRuntime": false,
-      "gatekeeperAssess": false
+      "gatekeeperAssess": false,
+      "asarUnpack": "**/*.node"
     },
     "dmg": {
       "title": "星轨人生",

@@ -51,14 +51,23 @@ jobs:
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           TEAM_ID: ${{ secrets.TEAM_ID }}
 
-      - name: Verify app entitlements
+      - name: Fix helper entitlements
         run: |
           APP_PATH=$(find dist -name "*.app" -type d | head -1)
-          echo "Checking entitlements for: $APP_PATH"
-          codesign -d --entitlements - "$APP_PATH" 2>&1 || true
-          echo ""
-          echo "Checking main executable entitlements:"
-          codesign -d --entitlements - "$APP_PATH/Contents/MacOS/"* 2>&1 || true
+          echo "Fixing helpers in: $APP_PATH"
+          for helper in "Helper" "Helper (GPU)" "Helper (Plugin)" "Helper (Renderer)"; do
+            HELPER_APP="$APP_PATH/Contents/Frameworks/星轨人生-v2 $helper.app"
+            if [ -d "$HELPER_APP" ]; then
+              echo "Re-signing: $helper"
+              codesign --force --sign "3rd Party Mac Developer Application: yinan wu (2DM78YY6PM)" --entitlements entitlements.mas.inherit.plist "$HELPER_APP" 2>&1 || true
+            fi
+          done
+          # Also fix Login Helper
+          LOGIN_HELPER="$APP_PATH/Contents/Library/LoginItems/星轨人生-v2 Login Helper.app"
+          if [ -d "$LOGIN_HELPER" ]; then
+            echo "Re-signing: Login Helper"
+            codesign --force --sign "3rd Party Mac Developer Application: yinan wu (2DM78YY6PM)" --entitlements entitlements.mas.inherit.plist "$LOGIN_HELPER" 2>&1 || true
+          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
