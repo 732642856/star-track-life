@@ -22,46 +22,27 @@ jobs:
       - name: Verify provisioning profile exists
         run: ls -la StarTrackLifeMacAppStore.provisionprofile
 
-      - name: Import certificates
-        run: |
-          KEYCHAIN=build.keychain
-          KEYCHAIN_PWD=actions-password
+      - name: Import Mac App Distribution Certificate
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.CSC_LINK }}
+          p12-password: ${{ secrets.CSC_KEY_PASSWORD }}
+          keychain-password: ${{ secrets.CSC_KEY_PASSWORD }}
 
-          # 删除旧的（如果有）
-          security delete-keychain "$KEYCHAIN" || true
-
-          # 创建新 keychain
-          security create-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN"
-
-          # 导入 Developer 证书（Application）
-          echo "${{ secrets.CSC_LINK }}" | base64 --decode > dev-cert.p12
-          security import dev-cert.p12 -k "$KEYCHAIN" -P "${{ secrets.CSC_KEY_PASSWORD }}" -T /usr/bin/codesign
-          rm -f dev-cert.p12
-
-          # 导入 Installer 证书
-          echo "${{ secrets.MAC_INSTALLER_CERTIFICATE_BASE64 }}" | base64 --decode > installer-cert.p12
-          security import installer-cert.p12 -k "$KEYCHAIN" -P "${{ secrets.MAC_INSTALLER_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
-          rm -f installer-cert.p12
-
-          # 允许 codesign 访问私钥（必须）
-          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PWD" "$KEYCHAIN"
-
-          # 设置为默认并解锁
-          security default-keychain -s "$KEYCHAIN"
-          security unlock-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN"
-
-          # 验证证书是否导入成功
-          echo "=== 签名身份列表 ==="
-          security find-identity -v -p codesigning "$KEYCHAIN"
+      - name: Import Mac Installer Distribution Certificate
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.MAC_INSTALLER_CERTIFICATE_BASE64 }}
+          p12-password: ${{ secrets.MAC_INSTALLER_CERTIFICATE_PASSWORD }}
+          create-keychain: false
+          keychain-password: ${{ secrets.CSC_KEY_PASSWORD }}
 
       - name: Build MAS pkg
         run: npx electron-builder --mac mas --publish never
         env:
           CSC_NAME: "yinan wu (2DM78YY6PM)"
-          CSC_KEY_PASSWORD: "${{ secrets.CSC_KEY_PASSWORD }}"
-          TEAM_ID: "${{ secrets.TEAM_ID }}"
-          KEYCHAIN_PATH: build.keychain
-          KEYCHAIN_PASSWORD: actions-password
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
