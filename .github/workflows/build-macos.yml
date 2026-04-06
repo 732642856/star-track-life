@@ -40,7 +40,6 @@ jobs:
       - name: Build MAS pkg
         run: npx electron-builder --mac mas --publish never
         env:
-          CSC_NAME: "yinan wu (2DM78YY6PM)"
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           TEAM_ID: ${{ secrets.TEAM_ID }}
 
