@@ -22,6 +22,14 @@ jobs:
       - name: Verify provisioning profile exists
         run: ls -la StarTrackLifeMacAppStore.provisionprofile
 
+      - name: Check entitlements files
+        run: |
+          echo "=== entitlements.plist ==="
+          cat entitlements.plist
+          echo ""
+          echo "=== entitlements.mas.inherit.plist ==="
+          cat entitlements.mas.inherit.plist
+
       - name: Import Mac App Distribution Certificate
         uses: apple-actions/import-codesign-certs@v3
         with:
@@ -42,6 +50,15 @@ jobs:
         env:
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           TEAM_ID: ${{ secrets.TEAM_ID }}
+
+      - name: Verify app entitlements
+        run: |
+          APP_PATH=$(find dist -name "*.app" -type d | head -1)
+          echo "Checking entitlements for: $APP_PATH"
+          codesign -d --entitlements - "$APP_PATH" 2>&1 || true
+          echo ""
+          echo "Checking main executable entitlements:"
+          codesign -d --entitlements - "$APP_PATH/Contents/MacOS/"* 2>&1 || true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
