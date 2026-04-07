@@ -1,0 +1,52 @@
+/* ========================================
+   星轨人生 - 桌面端补充样式
+   ======================================== */
+
+/* 步骤指示器更轻量 */
+.step-indicator {
+    opacity: 0.5;
+    transition: opacity 0.3s;
+}
+.step-indicator.hidden { opacity: 0; pointer-events: none; }
+.step-number { font-size: 11px; }
+.step-label { font-size: 11px; }
+
+/* 保存角色区域弱化 */
+.saved-character-item { padding: 12px 16px; border-bottom: 1px solid #eee; }
+.character-name-display { font-size: 14px; color: #666; }
+.character-meta { font-size: 11px; color: #999; }
+.character-tags { display: flex; gap: 4px; margin-top: 4px; }
+.char-tag { font-size: 10px; padding: 1px 6px; background: #f5f5f5; color: #888; border-radius: 3px; }
+.character-notes { font-size: 11px; color: #aaa; margin-top: 4px; line-height: 1.4; }
+.character-time { font-size: 10px; color: #bbb; margin-top: 2px; }
+.character-actions .btn { font-size: 11px; padding: 4px 10px; color: #888; border-color: #ddd; background: #fafafa; }
+
+/* 划线批注工具栏 */
+#annotation-toolbar {
+    position: fixed;
+    background: #333;
+    border-radius: 6px;
+    padding: 6px 12px;
+    display: none;
+    z-index: 9999;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+#annotation-toolbar button {
+    background: none;
+    border: none;
+    color: #fff;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-size: 12px;
+    border-radius: 4px;
+}
+#annotation-toolbar button:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+/* 批注高亮样式 */
+.annotation-highlight {
+    background: rgba(255, 235, 59, 0.3);
+    border-bottom: 2px solid #ffc107;
+    cursor: pointer;
+}

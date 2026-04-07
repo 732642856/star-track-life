@@ -1,0 +1,615 @@
+/* ========================================
+   星轨人生 - macOS 桌面端专属样式
+   适配 Mac App Store 应用
+   ======================================== */
+
+/* ══════════════════════════════════════════════════════════════════════════
+   1. CSS 变量扩展 - macOS 设计语言
+   ══════════════════════════════════════════════════════════════════════════ */
+:root {
+    /* macOS 系统色彩 */
+    --macos-window-bg: #f5f5f5;
+    --macos-sidebar-bg: rgba(245, 245, 245, 0.85);
+    --macos-toolbar-bg: rgba(255, 255, 255, 0.92);
+    --macos-accent: #8B0000;
+    --macos-accent-hover: #A52A2A;
+    --macos-border: rgba(0, 0, 0, 0.1);
+    --macos-shadow: 0 22px 70px 4px rgba(0, 0, 0, 0.12);
+    
+    /* 桌面端尺寸 */
+    --desktop-sidebar-width: 260px;
+    --desktop-content-max-width: 1200px;
+    --desktop-nav-height: 52px;
+    --desktop-toolbar-height: 44px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   2. 桌面端整体布局
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* 桌面端主容器 */
+@media (min-width: 1025px) {
+    body {
+        background: var(--macos-window-bg);
+        min-height: 100vh;
+    }
+    
+    /* 隐藏移动端导航栏 */
+    .main-nav {
+        display: none;
+    }
+    
+    /* 桌面端窗口容器 */
+    .page-wrapper {
+        display: flex;
+        flex-direction: row;
+        min-height: 100vh;
+        padding: 0;
+    }
+    
+    /* ═════════════════════════════════════════════════════════════════════
+       侧边栏 - macOS 风格
+       ═════════════════════════════════════════════════════════════════════ */
+    .desktop-sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: var(--desktop-sidebar-width);
+        background: var(--macos-sidebar-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border-right: 1px solid var(--macos-border);
+        display: flex;
+        flex-direction: column;
+        z-index: 100;
+        padding-top: env(titlebar-area-height, 28px); /* macOS 原生标题栏高度 */
+    }
+    
+    /* 侧边栏 Logo */
+    .sidebar-logo {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--macos-border);
+    }
+    
+    .sidebar-logo .logo-text {
+        font-family: var(--font-serif);
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--color-text);
+        letter-spacing: 0.1em;
+    }
+    
+    /* 侧边栏导航 */
+    .sidebar-nav {
+        flex: 1;
+        padding: 16px 12px;
+        overflow-y: auto;
+    }
+    
+    .sidebar-nav-section {
+        margin-bottom: 24px;
+    }
+    
+    .sidebar-nav-title {
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 8px 12px;
+    }
+    
+    .sidebar-nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        color: var(--color-text-secondary);
+        font-size: 0.9rem;
+    }
+    
+    .sidebar-nav-item:hover {
+        background: rgba(0, 0, 0, 0.05);
+        color: var(--color-text);
+    }
+    
+    .sidebar-nav-item.active {
+        background: rgba(139, 0, 0, 0.1);
+        color: var(--color-accent);
+        font-weight: 500;
+    }
+    
+    .sidebar-nav-item .nav-icon {
+        font-size: 1.1rem;
+        opacity: 0.7;
+    }
+    
+    /* 侧边栏底部 */
+    .sidebar-footer {
+        padding: 16px;
+        border-top: 1px solid var(--macos-border);
+    }
+    
+    /* ═════════════════════════════════════════════════════════════════════
+       主内容区 - 桌面端
+       ═════════════════════════════════════════════════════════════════════ */
+    .desktop-main {
+        flex: 1;
+        margin-left: var(--desktop-sidebar-width);
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+    
+    /* 桌面端顶部工具栏 */
+    .desktop-toolbar {
+        position: sticky;
+        top: 0;
+        height: var(--desktop-toolbar-height);
+        background: var(--macos-toolbar-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border-bottom: 1px solid var(--macos-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        z-index: 50;
+    }
+    
+    .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+    
+    .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .toolbar-breadcrumb {
+        font-size: 0.85rem;
+        color: var(--color-text-secondary);
+    }
+    
+    .toolbar-breadcrumb span {
+        color: var(--color-text-muted);
+        margin: 0 6px;
+    }
+    
+    /* 桌面端内容区 */
+    .desktop-content {
+        flex: 1;
+        padding: 32px 48px;
+        max-width: 1000px;
+        margin: 0 auto;
+        width: 100%;
+    }
+    
+    /* Hero 区域调整 */
+    .hero-section {
+        padding: 60px 48px 40px;
+        text-align: left;
+        background: transparent;
+    }
+    
+    .hero-content {
+        max-width: 100%;
+    }
+    
+    .hero-title {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .title-line {
+        font-size: 1.75rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+        margin-bottom: 12px;
+    }
+    
+    /* 步骤指示器 - 水平紧凑 */
+    .step-indicator {
+        padding: 20px 48px;
+        background: transparent;
+    }
+    
+    /* 卡片 - 桌面端优化 */
+    .content-card {
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+    
+    /* 表单网格 - 更宽敞 */
+    .option-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 16px;
+    }
+    
+    .era-card {
+        padding: 24px;
+    }
+    
+    .era-icon {
+        font-size: 2.5rem;
+    }
+    
+    /* 主内容区 */
+    .main-content {
+        max-width: 100%;
+        padding: 0;
+    }
+    
+    /* 按钮栏 - 桌面端固定底部 */
+    .action-bar {
+        position: sticky;
+        bottom: 0;
+        background: var(--macos-toolbar-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-top: 1px solid var(--macos-border);
+        padding: 16px 48px;
+    }
+    
+    /* ═════════════════════════════════════════════════════════════════════
+       人物小传 - 分层展示（桌面端核心优化）
+       ═════════════════════════════════════════════════════════════════════ */
+    
+    /* 小传容器 - 桌面端双栏布局 */
+    .bio-desktop-container {
+        display: flex;
+        gap: 32px;
+        margin-top: 24px;
+    }
+    
+    /* 左侧：章节导航 */
+    .bio-nav-panel {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: calc(var(--desktop-toolbar-height) + 24px);
+        align-self: flex-start;
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+    }
+    
+    .bio-nav-title {
+        font-family: var(--font-serif);
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 12px;
+        padding: 0 8px;
+    }
+    
+    .bio-nav-item {
+        display: block;
+        padding: 10px 12px;
+        font-size: 0.85rem;
+        color: var(--color-text-secondary);
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.15s ease;
+        border-left: 2px solid transparent;
+        margin-bottom: 2px;
+    }
+    
+    .bio-nav-item:hover {
+        background: rgba(0, 0, 0, 0.04);
+        color: var(--color-text);
+    }
+    
+    .bio-nav-item.active {
+        background: rgba(139, 0, 0, 0.08);
+        color: var(--color-accent);
+        border-left-color: var(--color-accent);
+        font-weight: 500;
+    }
+    
+    /* 子章节 */
+    .bio-nav-subitem {
+        padding-left: 24px;
+        font-size: 0.8rem;
+        color: var(--color-text-muted);
+    }
+    
+    /* 右侧：小传内容 */
+    .bio-content-panel {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    /* 小传章节 - 可折叠 */
+    .bio-section {
+        margin-bottom: 32px;
+        border: 1px solid var(--color-border-light);
+        border-radius: 10px;
+        overflow: hidden;
+        background: var(--color-bg);
+    }
+    
+    .bio-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        background: linear-gradient(180deg, var(--color-bg-secondary) 0%, var(--color-bg) 100%);
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.15s ease;
+    }
+    
+    .bio-section-header:hover {
+        background: var(--color-bg-tertiary);
+    }
+    
+    .bio-section-title {
+        font-family: var(--font-serif);
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--color-text);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .bio-section-title .section-icon {
+        font-size: 1.2rem;
+        opacity: 0.7;
+    }
+    
+    .bio-section-toggle {
+        font-size: 0.8rem;
+        color: var(--color-text-muted);
+        transition: transform 0.2s ease;
+    }
+    
+    .bio-section.collapsed .bio-section-toggle {
+        transform: rotate(-90deg);
+    }
+    
+    .bio-section-content {
+        padding: 20px 24px;
+        max-height: 2000px;
+        overflow: hidden;
+        transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+    
+    .bio-section.collapsed .bio-section-content {
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+    
+    /* 小传内容样式继承原样式 */
+    .bio-section-content .result-content {
+        padding: 0;
+        max-width: 100%;
+    }
+    
+    /* 标签样式 */
+    .bio-tag {
+        display: inline-block;
+        padding: 4px 10px;
+        background: rgba(139, 0, 0, 0.08);
+        border-radius: 4px;
+        font-size: 0.75rem;
+        color: var(--color-accent);
+        font-weight: 500;
+    }
+    
+    /* ═════════════════════════════════════════════════════════════════════
+       已保存角色列表 - 桌面端优化
+       ═════════════════════════════════════════════════════════════════════ */
+    .saved-characters-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+    }
+    
+    .saved-character-card {
+        border: 1px solid var(--color-border);
+        border-radius: 12px;
+        padding: 20px;
+        background: var(--color-bg);
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .saved-character-card:hover {
+        border-color: var(--color-accent);
+        box-shadow: 0 8px 24px rgba(139, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    /* ═════════════════════════════════════════════════════════════════════
+       对比模式 - 桌面端优化
+       ═════════════════════════════════════════════════════════════════════ */
+    #compare-section {
+        position: fixed;
+        inset: 0;
+        z-index: 9000;
+        background: var(--macos-window-bg);
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        height: 100vh;
+    }
+    
+    .cmp-bio-columns {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+        padding: 24px;
+        overflow-y: auto;
+        flex: 1;
+    }
+    
+    .cmp-bio-col {
+        background: var(--color-bg);
+        border-radius: 12px;
+        border: 1px solid var(--color-border);
+        overflow: hidden;
+    }
+    
+    .cmp-bio-col-header {
+        padding: 16px 20px;
+        background: var(--color-bg-secondary);
+        border-bottom: 1px solid var(--color-border);
+        position: sticky;
+        top: 0;
+    }
+    
+    .cmp-bio-col-body {
+        padding: 20px;
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+    
+    /* ═════════════════════════════════════════════════════════════════════
+       macOS 原生窗口控制按钮（左上角红黄绿）
+       ═════════════════════════════════════════════════════════════════════ */
+    .window-controls {
+        display: flex;
+        gap: 8px;
+        padding: 12px 16px;
+        -webkit-app-region: drag;
+    }
+    
+    .window-control-btn {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        -webkit-app-region: no-drag;
+    }
+    
+    .window-control-btn.close {
+        background: #ff5f57;
+    }
+    
+    .window-control-btn.minimize {
+        background: #ffbd2e;
+    }
+    
+    .window-control-btn.maximize {
+        background: #28c840;
+    }
+    
+    /* ═════════════════════════════════════════════════════════════════════
+       滚动条样式 - macOS 风格
+       ═════════════════════════════════════════════════════════════════════ */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.15);
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 0, 0, 0.25);
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   3. 打印样式
+   ══════════════════════════════════════════════════════════════════════════ */
+@media print {
+    .desktop-sidebar,
+    .desktop-toolbar,
+    .action-bar,
+    .bio-nav-panel {
+        display: none !important;
+    }
+    
+    .desktop-main {
+        margin-left: 0;
+    }
+    
+    .bio-section {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    
+    .bio-section.collapsed .bio-section-content {
+        max-height: none;
+        padding: 20px 24px;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   笔记本面板
+   ══════════════════════════════════════════════════════════════════════════ */
+#notebook-panel {
+    position: fixed;
+    top: 0;
+    left: 260px;
+    right: 0;
+    bottom: 0;
+    background: #fff;
+    z-index: 90;
+    padding: 20px;
+    overflow: auto;
+}
+
+#notebook-panel textarea {
+    width: 100%;
+    height: calc(100vh - 150px);
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 15px;
+    line-height: 1.8;
+    resize: none;
+    outline: none;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   划线批注
+   ══════════════════════════════════════════════════════════════════════════ */
+#annotation-toolbar {
+    position: fixed;
+    background: #333;
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: none;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+#annotation-toolbar button {
+    background: none;
+    border: none;
+    color: #fff;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    border-radius: 4px;
+}
+
+#annotation-toolbar button:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.annotation-highlight {
+    background: rgba(255, 235, 59, 0.4);
+    border-bottom: 2px solid #ffc107;
+}
