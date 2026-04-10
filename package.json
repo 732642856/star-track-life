@@ -1,35 +1,78 @@
 {
   "name": "star-track-life",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "星轨人生 - 紫微斗数角色设计工具",
   "main": "main.js",
   "scripts": {
-    "build": "echo 'Static web app, no build needed'",
-    "dev": "electron .",
+    "start": "electron .",
+    "dev": "NODE_ENV=development electron .",
+    "build": "electron-builder",
     "build:mac": "electron-builder --mac",
+    "build:mac:dmg": "electron-builder --mac dmg",
+    "build:mas": "electron-builder --mac mas",
     "build:all": "electron-builder --mac --win --linux",
-    "cap:init": "npx cap init",
-    "cap:add:ios": "npx cap add ios",
-    "cap:sync": "npx cap sync ios",
-    "cap:open": "npx cap open ios"
+    "postinstall": "electron-builder install-app-deps",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "echo 'ESLint not configured yet'",
+    "clean": "find . -name '*.bak' -delete && echo 'Backup files cleaned'",
+    "release": "electron-builder --publish=always"
   },
   "keywords": [
     "ziwei",
     "astrology",
-    "character-design"
+    "character-design",
+    "macos",
+    "electron"
   ],
-  "author": "Yinan",
+  "author": {
+    "name": "Yinan",
+    "email": "your-email@example.com"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/star-track-life.git"
+  },
   "build": {
     "appId": "com.yinan.xinggui0",
-    "productName": "星轨人生-v2",
-    "icon": "iconset.png",
+    "productName": "星轨人生",
+    "copyright": "Copyright © 2024-2026 星轨人生",
+    "icon": "icon-512x512.png",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "www/**/*",
+      "main.js",
+      "preload.js",
+      "package.json"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "**/*.node",
+      "**/node_modules/sharp/**/*"
+    ],
     "mac": {
-      "target": "mas",
-      "provisioningProfile": "./StarTrackLifeMacAppStore.provisionprofile",
-      "extendInfo": {
-        "ITSAppUsesNonExemptEncryption": false
-      }
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64", "universal"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64", "universal"]
+        }
+      ],
+      "category": "public.app-category.lifestyle",
+      "icon": "icon-512x512.png",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "entitlements.plist",
+      "entitlementsInherit": "entitlements.plist",
+      "provisioningProfile": "./StarTrackLifeMacAppStore.provisionprofile"
     },
     "mas": {
       "type": "distribution",
@@ -42,7 +85,8 @@
       "asarUnpack": "**/*.node"
     },
     "dmg": {
-      "title": "星轨人生",
+      "title": "星轨人生 v${version}",
+      "artifactName": "星轨人生-${version}-${arch}.${ext}",
       "contents": [
         {
           "x": 130,
@@ -54,18 +98,33 @@
           "type": "link",
           "path": "/Applications"
         }
-      ]
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      }
     },
-    "publish": null
+    "publish": {
+      "provider": "github",
+      "owner": "yourusername",
+      "repo": "star-track-life",
+      "releaseType": "release"
+    }
   },
   "dependencies": {
-    "@capacitor/android": "^8.3.0",
-    "@capacitor/cli": "^8.3.0",
-    "@capacitor/core": "^8.3.0",
-    "@capacitor/ios": "^8.3.0"
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/ios": "^7.0.0",
+    "electron-log": "^5.0.0",
+    "electron-store": "^10.0.0",
+    "electron-updater": "^6.3.0"
   },
   "devDependencies": {
-    "electron": "^41.1.1",
-    "electron-builder": "23.6.0"
+    "electron": "^35.0.0",
+    "electron-builder": "^25.1.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }

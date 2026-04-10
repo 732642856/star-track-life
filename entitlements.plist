@@ -2,17 +2,33 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <!-- App Sandbox -->
     <key>com.apple.security.app-sandbox</key>
     <true/>
+    
+    <!-- 代码签名相关 -->
     <key>com.apple.security.cs.allow-jit</key>
     <true/>
     <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
     <true/>
     <key>com.apple.security.cs.allow-dyld-environment-variables</key>
     <true/>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+    
+    <!-- 网络权限 - 只保留客户端权限，移除服务器权限 -->
     <key>com.apple.security.network.client</key>
     <true/>
-    <key>com.apple.security.network.server</key>
+    <!-- 已移除：com.apple.security.network.server -->
+    
+    <!-- 文件访问权限 -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+    <key>com.apple.security.files.downloads.read-write</key>
+    <true/>
+    
+    <!-- 打印支持 -->
+    <key>com.apple.security.print</key>
     <true/>
 </dict>
 </plist>

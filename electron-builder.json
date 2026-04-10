@@ -1,37 +1,64 @@
 {
   "appId": "com.yinan.xinggui0",
   "productName": "星轨人生",
+  "copyright": "Copyright © 2024-2026 星轨人生",
   "directories": {
-    "output": "dist"
+    "output": "dist",
+    "buildResources": "build"
   },
   "files": [
     "www/**/*",
     "main.js",
+    "preload.js",
     "package.json"
   ],
+  "asar": true,
+  "asarUnpack": [
+    "**/*.node",
+    "**/node_modules/sharp/**/*"
+  ],
+  "electronDownload": {
+    "mirror": "https://npmmirror.com/mirrors/electron/"
+  },
   "mac": {
-    "category": "public.app-category.lifestyle",
     "target": [
       {
         "target": "dmg",
-        "arch": ["x64", "arm64"]
+        "arch": ["x64", "arm64", "universal"]
+      },
+      {
+        "target": "zip",
+        "arch": ["x64", "arm64", "universal"]
       }
     ],
+    "category": "public.app-category.lifestyle",
     "icon": "icon-512x512.png",
-    "entitlements": "entitlements.plist",
-    "entitlementsInherit": "entitlements.plist",
     "hardenedRuntime": true,
     "gatekeeperAssess": false,
-    "cscLink": "/Users/wuyongnaren/Desktop/证书.p12",
-    "cscKeyPassword": "5021865",
-    "identity": "3rd Party Mac Developer Application: yinan wu (2DM78YY6PM)"
+    "entitlements": "entitlements.plist",
+    "entitlementsInherit": "entitlements.plist",
+    "provisioningProfile": "./StarTrackLifeMacAppStore.provisionprofile",
+    "darkModeSupport": true,
+    "minimumSystemVersion": "10.15"
+  },
+  "mas": {
+    "type": "distribution",
+    "category": "public.app-category.lifestyle",
+    "entitlements": "entitlements.plist",
+    "entitlementsInherit": "entitlements.mas.inherit.plist",
+    "entitlementsLoginHelper": "entitlements.mas.loginhelper.plist",
+    "hardenedRuntime": false,
+    "gatekeeperAssess": false,
+    "asarUnpack": "**/*.node"
   },
   "dmg": {
-    "title": "星轨人生",
+    "title": "星轨人生 v${version}",
+    "artifactName": "星轨人生-${version}-${arch}.${ext}",
     "contents": [
       {
         "x": 130,
-        "y": 220
+        "y": 220,
+        "type": "file"
       },
       {
         "x": 410,
@@ -39,7 +66,20 @@
         "type": "link",
         "path": "/Applications"
       }
-    ]
+    ],
+    "window": {
+      "width": 540,
+      "height": 380
+    },
+    "background": {
+      "x": 270,
+      "y": 190
+    }
   },
-  "publish": null
+  "publish": {
+    "provider": "github",
+    "owner": "yourusername",
+    "repo": "star-track-life",
+    "releaseType": "release"
+  }
 }
