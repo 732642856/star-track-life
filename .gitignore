@@ -8,6 +8,8 @@ ios/App/App.xcodeproj/project.xcworkspace/xcuserdata/
 *.p8
 *.p12
 *.mobileprovision
+*.key
+*.pem
 
 # 阻止构建产物和系统文件进入仓库
 node_modules/

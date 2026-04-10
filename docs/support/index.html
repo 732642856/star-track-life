@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>技术支持 - 星轨人生 | Star Track Life Support</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .lang-switch {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.9);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .lang-switch:hover {
+            background: white;
+            transform: scale(1.05);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            color: #667eea;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .card h3 {
+            color: #555;
+            font-size: 1.1em;
+            margin: 20px 0 10px 0;
+        }
+        
+        .faq-item {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .faq-item h4 {
+            color: #333;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .faq-item p {
+            color: #666;
+            font-size: 0.95em;
+        }
+        
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .contact-item {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .contact-item .icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .contact-item h3 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .contact-item a {
+            color: #667eea;
+            text-decoration: none;
+            word-break: break-all;
+        }
+        
+        .contact-item a:hover {
+            text-decoration: underline;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 500;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .version-info {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .version-item {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .version-item strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.9em;
+        }
+        
+        .footer a {
+            color: white;
+            text-decoration: underline;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .lang-switch {
+                position: relative;
+                top: auto;
+                right: auto;
+                display: inline-block;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 语言切换 -->
+        <div class="lang-switch" onclick="toggleLang()">
+            <span id="lang-text">English</span>
+        </div>
+        
+        <!-- 中文内容 -->
+        <div id="content-zh">
+            <div class="header">
+                <h1>🌟 星轨人生</h1>
+                <p>基于紫微斗数的 AI 角色设计工具</p>
+            </div>
+            
+            <div class="card">
+                <h2>📚 常见问题</h2>
+                
+                <div class="faq-item">
+                    <h4>如何生成我的第一个命盘？</h4>
+                    <p>打开应用后，点击「新建命盘」，选择你的出生时代（古代/民国/现代），输入出生年月日时和性别，即可生成专属命盘。</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4>命盘数据会保存在哪里？</h4>
+                    <p>所有命盘数据都保存在本地设备上，不会上传到任何服务器，确保你的隐私安全。</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4>如何导出或分享命盘？</h4>
+                    <p>在命盘详情页面，点击右上角的分享按钮，可以将命盘导出为图片或文本格式保存到相册或文件。</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4>支持哪些平台？</h4>
+                    <p>目前支持 iOS、macOS 和 Android 平台。Windows 版本正在开发中。</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4>遇到闪退或卡顿怎么办？</h4>
+                    <p>请尝试重启应用。如果问题持续，请通过下方的联系方式反馈，我们会尽快修复。</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>📞 联系我们</h2>
+                <div class="contact-grid">
+                    <div class="contact-item">
+                        <div class="icon">📧</div>
+                        <h3>邮件支持</h3>
+                        <a href="mailto:startracklife@example.com">startracklife@example.com</a>
+                    </div>
+                    <div class="contact-item">
+                        <div class="icon">💬</div>
+                        <h3>问题反馈</h3>
+                        <a href="https://github.com/732642856/star-track-life/issues" target="_blank">GitHub Issues</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>🔒 隐私与条款</h2>
+                <p>我们重视你的隐私。星轨人生所有数据处理都在本地完成，不会收集或上传任何个人信息。</p>
+                <br>
+                <a href="../privacy.html" class="btn">查看隐私政策</a>
+            </div>
+            
+            <div class="card">
+                <h2>📦 版本信息</h2>
+                <div class="version-info">
+                    <div class="version-item">
+                        <strong>当前版本</strong>
+                        v2.1.0
+                    </div>
+                    <div class="version-item">
+                        <strong>最后更新</strong>
+                        2026年4月10日
+                    </div>
+                    <div class="version-item">
+                        <strong>支持系统</strong>
+                        iOS 14+ / macOS 11+ / Android 8+
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- English Content -->
+        <div id="content-en" class="hidden">
+            <div class="header">
+                <h1>🌟 Star Track Life</h1>
+                <p>AI Character Design Tool Based on Zi Wei Dou Shu</p>
+            </div>
+            
+            <div class="card">
+                <h2>📚 Frequently Asked Questions</h2>
+                
+                <div class="faq-item">
+                    <h4>How do I generate my first birth chart?</h4>
+                    <p>Open the app and tap "New Chart". Select your birth era (Ancient/Republic/Modern), enter your birth date, time, and gender to generate your personalized chart.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4>Where is my chart data stored?</h4>
+                    <p>All chart data is stored locally on your device. Nothing is uploaded to any server, ensuring your privacy.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4>How can I export or share my chart?</h4>
+                    <p>In the chart details page, tap the share button in the top right corner to export your chart as an image or text to your album or files.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4>Which platforms are supported?</h4>
+                    <p>Currently supports iOS, macOS, and Android platforms. Windows version is under development.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4>What if the app crashes or lags?</h4>
+                    <p>Please try restarting the app. If the issue persists, contact us using the methods below and we'll fix it ASAP.</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>📞 Contact Us</h2>
+                <div class="contact-grid">
+                    <div class="contact-item">
+                        <div class="icon">📧</div>
+                        <h3>Email Support</h3>
+                        <a href="mailto:startracklife@example.com">startracklife@example.com</a>
+                    </div>
+                    <div class="contact-item">
+                        <div class="icon">💬</div>
+                        <h3>Bug Report</h3>
+                        <a href="https://github.com/732642856/star-track-life/issues" target="_blank">GitHub Issues</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>🔒 Privacy & Terms</h2>
+                <p>We value your privacy. Star Track Life processes all data locally and does not collect or upload any personal information.</p>
+                <br>
+                <a href="../privacy.html" class="btn">View Privacy Policy</a>
+            </div>
+            
+            <div class="card">
+                <h2>📦 Version Info</h2>
+                <div class="version-info">
+                    <div class="version-item">
+                        <strong>Current Version</strong>
+                        v2.1.0
+                    </div>
+                    <div class="version-item">
+                        <strong>Last Updated</strong>
+                        April 10, 2026
+                    </div>
+                    <div class="version-item">
+                        <strong>Supported OS</strong>
+                        iOS 14+ / macOS 11+ / Android 8+
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>© 2026 星轨人生 Star Track Life. All rights reserved.</p>
+            <p><a href="../privacy.html">Privacy Policy</a> | <a href="https://github.com/732642856/star-track-life">GitHub</a></p>
+        </div>
+    </div>
+    
+    <script>
+        let currentLang = 'zh';
+        
+        function toggleLang() {
+            const zhContent = document.getElementById('content-zh');
+            const enContent = document.getElementById('content-en');
+            const langText = document.getElementById('lang-text');
+            
+            if (currentLang === 'zh') {
+                zhContent.classList.add('hidden');
+                enContent.classList.remove('hidden');
+                langText.textContent = '中文';
+                currentLang = 'en';
+                document.documentElement.lang = 'en';
+            } else {
+                enContent.classList.add('hidden');
+                zhContent.classList.remove('hidden');
+                langText.textContent = 'English';
+                currentLang = 'zh';
+                document.documentElement.lang = 'zh-CN';
+            }
+        }
+        
+        // Auto-detect language based on browser
+        const userLang = navigator.language || navigator.userLanguage;
+        if (userLang && userLang.startsWith('en')) {
+            toggleLang();
+        }
+    </script>
+</body>
+</html>

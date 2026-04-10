@@ -25,19 +25,27 @@
     <string>APPL</string>
     
     <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
+    <string>2.1.0</string>
     
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>21</string>
     
     <key>LSMinimumSystemVersion</key>
-    <string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+    <string>10.15</string>
     
     <key>NSHighResolutionCapable</key>
     <true/>
     
     <key>NSHumanReadableCopyright</key>
-    <string>Copyright © 2024 星轨人生. All rights reserved.</string>
+    <string>Copyright © 2024-2026 星轨人生. All rights reserved.</string>
+    
+    <!-- 技术支持链接 - 修复审核问题 -->
+    <key>CFBundleHelpBookName</key>
+    <string>星轨人生帮助</string>
+    
+    <!-- 技术支持 URL (GitHub Pages) -->
+    <key>SupportURL</key>
+    <string>https://732642856.github.io/star-track-life/docs/support/</string>
     
     <!-- 应用图标 -->
     <key>CFBundleIconFile</key>
@@ -55,18 +63,26 @@
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.lifestyle</string>
     
-    <!-- 支持文档类型 -->
+    <!-- 深色模式支持 -->
+    <key>NSRequiresAquaSystemAppearance</key>
+    <false/>
+    
+    <!-- 文件类型支持 -->
     <key>CFBundleDocumentTypes</key>
     <array>
         <dict>
             <key>CFBundleTypeName</key>
             <string>StarTrack Character</string>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
             <key>LSHandlerRank</key>
             <string>Owner</string>
             <key>LSItemContentTypes</key>
             <array>
                 <string>com.startracklife.character</string>
             </array>
+            <key>CFBundleTypeIconFile</key>
+            <string>document-icon</string>
         </dict>
     </array>
     
@@ -84,10 +100,28 @@
                 <array>
                     <string>stchar</string>
                 </array>
+                <key>public.mime-type</key>
+                <array>
+                    <string>application/json</string>
+                </array>
             </dict>
             <key>UTTypeConformsTo</key>
             <array>
                 <string>public.json</string>
+                <string>public.text</string>
+            </array>
+        </dict>
+    </array>
+    
+    <!-- URL Scheme 支持 -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>星轨人生</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>startracklife</string>
             </array>
         </dict>
     </array>
