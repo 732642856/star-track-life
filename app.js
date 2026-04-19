@@ -842,6 +842,7 @@ function generateBackgroundLink(palaceName, gender, age, career, personality, fa
 // 当前步骤
 let currentStep = 1;
 let selectedChart = null;
+let currentCharacter = null; // 当前生成的角色数据
 let userInputs = {};
 let eightAttributes = {}; // 8个细致属性
 let skipEightAttributes = false; // 是否跳过8属性
@@ -1549,12 +1550,31 @@ function generateCharacter() {
     let stepIndex = 0;
     const loadingInterval = setInterval(() => {
         if (stepIndex < loadingSteps.length) {
-            document.getElementById('loadingText').textContent = loadingSteps[stepIndex];
+            const loadingTextEl = document.getElementById('loadingText');
+            if (loadingTextEl) {
+                loadingTextEl.textContent = loadingSteps[stepIndex];
+            }
             stepIndex++;
         } else {
             clearInterval(loadingInterval);
         }
     }, 800);
+    
+    // 实际生成角色数据
+    if (selectedChart) {
+        const mingPalace = selectedChart.palaces.find(p => p.isMing);
+        const mainStar = mingPalace ? mingPalace.stars.find(s => MAIN_STARS[s]) : '紫微';
+        
+        currentCharacter = {
+            name: '角色_' + Date.now(),
+            gender: userInputs.gender || 'male',
+            age: userInputs.age || 'young',
+            career: userInputs.career || 'commoner',
+            mainStar: mainStar,
+            palace: mingPalace ? mingPalace.name : '命宫',
+            branch: mingPalace ? mingPalace.branch : '子'
+        };
+    }
 }
 
 // 生成完整结果
