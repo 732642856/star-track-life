@@ -196,10 +196,15 @@ function answer20QuestionsWithChart(chartData, characterData, era) {
     // 获取主星
     const mainStar = chartData.mainStars[0] || '紫微';
 
-    // 获取各宫位数据
+    // 获取各宫位数据（palaces 可能不存在，兜底到 twelvePalaces）
     const getPalace = (palaceName) => {
-        return chartData.palaces.find(p => p.name === palaceName) ||
-               chartData.twelvePalaces[palaceName];
+        const fromArray = (chartData.palaces && chartData.palaces.find)
+            ? chartData.palaces.find(p => p.name === palaceName)
+            : null;
+        const fromMap = (chartData.twelvePalaces && chartData.twelvePalaces[palaceName])
+            ? chartData.twelvePalaces[palaceName]
+            : null;
+        return fromArray || fromMap || null;
     };
 
     const mingPalace = getPalace('命宫');

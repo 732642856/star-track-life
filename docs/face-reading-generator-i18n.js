@@ -3,6 +3,79 @@
  * 基于紫微斗数命盘生成角色外貌描述
  */
 
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 多语言支持
+// ═══════════════════════════════════════════════════════════════════════════
+var _lang = (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG : 'zh');
+
+// 英文翻译映射
+var _en = {
+    // 主星名称
+    '紫微': 'Zi Wei (Emperor)', '天机': 'Tian Ji (Strategist)', '太阳': 'Tai Yang (Sun)',
+    '武曲': 'Wu Qu (Finance)', '天同': 'Tian Tong (Fortune)', '廉贞': 'Lian Zhen (Passion)',
+    '天府': 'Tian Fu (Treasury)', '太阴': 'Tai Yin (Moon)', '贪狼': 'Tan Lang (Ambition)',
+    '巨门': 'Ju Men (Gatekeeper)', '天相': 'Tian Xiang (Minister)', '天梁': 'Tian Liang (Shelter)',
+    '七杀': 'Seven Killings', '破军': 'Po Jun (Breaker)',
+    // 面相描述
+    '额头': 'Forehead', '眉毛': 'Eyebrows', '眼睛': 'Eyes', '鼻子': 'Nose',
+    '嘴唇': 'Lips', '下巴': 'Chin', '脸型': 'Face', '颧骨': 'Cheekbones',
+    '身高': 'Height', '体型': 'Build', '姿态': 'Posture', '气质': 'Temperament',
+    // 气质词
+    '高贵典雅': 'Noble & elegant', '智慧': 'wisdom', '领导力': 'leadership',
+    '威严': 'dignified', '威严感': 'aura of authority',
+    '有型': 'well-formed', '有神': 'expressive', '深邃': 'deep-set', '穿透力': 'penetrating gaze',
+    '高挺': 'high-bridged', '圆润': 'round', '有肉': 'fleshy',
+    '权力': 'power', '财富': 'wealth', '决断力': 'decisiveness', '晚年运势': 'late-life fortune',
+    '高大挺拔': 'tall & upright', '匀称': 'well-proportioned',
+    '优雅从容': 'elegant & composed', '不疾不徐': 'unhurried',
+    '聪明': 'intelligent', '温和': 'gentle', '善良': 'kind',
+    '灵活': 'nimble', '敏锐': 'keen', '活跃': 'active',
+    '热情洋溢': 'enthusiastic', '正气': 'righteousness',
+    '务实': 'practical', '财运': 'financial luck',
+    '保守': 'conservative', '刚毅': 'resolute',
+    '温和善良': 'warm & kind', '福气': 'fortune',
+    '享受': 'enjoyment', '亲和': 'approachable',
+    '敏感': 'sensitive', '多疑': 'suspicious',
+    '复杂': 'complex', '艺术气质': 'artistic temperament',
+    '美丽危险': 'beautiful yet dangerous',
+    '稳重': 'steady', '领导': 'leadership',
+    '沉默': 'silent', '耐力持久': 'long-lasting endurance'
+};
+
+// 繁体翻译映射
+var _tw = {
+    '额头': '額頭', '眉毛': '眉毛', '眼睛': '眼睛', '鼻子': '鼻子',
+    '嘴唇': '嘴唇', '下巴': '下巴', '脸型': '臉型', '颧骨': '顴骨',
+    '身高': '身高', '体型': '體型', '姿态': '姿態', '气质': '氣質',
+    '高大挺拔': '高大挺拔', '匀称': '勻稱', '优雅从容': '優雅從容',
+    '不疾不徐': '不疾不徐', '聪明': '聰明', '温和': '溫和', '善良': '善良',
+    '灵活': '靈活', '敏锐': '敏銳', '活跃': '活躍',
+    '热情洋溢': '熱情洋溢', '正气': '正氣', '务实': '務實',
+    '财运': '財運', '保守': '保守', '刚毅': '剛毅',
+    '温和善良': '溫和善良', '福气': '福氣',
+    '享受': '享受', '亲和': '親和',
+    '敏感': '敏感', '多疑': '多疑',
+    '复杂': '複雜', '艺术气质': '藝術氣質',
+    '美丽危险': '美麗危險', '稳重': '穩重', '领导': '領導',
+    '沉默': '沉默', '耐力持久': '耐力持久'
+};
+
+function _t(text) {
+    if (!text) return text;
+    if (_lang === 'en') {
+        for (var key in _en) {
+            text = text.split(key).join(_en[key]);
+        }
+    } else if (_lang === 'zh-TW') {
+        for (var key in _tw) {
+            text = text.split(key).join(_tw[key]);
+        }
+    }
+    return text;
+}
+
+
 // 主星对应的面相特征
 const STAR_FACE_FEATURES = {
     '紫微': {
@@ -349,7 +422,7 @@ function generateAppearance(chartData, gender, age, luckyStars = [], malignantSt
     
     // 气质特征
     appearance += '【气质】\n';
-    appearance += `整体气质${starFeatures.temperament}。\n`;
+    appearance += `整体气质${starFeatures.temperaturement}。\n`;
     appearance += `声音${starFeatures.voice}。\n\n`;
     
     // 六吉星影响
@@ -374,20 +447,16 @@ function generateAppearance(chartData, gender, age, luckyStars = [], malignantSt
         appearance += '\n';
     }
     
-    // 性别调整（gender 可能是 'male'/'female' 或 '男'/'女'）
-    const genderKeyMap = { male: '男', female: '女' };
-    const genderKey = genderKeyMap[gender] || gender || '男';
-    const genderAdjustment = GENDER_ADJUSTMENTS[genderKey] ? 
-        GENDER_ADJUSTMENTS[genderKey][mainStar] : '';
+    // 性别调整
+    const genderAdjustment = GENDER_ADJUSTMENTS[gender] ? 
+        GENDER_ADJUSTMENTS[gender][mainStar] : '';
     if (genderAdjustment) {
         appearance += '【性别特征】\n';
         appearance += `${genderAdjustment}。\n\n`;
     }
     
-    // 年龄特征（age 可能是英文 'youth'/'middle'/'senior' 或中文）
-    const ageKeyMap = { youth: '青年', middle: '中年', senior: '老年' };
-    const ageKey = ageKeyMap[age] || age || '青年';
-    const ageFeatures = AGE_FEATURES[ageKey] || AGE_FEATURES['青年'];
+    // 年龄特征
+    const ageFeatures = AGE_FEATURES[age] || AGE_FEATURES['青年'];
     appearance += '【年龄特征】\n';
     appearance += `${ageFeatures.skin}。\n`;
     appearance += `${ageFeatures.eyes}。\n`;
@@ -422,7 +491,7 @@ function generateDetailFeatures(star, malignantStars, age) {
         '破军': '眼神不定，透着对变动的渴望和不满足。'
     };
     
-    details += (eyeDetails[star] || eyeDetails['紫微']) + '\n';
+    details += eyeDetails[star] || eyeDetails['紫微'] + '\n';
     
     // 手势特征
     const gestureDetails = {
@@ -442,7 +511,7 @@ function generateDetailFeatures(star, malignantStars, age) {
         '破军': '手势快速多变，透着变动和开创的欲望。'
     };
     
-    details += (gestureDetails[star] || gestureDetails['紫微']) + '\n';
+    details += gestureDetails[star] || gestureDetails['紫微'] + '\n';
     
     // 身体气味（基于煞星）
     if (malignantStars.length > 0) {
@@ -478,7 +547,7 @@ function generateDetailFeatures(star, malignantStars, age) {
             '七杀': '身上有淡淡的血腥味，透着武将的杀气。',
             '破军': '身上有种变动的味道，难以捉摸。'
         };
-        details += (defaultSmells[star] || defaultSmells['紫微']) + '\n';
+        details += defaultSmells[star] || defaultSmells['紫微'] + '\n';
     }
     
     // 疤痕或特殊标记（基于煞星）

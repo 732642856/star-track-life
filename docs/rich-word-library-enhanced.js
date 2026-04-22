@@ -18,7 +18,7 @@ const RichZiweiWordLibrary = (function() {
                 '下颌线条分明如刀削', '肤色均匀白皙似羊脂', '气质尊贵非凡压群雄', '仪态从容优雅若仙鹤',
                 '姿态挺拔如松迎风雪', '步伐稳重坚定似山移', '衣着考究合体显身份', '配饰精致内敛藏富贵',
                 '发型整齐得体显威仪', '眼神锐利有神慑人心', '表情矜持克制藏心思', '身形匀称挺拔显力量',
-                '手势沉稳有力示权威', '微笑含蓄得体显修养', '眉头微蹙显深思', '颈项修长优雅似天鹅',
+                '手势沉稳有力示权威', '微笑含蓄得体显修养', '眉头微蹙显深思熟虑', '颈项修长优雅似天鹅',
                 '肩膀宽阔有力担重任', '腰背挺直如尺显刚正', '手指修长洁净显文雅', '皮肤细腻光滑如凝脂',
                 '面容轮廓清晰似雕塑', '眉形优美舒展显智慧', '眼窝深邃神秘藏谋略', '鼻翼微张显气息沉稳',
                 '唇色红润健康显活力', '耳廓圆润饱满显福相', '额头宽阔饱满显智慧', '颧骨适中突出显权威',
@@ -54,7 +54,7 @@ const RichZiweiWordLibrary = (function() {
                 '积累经验丰富如积土', '传承知识认真如传灯', '教导他人耐心如师长', '分享经验慷慨如赠宝',
                 '交流思想开放如门户', '探讨问题深入如探矿', '合作共赢如携手同行', '竞争有度如君子之争',
                 '创新突破如破茧成蝶', '坚守原则如磐石不移', '灵活变通如柳随风', '耐心等待如渔翁垂钓',
-                '果断如猎豹扑食', '细致入微如绣花女', '宏观把控如将军布阵', '微观关注如医生诊脉',
+                '果断行动如猎豹扑食', '细致入微如绣花女', '宏观把控如将军布阵', '微观关注如医生诊脉',
                 '长期规划如建筑师', '短期执行如运动员', '风险管理如保险师', '机会把握如投资者',
                 '团队建设如园丁育苗', '个人成长如雕塑家', '社会贡献如蜡烛燃烧', '历史担当如砥柱中流'
             ],
@@ -89,7 +89,7 @@ const RichZiweiWordLibrary = (function() {
                 '归属感满足如家庭', '认同感获得如勋章', '价值感实现如成就', '意义感追寻如朝圣'
             ],
             crisis: [
-                '冷静形势如军师', '果断制定对策如统帅', '迅速调动资源如管家', '有效控制局面如舵手',
+                '冷静分析形势如军师', '果断制定对策如统帅', '迅速调动资源如管家', '有效控制局面如舵手',
                 '妥善化解危机如神医', '风险评估准确如精算', '预案准备充分如备战', '应急反应迅速如闪电',
                 '处理措施得当如良医', '损失控制最小如止损', '信心恢复快速如春草', '秩序重建及时如重建',
                 '信任重塑成功如修复', '形象维护完好如珍宝', '声誉保护周全如护甲', '学习教训深刻如刻骨',
@@ -148,7 +148,7 @@ const RichZiweiWordLibrary = (function() {
         },
         '太阳': {
             appearance: ['阳光灿烂如朝阳', '精神饱满如鼓足', '笑容温暖如春日', '眼神明亮如星辰'],
-            speech: ['声音洪亮如钟鸣', '热情如火焰', '表达直接如箭矢', '用词积极如阳光'],
+            speech: ['声音洪亮如钟鸣', '热情洋溢如火焰', '表达直接如箭矢', '用词积极如阳光'],
             behavior: ['行动果断如雷霆', '执行力强如机器', '积极主动如弹簧', '精力旺盛如火山'],
             emotion: ['情感外露如清泉', '情绪高涨如浪潮', '内心阳光如晴空', '乐观积极如朝阳'],
             social: ['社交广泛如阳光', '人脉温暖如炉火', '交流主动如出击', '互动频繁如心跳'],
@@ -419,28 +419,36 @@ const RichZiweiWordLibrary = (function() {
      * @param {Object} chartData - 命盘数据 {mainStar, sihuaType, patternType, era}
      * @returns {Object} 八大维度的词汇数组
      */
-    /**
-     * 生成8维度基础词汇（仅返回主星原始词汇，不叠加修饰器）
-     * 
-     * 【修改说明 2026-04-03】
-     * 之前 triple-modifier 链（SIHUA→格局→时代）全部在生成阶段叠加，
-     * 导致每个选项变成「眼神锐利有神慑人心，充满着保守心态，似近代绅士」
-     * 这样超长的句子，用户无法快速选词。
-     * 
-     * 现在：只返回主星基础词（2~4字核心描述），
-     * 时代/格局修饰只在最终输出「命盘印证」部分应用。
-     * 
-     * 使用方式：
-     *   const words = RichZiweiWordLibrary.generateEightAttrOptions(chartData, 'appearance', 8);
-     */
     function generateAllDimensionsVocabulary(chartData) {
-        const { mainStar = '紫微' } = chartData || {};
+        const { mainStar = '紫微', sihuaType = '化禄型', patternType = '杀破狼', era = 'contemporary' } = chartData;
+        
+        // 获取基础词汇
         const baseVocab = STAR_BASE_VOCAB[mainStar] || STAR_BASE_VOCAB['紫微'];
+        
         const result = {};
+        
         EIGHT_DIMENSIONS.forEach(dimension => {
-            // 只取主星基础词，随机选15条，不叠加任何修饰器
-            result[dimension] = shuffleArray([...(baseVocab[dimension] || [])]).slice(0, 15);
+            let words = [...(baseVocab[dimension] || [])];
+            
+            // 应用四化增强
+            if (SIHUA_ENHANCERS[sihuaType]) {
+                words = SIHUA_ENHANCERS[sihuaType].modifier(words);
+            }
+            
+            // 应用格局修饰
+            if (PATTERN_MODIFIERS[patternType]) {
+                words = PATTERN_MODIFIERS[patternType].modifier(words);
+            }
+            
+            // 应用时代适配
+            if (ERA_ADAPTERS[era]) {
+                words = ERA_ADAPTERS[era].adapter(words);
+            }
+            
+            // 随机选择15个词汇返回
+            result[dimension] = shuffleArray(words).slice(0, 15);
         });
+        
         return result;
     }
     

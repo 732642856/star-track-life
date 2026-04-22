@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>国际化测试 - 星轨人生 Pro</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #f5f5f5;
+        }
+        
+        .test-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        h1 { color: #333; margin-bottom: 8px; }
+        h2 { color: #666; font-size: 18px; margin-top: 0; }
+        
+        .lang-switcher {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 9999;
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        }
+        
+        .lang-btn {
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #666;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        
+        .lang-btn:hover { color: #333; background: rgba(0, 0, 0, 0.04); }
+        .lang-btn.active {
+            color: #fff;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-weight: 600;
+        }
+        
+        .test-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .test-item:last-child { border-bottom: none; }
+        
+        .test-key { color: #999; font-size: 14px; }
+        .test-value { color: #333; font-weight: 500; }
+        
+        .status-ok { color: #27ae60; }
+        .status-error { color: #e74c3c; }
+        
+        #test-log {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: "SF Mono", Monaco, monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .log-time { color: #6a9955; }
+        .log-info { color: #569cd6; }
+        .log-success { color: #4ec9b0; }
+        .log-error { color: #f14c4c; }
+    </style>
+    <link rel="stylesheet" href="i18n-styles.css">
+</head>
+<body>
+    <!-- 语言切换器 -->
+    <div class="lang-switcher" id="lang-switcher">
+        <button class="lang-btn active" data-lang="zh" onclick="switchLanguage('zh')">简体</button>
+        <button class="lang-btn" data-lang="zh-TW" onclick="switchLanguage('zh-TW')">繁體</button>
+        <button class="lang-btn" data-lang="en" onclick="switchLanguage('en')">EN</button>
+    </div>
+
+    <h1>🌐 国际化测试</h1>
+    <h2>星轨人生 Pro i18n Test Page</h2>
+
+    <div class="test-section">
+        <h3>📋 UI 文案测试</h3>
+        <div class="test-item">
+            <span class="test-key">appName</span>
+            <span class="test-value" id="test-appName">-</span>
+        </div>
+        <div class="test-item">
+            <span class="test-key">appSlogan</span>
+            <span class="test-value" id="test-appSlogan">-</span>
+        </div>
+        <div class="test-item">
+            <span class="test-key">btnGenerate</span>
+            <span class="test-value" id="test-btnGenerate">-</span>
+        </div>
+        <div class="test-item">
+            <span class="test-key">step1Title</span>
+            <span class="test-value" id="test-step1Title">-</span>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>⭐ 星曜名称测试</h3>
+        <div class="test-item">
+            <span class="test-key">紫微</span>
+            <span class="test-value" id="test-star1">-</span>
+        </div>
+        <div class="test-item">
+            <span class="test-key">七杀</span>
+            <span class="test-value" id="test-star2">-</span>
+        </div>
+        <div class="test-item">
+            <span class="test-key">贪狼</span>
+            <span class="test-value" id="test-star3">-</span>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>🏛️ 宫位名称测试</h3>
+        <div class="test-item">
+            <span class="test-key">命宫</span>
+            <span class="test-value" id="test-palace1">-</span>
+        </div>
+        <div class="test-item">
+            <span class="test-key">夫妻宫</span>
+            <span class="test-value" id="test-palace2">-</span>
+        </div>
+        <div class="test-item">
+            <span class="test-key">官禄宫</span>
+            <span class="test-value" id="test-palace3">-</span>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>📊 测试日志</h3>
+        <div id="test-log"></div>
+    </div>
+
+    <script src="i18n-core.js"></script>
+    <script src="i18n-data/i18n-ui.js"></script>
+    <script>
+        // 日志函数
+        function log(msg, type = 'info') {
+            const logDiv = document.getElementById('test-log');
+            const time = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'log-success' : 
+                             type === 'error' ? 'log-error' : 'log-info';
+            logDiv.innerHTML += `<div><span class="log-time">[${time}]</span> <span class="${className}">${msg}</span></div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // 更新测试显示
+        function updateTestDisplay() {
+            if (typeof I18nCore === 'undefined') {
+                log('❌ I18nCore 未加载', 'error');
+                return;
+            }
+
+            const lang = I18nCore.getLanguage();
+            log(`当前语言: ${lang}`, 'success');
+
+            // UI 文案测试
+            document.getElementById('test-appName').textContent = I18nCore.t('appName');
+            document.getElementById('test-appSlogan').textContent = I18nCore.t('appSlogan');
+            document.getElementById('test-btnGenerate').textContent = I18nCore.t('btnGenerate');
+            document.getElementById('test-step1Title').textContent = I18nCore.t('step1Title');
+
+            // 星曜名称测试
+            document.getElementById('test-star1').textContent = I18nCore.getStarName('紫微');
+            document.getElementById('test-star2').textContent = I18nCore.getStarName('七杀');
+            document.getElementById('test-star3').textContent = I18nCore.getStarName('贪狼');
+
+            // 宫位名称测试
+            document.getElementById('test-palace1').textContent = I18nCore.getPalaceName('命宫');
+            document.getElementById('test-palace2').textContent = I18nCore.getPalaceName('夫妻宫');
+            document.getElementById('test-palace3').textContent = I18nCore.getPalaceName('官禄宫');
+
+            log('✅ 测试显示已更新');
+        }
+
+        // 语言切换函数
+        function switchLanguage(lang) {
+            if (typeof I18nCore === 'undefined') {
+                log('❌ I18nCore 未加载', 'error');
+                return;
+            }
+
+            I18nCore.setLanguage(lang);
+            
+            // 更新按钮状态
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+
+            // 更新测试显示
+            updateTestDisplay();
+        }
+
+        // 页面加载完成后测试
+        document.addEventListener('DOMContentLoaded', () => {
+            log('🚀 页面加载完成');
+            
+            setTimeout(() => {
+                log('📦 检查 I18nCore...');
+                if (typeof I18nCore !== 'undefined') {
+                    log('✅ I18nCore 已加载', 'success');
+                    I18nCore.init();
+                    updateTestDisplay();
+                } else {
+                    log('❌ I18nCore 未找到', 'error');
+                }
+
+                log('📦 检查 UI_TEXT...');
+                if (typeof UI_TEXT !== 'undefined') {
+                    log('✅ UI_TEXT 已加载', 'success');
+                    log(`   - 支持语言: ${Object.keys(UI_TEXT).join(', ')}`);
+                } else {
+                    log('❌ UI_TEXT 未找到', 'error');
+                }
+            }, 500);
+        });
+
+        // 监听语言变更事件
+        window.addEventListener('languageChanged', (e) => {
+            log(`🔄 语言变更事件: ${e.detail.lang}`);
+            updateTestDisplay();
+        });
+    </script>
+</body>
+</html>
