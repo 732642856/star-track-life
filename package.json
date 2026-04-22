@@ -62,7 +62,10 @@
     "@capacitor/android": "^8.3.0",
     "@capacitor/cli": "^8.3.0",
     "@capacitor/core": "^8.3.0",
-    "@capacitor/ios": "^8.3.0"
+    "@capacitor/ios": "^8.3.0",
+    "electron-store": "^8.0.0",
+    "electron-log": "^4.4.6",
+    "electron-updater": "^6.1.7"
   },
   "devDependencies": {
     "electron": "^41.1.1",

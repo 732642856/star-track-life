@@ -1,6 +1,6 @@
 {
   "appId": "com.yinan.xinggui0",
-  "productName": "星轨人生",
+  "productName": "星轨人生-v2",
   "copyright": "Copyright © 2024-2026 星轨人生",
   "directories": {
     "output": "dist",
@@ -10,7 +10,8 @@
     "www/**/*",
     "main.js",
     "preload.js",
-    "package.json"
+    "package.json",
+    "node_modules/**/*"
   ],
   "asar": true,
   "asarUnpack": [
@@ -21,25 +22,18 @@
     "mirror": "https://npmmirror.com/mirrors/electron/"
   },
   "mac": {
-    "target": [
-      {
-        "target": "dmg",
-        "arch": ["x64", "arm64", "universal"]
-      },
-      {
-        "target": "zip",
-        "arch": ["x64", "arm64", "universal"]
-      }
-    ],
+    "target": "mas",
     "category": "public.app-category.lifestyle",
     "icon": "icon-512x512.png",
-    "hardenedRuntime": true,
+    "hardenedRuntime": false,
     "gatekeeperAssess": false,
     "entitlements": "entitlements.plist",
-    "entitlementsInherit": "entitlements.plist",
+    "entitlementsInherit": "entitlements.mas.inherit.plist",
+    "entitlementsLoginHelper": "entitlements.mas.loginhelper.plist",
     "provisioningProfile": "./StarTrackLifeMacAppStore.provisionprofile",
     "darkModeSupport": true,
-    "minimumSystemVersion": "10.15"
+    "minimumSystemVersion": "10.15",
+    "signingIdentity": "3rd Party Mac Developer Application: yinan wu (2DM78YY6PM)"
   },
   "mas": {
     "type": "distribution",
