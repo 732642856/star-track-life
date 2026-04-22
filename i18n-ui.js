@@ -35,7 +35,6 @@ const UI_TEXT = {
         labelOccupation: '职业方向',
         labelName: '角色名称（选填）',
         placeholderName: '为这个角色起个名字…',
-        unnamedChar: '未命名角色',
         genderMale: '男',
         genderFemale: '女',
         btnGenerate: '生成命盘传记',
@@ -142,7 +141,6 @@ const UI_TEXT = {
         // 步骤4：8属性细化
         step4Title: '8属性细化',
         step4Subtitle: '完善角色的8个核心维度',
-        step4Hint: '💡 填得越多，人物越生动',
         btnGenerateBio: '生成人物小传',
 
         // 步骤5：人物小传
@@ -173,7 +171,7 @@ const UI_TEXT = {
         toastSelectSiblings: '请选择手足关系',
         toastFinishChartMatch: '请先完成星盘匹配',
         toastSelectSihua: '请选择四化类型',
-        toastAttrsPartial: (n) => '💡 ' + n + ' 项未选择，对应内容将以模糊风格呈现',
+        toastAttrsPartial: (n) => n + ' 项未选择，对应内容将以模糊风格呈现',
         toastGenerateError: (msg) => '生成出错，请重试（' + msg + '）',
         toastSavedFull: '最多只能保存10个角色，请先删除一些',
         toastSavedSuccess: (name, n) => '「' + name + '」已保存 (' + n + '/10)',
@@ -221,7 +219,6 @@ const UI_TEXT = {
         labelOccupation: '職業方向',
         labelName: '角色名稱（選填）',
         placeholderName: '為這個角色起個名字…',
-        unnamedChar: '未命名角色',
         genderMale: '男',
         genderFemale: '女',
         btnGenerate: '生成命盤傳記',
@@ -317,7 +314,6 @@ const UI_TEXT = {
 
         step4Title: '8屬性細化',
         step4Subtitle: '完善角色的8個核心維度',
-        step4Hint: '💡 填得越多，人物越生動',
         btnGenerateBio: '生成人物小傳',
 
         step5Title: '人物小傳',
@@ -344,9 +340,9 @@ const UI_TEXT = {
         toastSelectSocial: '請選擇社會地位',
         toastSelectParents: '請選擇父母關係',
         toastSelectSiblings: '請選擇手足關係',
-        toastFinishChartMatch: '請先完成星盤匹配',
+        toastFinishChartMatch: '請先完成星盘匹配',
         toastSelectSihua: '請選擇四化類型',
-        toastAttrsPartial: (n) => '💡 ' + n + ' 項未選擇，對應內容將以模糊風格呈現',
+        toastAttrsPartial: (n) => n + ' 項未選擇，對應內容將以模糊風格呈現',
         toastGenerateError: (msg) => '生成出錯，請重試（' + msg + '）',
         toastSavedFull: '最多只能儲存10個角色，請先刪除一些',
         toastSavedSuccess: (name, n) => '「' + name + '」已儲存 (' + n + '/10)',
@@ -394,7 +390,6 @@ const UI_TEXT = {
         labelOccupation: 'Occupation',
         labelName: 'Character Name (optional)',
         placeholderName: 'Give this character a name…',
-        unnamedChar: 'Unnamed Character',
         genderMale: 'Male',
         genderFemale: 'Female',
         btnGenerate: 'Generate Chart & Biography',
@@ -490,7 +485,6 @@ const UI_TEXT = {
 
         step4Title: 'Refine Attributes',
         step4Subtitle: 'Define 8 core character dimensions.',
-        step4Hint: '💡 The more you fill, the more vivid the character becomes',
         btnGenerateBio: 'Generate Biography',
 
         step5Title: 'Character Biography',
@@ -519,7 +513,7 @@ const UI_TEXT = {
         toastSelectSiblings: 'Please select a sibling/friend dynamic',
         toastFinishChartMatch: 'Please complete the chart match first',
         toastSelectSihua: 'Please select a transformation type',
-        toastAttrsPartial: (n) => '💡 ' + n + ' attribute(s) unset — those sections will be rendered in outline style',
+        toastAttrsPartial: (n) => n + ' attribute(s) unset — those sections will be rendered in outline style',
         toastGenerateError: (msg) => 'Generation failed, please try again (' + msg + ')',
         toastSavedFull: 'You can save up to 10 characters. Please delete one first.',
         toastSavedSuccess: (name, n) => '"' + name + '" saved (' + n + '/10)',
@@ -544,6 +538,18 @@ const UI_TEXT = {
         cmpSectionDrama: 'Dramatic Dynamic',
         cmpSectionContext: 'Context Note',
         cmpCharLabel: 'Character',
+        
+        // 8 Attributes (for dynamic usage) - NEW FIXED VERSION
+        attr: {
+            appearance: { name: 'Appearance', options: ['Commanding', 'Gentle & Refined', 'Sharp & Capable', 'Warm & Approachable', 'Distinctive', 'Unassuming'] },
+            speech: { name: 'Speaking Style', options: ['Direct & Concise', 'Tactful & Soft', 'Enthusiastic', 'Calm & Measured', 'Humorous', 'Reserved'] },
+            behavior: { name: 'Habits', options: ['Decisive', 'Thoughtful', 'Spontaneous', 'Cautious', 'Methodical', 'Free-spirited'] },
+            emotion: { name: 'Emotional Expression', options: ['Openly Expressive', 'Reserved', 'Changeable', 'Stable', 'Rationally Controlled', 'Impulsive'] },
+            social: { name: 'Social Style', options: ['Leader', 'Supporter', 'Observer', 'Connector', 'Independent', 'Group-oriented'] },
+            crisis: { name: 'Crisis Response', options: ['Confront directly', 'Analyze calmly', 'Seek help', 'Hide & evade', 'Take charge', 'Adapt & change'] },
+            learning: { name: 'Learning & Adaptation', options: ['Practical', 'Theoretical', 'Intuitive', 'Methodical', 'Experimental', 'Traditional'] },
+            growth: { name: 'Growth Direction', options: ['Achievement', 'Contribution', 'Connection', 'Knowledge', 'Self-mastery', 'Balance'] }
+        },
     }
 };
 
@@ -594,6 +600,20 @@ function applyI18nToDOM() {
         return (val != null && typeof val !== 'object' && typeof val !== 'function') ? val : null;
     }
 
+    // 第一步：清除所有有 data-i18n 属性的元素的硬编码内容
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+            // input/textarea 元素，清除 placeholder（如果有硬编码的）
+            if (el.hasAttribute('placeholder') && el.getAttribute('data-i18n')) {
+                el.placeholder = '';  // 先清空，等会儿会重新设置
+            }
+        } else {
+            // 其他元素，清除 textContent
+            el.textContent = '';
+        }
+    });
+
+    // 第二步：应用翻译
     // data-i18n → textContent (input/textarea → placeholder)
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
@@ -612,6 +632,17 @@ function applyI18nToDOM() {
         const key = el.getAttribute('data-i18n-placeholder');
         const val = resolve(key);
         if (val !== null) el.placeholder = val;
+    });
+
+    // 第三步：处理有 data-i18n-placeholder 但没有 placeholder 属性的元素
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+            const key = el.getAttribute('data-i18n-placeholder');
+            const val = resolve(key);
+            if (val !== null) {
+                el.placeholder = val;
+            }
+        }
     });
 
     // data-i18n-html → innerHTML（用于带标签的富文本）
@@ -661,7 +692,7 @@ const UI_DYNAMIC = {
         compatLabels: { high: '高度契合', good: '关系良好', tension: '张力显著', conflict: '冲突型组合' },
         compatTitle: '命盘相性',
         
-        // 8大维度（统一使用数组格式，与英文版保持一致）
+        // 8大维度（简洁清晰版，去除重复冗余）- FIXED: Now using array format
         attr: [
             { id: 'appearance', name: '外貌特征', options: ['威严霸气', '温和儒雅', '锐利干练', '柔和亲和', '独特个性', '低调朴素'] },
             { id: 'speech', name: '说话方式', options: ['简洁有力', '温和委婉', '热情洋溢', '沉稳冷静', '幽默风趣', '寡言内敛'] },
@@ -717,15 +748,6 @@ const UI_DYNAMIC = {
         // 时代地图
         eraMap: { ancient: '古代', modern: '近代', contemporary: '现代' },
         ageMap: { youth: '青年', middle: '中年', senior: '老年' },
-        // 命盘格局名称
-        patternNames: {
-            '杀破狼': '杀破狼', '紫府廉武相': '紫府廉武相', '机月同梁': '机月同梁', '巨日': '巨日',
-            '七杀独坐': '七杀独坐', '破军独坐': '破军独坐', '贪狼独坐': '贪狼独坐',
-            '紫微独坐': '紫微独坐', '天府独坐': '天府独坐', '廉贞独坐': '廉贞独坐',
-            '武曲独坐': '武曲独坐', '天同独坐': '天同独坐', '天机独坐': '天机独坐',
-            '太阳独坐': '太阳独坐', '太阴独坐': '太阴独坐', '巨门独坐': '巨门独坐',
-            '天相独坐': '天相独坐', '天梁独坐': '天梁独坐'
-        },
         // 命盘推荐徽章
         badgeTop1: '✦ 命盘首选',
         badgeTop2: '◈ 次选',
@@ -760,7 +782,7 @@ const UI_DYNAMIC = {
         compatLabels: { high: '高度契合', good: '關係良好', tension: '張力顯著', conflict: '衝突型組合' },
         compatTitle: '命盤相性',
         
-        // 8大维度（统一使用数组格式）
+        // 8大维度（简洁清晰版，去除重复冗余）- FIXED: Now using array format
         attr: [
             { id: 'appearance', name: '外貌特徵', options: ['威嚴霸氣', '溫和儒雅', '銳利幹練', '柔和親和', '獨特個性', '低調樸素'] },
             { id: 'speech', name: '說話方式', options: ['簡潔有力', '溫和委婉', '熱情洋溢', '沉穩冷靜', '幽默風趣', '寡言內斂'] },
@@ -794,7 +816,7 @@ const UI_DYNAMIC = {
             '謀局者_執念者': '一個算計全局，一個死磕一點。前者容易把後者當棋子，後者往往是最後翻盤的變量。適合設計利用與被利用、最終失控的關係。',
             '執念者_謀局者': '一個算計全局，一個死磕一點。前者容易把後者當棋子，後者往往是最後翻盤的變量。適合設計利用與被利用、最終失控的關係。',
             '隱忍者_執念者': '兩人都有強烈內驅力，一個向內消化，一個向外固著。放在親密關係裡尤其有戲——彼此理解卻互相消耗。',
-            '執念者_隱忍者': '兩人都有強烈內驅力，一個向內消化，一個向外固著。放在親密關係裡尤其有戲——彼此理解卻互相消耗。',
+            '執念者_隱忍者': '兩人都有強烈內驅力，一個向內消化，一个向外固著。放在親密關係裡尤其有戲——彼此理解卻互相消耗。',
         },
         relationDefault: '這幾種類型並置，核心戲劇張力來自各自動機的碰撞——目標交叉時衝突自然產生，合作也帶著裂縫。',
         contextCrossEra: (eraList) => '角色處於不同時代（' + eraList.join(' / ') + '），若需同框需設計跨時代敘事結構。',
@@ -810,15 +832,6 @@ const UI_DYNAMIC = {
         compatGenderDiff: '性別：異性互補 +5',
         eraMap: { ancient: '古代', modern: '近代', contemporary: '現代' },
         ageMap: { youth: '青年', middle: '中年', senior: '老年' },
-        // 命盤格局名稱
-        patternNames: {
-            '杀破狼': '殺破狼', '紫府廉武相': '紫府廉武相', '机月同梁': '機月同梁', '巨日': '巨日',
-            '七杀独坐': '七殺獨坐', '破军独坐': '破軍獨坐', '贪狼独坐': '貪狼獨坐',
-            '紫微独坐': '紫微獨坐', '天府独坐': '天府獨坐', '廉贞独坐': '廉貞獨坐',
-            '武曲独坐': '武曲獨坐', '天同独坐': '天同獨坐', '天机独坐': '天機獨坐',
-            '太阳独坐': '太陽獨坐', '太阴独坐': '太陰獨坐', '巨门独坐': '巨門獨坐',
-            '天相独坐': '天相獨坐', '天梁独坐': '天梁獨坐'
-        },
         badgeTop1: '✦ 命盤首選',
         badgeTop2: '◈ 次選',
         badgeSource: (src) => (src || '命盤') + '推薦：',
@@ -847,7 +860,10 @@ const UI_DYNAMIC = {
             { label: 'Wanderer', desc: 'Can\'t find a real home. Always on the road — stopping brings more confusion, not less.', coreConflict: 'Craving belonging vs. feeling suffocated when they finally settle', wound: 'Never had a real home, even in childhood.', starHint: 'Tian Ji / Tan Lang strong in Travel Palace; empty Life Palace or Hua Ji in Ming' },
             { label: 'Endurer', desc: 'Carries everything. Only breaks at the limit. Looks more composed than anyone — until they don\'t.', coreConflict: 'Endurance is power vs. endurance slowly erasing the self', wound: 'Exploded once, lost too much. Learned to suppress everything after that.', starHint: 'Tian Xiang / Tai Yin / Wu Qu charts; Hua Ji in Fortune Palace' },
         ],
-        // 8 Attributes (统一使用 attr 数组格式，与中文版保持一致)
+        compatLabels: { high: 'Highly Compatible', good: 'Good Dynamic', tension: 'Charged Tension', conflict: 'Conflict-Driven' },
+        compatTitle: 'Chart Compatibility',
+        
+        // 8大维度（简洁清晰版，去除重复冗余）- FIXED: Now using array format
         attr: [
             { id: 'appearance', name: 'Appearance', options: ['Commanding', 'Gentle & Refined', 'Sharp & Capable', 'Warm & Approachable', 'Distinctive', 'Unassuming'] },
             { id: 'speech', name: 'Speaking Style', options: ['Direct & Concise', 'Tactful & Soft', 'Enthusiastic', 'Calm & Measured', 'Humorous', 'Reserved'] },
@@ -858,8 +874,6 @@ const UI_DYNAMIC = {
             { id: 'learning', name: 'Adaptability', options: ['Fast Learner', 'Steady Accumulator', 'Experience-reliant', 'Highly Adaptive', 'Stubborn', 'Flexible'] },
             { id: 'growth', name: 'Growth Direction', options: ['Achievement', 'Freedom', 'Stability', 'Truth', 'Connection', 'Balance'] }
         ],
-        compatLabels: { high: 'Highly Compatible', good: 'Good Dynamic', tension: 'Charged Tension', conflict: 'Conflict-Driven' },
-        compatTitle: 'Chart Compatibility',
         sihuaScoreMap: {
             '化禄型_化权型': [+12, 'Lu & Quan: one empowers, one commands. Natural drive for collaboration.'],
             '化权型_化禄型': [+12, 'Lu & Quan: one empowers, one commands. Natural drive for collaboration.'],
@@ -899,15 +913,6 @@ const UI_DYNAMIC = {
         compatGenderDiff: 'Gender: complementary +5',
         eraMap: { ancient: 'Ancient', modern: 'Modern', contemporary: 'Contemporary' },
         ageMap: { youth: 'Young', middle: 'Middle-aged', senior: 'Senior' },
-        // Pattern names
-        patternNames: {
-            '杀破狼': 'Sha-Po-Lang', '紫府廉武相': 'Zi-Fu-Lian-Wu-Xiang', '机月同梁': 'Ji-Yue-Tong-Liang', '巨日': 'Ju-Ri',
-            '七杀独坐': 'Qi Sha (Solo)', '破军独坐': 'Po Jun (Solo)', '贪狼独坐': 'Tan Lang (Solo)',
-            '紫微独坐': 'Zi Wei (Solo)', '天府独坐': 'Tian Fu (Solo)', '廉贞独坐': 'Lian Zhen (Solo)',
-            '武曲独坐': 'Wu Qu (Solo)', '天同独坐': 'Tian Tong (Solo)', '天机独坐': 'Tian Ji (Solo)',
-            '太阳独坐': 'Tai Yang (Solo)', '太阴独坐': 'Tai Yin (Solo)', '巨门独坐': 'Ju Men (Solo)',
-            '天相独坐': 'Tian Xiang (Solo)', '天梁独坐': 'Tian Liang (Solo)'
-        },
         badgeTop1: '✦ Chart Pick',
         badgeTop2: '◈ Alt',
         badgeSource: (src) => (src || 'Chart') + ' rec: ',
@@ -922,6 +927,10 @@ const UI_DYNAMIC = {
         interpersonalDoubleWound: '<strong>Double Wound:</strong> Both charts carry flying-star fixations. This relationship activates each other\'s deepest wounds — the most dramatically potent combination. Write them healing each other in the other\'s language, while deepening each other\'s pain.',
         toastSelectDrive: 'Please choose a drive type first',
         woundLabel: 'Wound',
+        sihuaLabelMap: {
+            '野心者': 'Ambition', '执念者': 'Obsessed', '谋局者': 'Strategist', '守护者': 'Guardian', '游荡者': 'Wanderer', '隐忍者': 'Endurer',
+            '化禄型': 'Lu Type', '化权型': 'Quan Type', '化科型': 'Ke Type', '化忌型': 'Ji Type'
+        },
     },
 };
 

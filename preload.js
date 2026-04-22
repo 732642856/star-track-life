@@ -1,49 +1,42 @@
+/**
+ * Electron Preload Script
+ * 星轨人生 Pro - 预加载脚本
+ * 
+ * 用于主进程与渲染进程之间的安全通信
+ */
+
 const { contextBridge, ipcRenderer } = require('electron');
 
-// 安全地暴露 Electron API 给渲染进程
+// 暴露安全的 API 给渲染进程
 contextBridge.exposeInMainWorld('electronAPI', {
-  // 应用信息
-  getVersion: () => ipcRenderer.invoke('get-app-version'),
+  /**
+   * 切换语言
+   * @param {string} lang - 目标语言
+   */
+  switchLanguage: (lang) => ipcRenderer.send('switch-language', lang),
   
-  // 设置管理
-  getSettings: () => ipcRenderer.invoke('get-settings'),
-  setSetting: (key, value) => ipcRenderer.invoke('set-setting', key, value),
+  /**
+   * 获取当前语言
+   * @returns {Promise<string>}
+   */
+  getLanguage: () => ipcRenderer.invoke('get-language'),
   
-  // 文件操作
-  addRecentFile: (filePath) => ipcRenderer.invoke('add-recent-file', filePath),
+  /**
+   * 平台信息
+   */
+  platform: process.platform,
   
-  // 事件监听
-  onLanguageChanged: (callback) => {
-    ipcRenderer.on('language-changed', (event, lang) => callback(lang));
-  },
-  onThemeChanged: (callback) => {
-    ipcRenderer.on('theme-changed', (event, theme) => callback(theme));
-  },
-  onOpenFile: (callback) => {
-    ipcRenderer.on('open-file', (event, filePath) => callback(filePath));
-  },
-  onSaveFile: (callback) => {
-    ipcRenderer.on('save-file', () => callback());
-  },
-  onExportCharacter: (callback) => {
-    ipcRenderer.on('export-character', () => callback());
-  },
-  onShowPreferences: (callback) => {
-    ipcRenderer.on('show-preferences', () => callback());
-  },
-  onInitTouchBar: (callback) => {
-    ipcRenderer.on('init-touchbar', () => callback());
-  },
-  
-  // 移除监听器
-  removeAllListeners: (channel) => {
-    ipcRenderer.removeAllListeners(channel);
+  /**
+   * 是否为 Electron 环境
+   */
+  isElectron: true
+});
+
+// 语言变更监听
+ipcRenderer.on('language-changed', (event, lang) => {
+  if (typeof window.switchLanguage === 'function') {
+    window.switchLanguage(lang);
   }
 });
 
-// 暴露平台信息
-contextBridge.exposeInMainWorld('platform', {
-  isMac: process.platform === 'darwin',
-  isWindows: process.platform === 'win32',
-  isLinux: process.platform === 'linux'
-});
+console.log('[Preload] Electron API 已注入');

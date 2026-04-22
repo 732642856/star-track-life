@@ -29,6 +29,39 @@
 
     const DIZHI = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
 
+    // 星曜英文名称映射
+    const STAR_NAMES_EN = {
+        '紫微': 'Zi Wei', '天机': 'Tian Ji', '太阳': 'Tai Yang',
+        '武曲': 'Wu Qu', '天同': 'Tian Tong', '廉贞': 'Lian Zhen',
+        '天府': 'Tian Fu', '太阴': 'Tai Yin', '贪狼': 'Tan Lang',
+        '巨门': 'Ju Men', '天相': 'Tian Xiang', '天梁': 'Tian Liang',
+        '七杀': 'Seven Killings', '破军': 'Po Jun'
+    };
+
+    // 星曜英文名称映射（带含义）
+    const STAR_NAMES_EN_FULL = {
+        '紫微': 'Zi Wei (Emperor)', '天机': 'Tian Ji (Strategist)', '太阳': 'Tai Yang (Sun)',
+        '武曲': 'Wu Qu (Finance)', '天同': 'Tian Tong (Fortune)', '廉贞': 'Lian Zhen (Passion)',
+        '天府': 'Tian Fu (Treasury)', '太阴': 'Tai Yin (Moon)', '贪狼': 'Tan Lang (Ambition)',
+        '巨门': 'Ju Men (Gatekeeper)', '天相': 'Tian Xiang (Minister)', '天梁': 'Tian Liang (Shelter)',
+        '七杀': 'Seven Killings', '破军': 'Po Jun (Breaker)'
+    };
+
+    // 获取星曜名称（根据语言）
+    function _tStar(starName) {
+        var lang = (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG : 'zh');
+        if (lang === 'en' && STAR_NAMES_EN[starName]) {
+            return STAR_NAMES_EN[starName];
+        }
+        return starName;
+    }
+
+    // 获取星曜名称数组（英文模式翻译）
+    function _tStars(starNames) {
+        if (!Array.isArray(starNames)) return starNames;
+        return starNames.map(function(s) { return _tStar(s); });
+    }
+
     // keIdx(0-7) → 时辰中的刻（一时辰8刻，每刻15分钟）
     const KE_NAMES = ['初刻','一刻','二刻','三刻','正刻','正一刻','正二刻','末刻'];
 
@@ -449,19 +482,34 @@
         }
 
         // 三方四正内是否有对冲主星（直线/波浪线的戏剧张力来源）
+        var _lang = (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG : 'zh');
         result.hasInternalConflict = result.sanfangStars.length >= 2;
+        // 英文模式下翻译星曜名称
+        var sanfangStarsEn = _tStars(result.sanfangStars);
         result.conflictDesc = result.hasInternalConflict
-            ? `三方宫位有${result.sanfangStars.join('+')}，${_getSanfangConflictDesc(result.sanfangStars)}`
-            : '三方较为单纯，人生格局较稳定';
+            ? (_lang === 'en' 
+                ? `Three-direction has ${sanfangStarsEn.join('+')} — ${_getSanfangConflictDesc(result.sanfangStars)}`
+                : `三方宫位有${result.sanfangStars.join('+')}，${_getSanfangConflictDesc(result.sanfangStars)}`)
+            : (_lang === 'en' ? 'Relatively balanced three-direction — stable life pattern' : '三方较为单纯，人生格局较稳定');
 
         return result;
     }
 
     function _getSanfangConflictDesc(stars) {
+        var lang = (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG : 'zh');
+        
         const killGroup = ['七杀','破军','贪狼'];
         const moonGroup = ['太阴','天同','天机','天梁'];
         const hasKill = stars.some(s => killGroup.includes(s));
         const hasMoon = stars.some(s => moonGroup.includes(s));
+        
+        if (lang === 'en') {
+            if (hasKill && hasMoon) return 'Both destructive power and gentleness — two very different people live inside';
+            if (hasKill) return 'Strong drive, but impulse and reason constantly at odds';
+            if (hasMoon) return 'Delicate feelings, but sometimes too sensitive and indecisive';
+            return 'Diverse patterns — needs to find balance across different aspects';
+        }
+        
         if (hasKill && hasMoon) return '兼具破坏力与温柔，内心住着两种截然不同的人';
         if (hasKill) return '行动力强，但冲动与理智常常拉锯';
         if (hasMoon) return '感受细腻，但有时过于感性而犹豫不决';
@@ -610,8 +658,30 @@
     }
 
     function _getFuqiProjection(fuqiStar, fuqiIdx, mingIdx) {
-        // 心理占星核心：夫妻宫 = 你寻找的"另一半阴影"
-        // 命宫与夫妻宫相对（卯-酉，子-午等），这在西方占星对应"上升-下降轴"
+        var lang = (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG : 'zh');
+        
+        // English version
+        if (lang === 'en') {
+            const projectionsEn = {
+                '紫微': 'Seeks regal authority in a partner — the dignity they may not dare to show themselves. Power dynamics are the core tension.',
+                '天机': 'Seeks intelligence and flexibility — loves being guided in thought, but loses patience with a partner who isn\'t mentally present.',
+                '太阳': 'Seeks warmth and reliability — someone who lights them up. But too much need for sunlight can lead to dependence.',
+                '武曲': 'Seeks action and security — needs someone who gets things done, but can become overly pragmatic in relationships.',
+                '天同': 'Seeks acceptance and gentleness — but may be spoiled or lose boundaries in the relationship.',
+                '廉贞': 'Seeks complexity and passion — boring relationships don\'t last. Drama is the undertone.',
+                '天府': 'Seeks stability and protection — high need for relationship security, would rather be conservative than take risks.',
+                '太阴': 'Seeks sensitivity and emotional resonance — needs to be understood, even pampered a little.',
+                '贪狼': 'Seeks charm and versatility — one of the charts most prone to encountering partners who are not what they seem.',
+                '巨门': 'Seeks authenticity and depth — cannot accept surface relationships, but may "interrogate" partners in intimacy.',
+                '天相': 'Seeks fairness and responsibility — needs a partner who plays by the rules. Deep disappointment if let down.',
+                '天梁': 'Seeks wisdom and protection — attracted to partners older than their years. Generational or mentor dynamics possible.',
+                '七杀': 'Seeks strength and independence — the weak and dependent hold no appeal. But "two strongs meeting" means long-term tension.',
+                '破军': 'Seeks change and stimulation — relationships are destined to be turbulent; calm ones will prompt them to create waves.'
+            };
+            return projectionsEn[fuqiStar] || 'Empty spouse palace — relationship patterns are shaped more by the life palace star.';
+        }
+        
+        // Chinese version
         const projections = {
             '紫微': '你在伴侣身上寻找王者气质——那份你自己未必敢展现的权威和担当。关系中的权力结构是核心矛盾。',
             '天机': '你在伴侣身上寻找聪明和灵活——喜欢被人引导思考，但会对"思维不在线"的伴侣失去耐心。',
@@ -632,6 +702,29 @@
     }
 
     function _getJiaoYouStyle(jiaoYouStar) {
+        var lang = (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG : 'zh');
+        
+        // English version
+        if (lang === 'en') {
+            const stylesEn = {
+                '紫微': 'Natural leadership in social circles — friends turn to you for decisions, but real intimacy is rare',
+                '天机': 'Information hub and strategist among friends, but tends to keep distance overthinking',
+                '太阳': 'Abundant social energy, popular, but relationships can stay surface-level',
+                '武曲': 'Few friends but extremely reliable, known for dependability in circles',
+                '天同': 'Easygoing, almost no enemies, but easily underestimated',
+                '廉贞': 'Complex social circles, tends to go to extremes — deep or nothing',
+                '天府': 'Stable core in your circle, everyone relies on you',
+                '太阴': 'Small but high-quality social circle, prefers depth over breadth',
+                '贪狼': 'Extremely popular, knows many people, few deep connections',
+                '巨门': 'Words are your social tool, too direct causes misunderstandings',
+                '天相': 'Coordinator in the circle, likes resolving conflicts',
+                '天梁': 'Elder figure in the group, experienced, attracts those seeking guidance',
+                '七杀': 'Few but loyal friends, dislikes social niceties',
+                '破军': 'Frequently changing social circles, relationships come and go'
+            };
+            return stylesEn[jiaoYouStar] || 'Empty friends palace — social patterns influenced by other palaces';
+        }
+        
         const styles = {
             '紫微': '社交圈中自带领导气场，朋友们遇事习惯找你拿主意——但真正亲密的人不多',
             '天机': '在朋友圈中是信息中枢和智囊，但也容易因为想太多而在社交中保持距离',
@@ -652,6 +745,29 @@
     }
 
     function _getXiongdiPattern(xiongdiStar) {
+        var lang = (typeof CURRENT_LANG !== 'undefined' ? CURRENT_LANG : 'zh');
+        
+        // English version
+        if (lang === 'en') {
+            const patternsEn = {
+                '紫微': 'Cannot truly be equal — your presence naturally creates hierarchy',
+                '天机': 'Best planner in partnerships, but may abandon execution for better plans',
+                '太阳': 'Tends to give more, sometimes taken for granted — needs boundaries',
+                '武曲': 'Most reliable partner, but fights for control due to convictions',
+                '天同': 'Values harmony, dislikes conflict, may sacrifice self for peace',
+                '廉贞': 'Complex partnerships with loyalty and potential conflict',
+                '天府': 'Best stable partner, excels in established cooperation',
+                '太阴': 'Sensitive in cooperation, notices subtle shifts, emotions affect judgment',
+                '贪狼': 'Charming but unpredictable — doubles when good, severs when bad',
+                '巨门': 'Frank and direct, best problem finder, but makes cooperation tense',
+                '天相': 'Guardian of rules, but strict adherence limits flexibility',
+                '天梁': 'Spiritual leader, influences through wisdom and experience',
+                '七杀': 'Strongest executor, tends to be dictatorial in decisions',
+                '破军': 'Most creative partner, excels at breaking patterns'
+            };
+            return patternsEn[xiongdiStar] || 'Empty siblings palace — patterns in equal relationships are flexible';
+        }
+        
         const patterns = {
             '紫微': '在平等关系中无法真正"平等"——你的气场会让合作者自然形成上下级感',
             '天机': '合作中是最好的策划者，但执行上容易半途而废或被更好的方案诱惑改变方向',

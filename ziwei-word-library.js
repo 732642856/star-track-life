@@ -390,21 +390,4 @@
         PATTERN_VOCABULARY
     };
 
-    // 兼容别名
-    global.RichZiweiWordLibrary = {
-        generateAllDimensionsVocabulary: function(chartData) {
-            return global.ZiweiWordLibrary.generateAllDimensionsVocabulary(chartData);
-        },
-        getStats: function() {
-            return { dimensions: 8, wordsPerDimension: 8 };
-        }
-    };
-
-    global.WritingLibraryEnhancer = {
-        getCombinedVocabulary: function(chartData, dimension, count) {
-            var allVocab = global.ZiweiWordLibrary.generateAllDimensionsVocabulary(chartData);
-            return allVocab[dimension] || [];
-        }
-    };
-
-})(typeof window !== 'undefined' ? window : this);
+})(window);

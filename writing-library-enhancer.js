@@ -171,14 +171,14 @@
      * @returns {Array} 关键词数组
      */
     function extractKeywordsFromCategories(categories, dimension, count = 5) {
-        var keywords = new Set();
+        const keywords = new Set();
         
-        categories.forEach(function(categoryName) {
-            var category = WRITING_LIBRARY_CATEGORIES[categoryName];
+        categories.forEach(categoryName => {
+            const category = WRITING_LIBRARY_CATEGORIES[categoryName];
             if (category && category.keywords) {
                 // 如果这个分类包含目标维度，或者没有指定维度限制
-                if (category.dimensions.length === 0 || category.dimensions.indexOf(dimension) >= 0) {
-                    category.keywords.forEach(function(keyword) {
+                if (category.dimensions.length === 0 || category.dimensions.includes(dimension)) {
+                    category.keywords.forEach(keyword => {
                         keywords.add(keyword);
                     });
                 }
@@ -195,31 +195,29 @@
      * @param {string} sihuaType - 四化类型
      * @returns {Array} 增强词汇数组
      */
-    function generateEnhancedVocabulary(mainStar, dimension, sihuaType) {
-        sihuaType = sihuaType || '化禄型';
-        
+    function generateEnhancedVocabulary(mainStar, dimension, sihuaType = '化禄型') {
         // 获取相关词库分类
-        var relevantCategories = getRelevantLibraryCategories(mainStar);
+        const relevantCategories = getRelevantLibraryCategories(mainStar);
         
         // 从词库分类中提取关键词
-        var libraryKeywords = extractKeywordsFromCategories(relevantCategories, dimension, 4);
+        const libraryKeywords = extractKeywordsFromCategories(relevantCategories, dimension, 4);
         
         // 根据四化类型调整词汇
-        var sihuaModifiers = {
+        const sihuaModifiers = {
             '化禄': ['丰润的', '和谐的', '滋养的', '满足的'],
             '化权': ['有力的', '掌控的', '权威的', '决断的'],
             '化科': ['优雅的', '得体的', '文雅的', '完美的'],
             '化忌': ['深刻的', '挣扎的', '压抑的', '转化的']
         };
         
-        var sihuaKey = sihuaType.indexOf('化') >= 0 ? sihuaType.replace('型', '') : '化禄';
-        var modifiers = sihuaModifiers[sihuaKey] || sihuaModifiers['化禄'];
+        const sihuaKey = sihuaType.includes('化') ? sihuaType.replace('型', '') : '化禄';
+        const modifiers = sihuaModifiers[sihuaKey] || sihuaModifiers['化禄'];
         
         // 组合词汇：四化修饰 + 词库关键词
-        var enhancedWords = [];
-        libraryKeywords.forEach(function(keyword) {
-            var modifier = modifiers[Math.floor(Math.random() * modifiers.length)];
-            enhancedWords.push(modifier + keyword);
+        const enhancedWords = [];
+        libraryKeywords.forEach(keyword => {
+            const modifier = modifiers[Math.floor(Math.random() * modifiers.length)];
+            enhancedWords.push(`${modifier}${keyword}`);
             
             // 有时也添加未修饰的原始关键词
             if (Math.random() > 0.5) {
@@ -236,14 +234,14 @@
      * @returns {object} 八大维度的增强词库
      */
     function generateEnhancedWordLibrary(chartData) {
-        var mainStar = chartData.mainStar || '紫微';
-        var sihuaType = chartData.sihuaType || '化禄型';
+        const mainStar = chartData.mainStar || '紫微';
+        const sihuaType = chartData.sihuaType || '化禄型';
         
-        var dimensions = ['appearance', 'speech', 'behavior', 'emotion', 'social', 'crisis', 'learning', 'growth'];
-        var result = {};
+        const dimensions = ['appearance', 'speech', 'behavior', 'emotion', 'social', 'crisis', 'learning', 'growth'];
+        const result = {};
         
-        dimensions.forEach(function(dimension) {
-            var enhancedWords = generateEnhancedVocabulary(mainStar, dimension, sihuaType);
+        dimensions.forEach(dimension => {
+            const enhancedWords = generateEnhancedVocabulary(mainStar, dimension, sihuaType);
             result[dimension] = enhancedWords;
         });
         
@@ -261,37 +259,29 @@
      * @param {number} count - 数量
      * @returns {Array} 组合词库（原词库 + 增强词库）
      */
-    function getCombinedVocabulary(chartData, dimension, count) {
-        count = count || 8;
-        var allWords = [];
+    function getCombinedVocabulary(chartData, dimension, count = 8) {
+        const allWords = [];
         
         // 1. 获取原始紫微斗数词库
-        if (global.ZiweiWordLibrary && typeof global.ZiweiWordLibrary.generateDynamicVocabulary === 'function') {
-            var originalWords = global.ZiweiWordLibrary.generateDynamicVocabulary(chartData, dimension, count);
-            originalWords.forEach(function(word) {
-                allWords.push(word);
-            });
+        if (window.ZiweiWordLibrary && typeof window.ZiweiWordLibrary.generateDynamicVocabulary === 'function') {
+            const originalWords = window.ZiweiWordLibrary.generateDynamicVocabulary(chartData, dimension, count);
+            originalWords.forEach(word => allWords.push(word));
         }
         
         // 2. 获取增强词库
-        var enhancedWords = generateEnhancedVocabulary(
+        const enhancedWords = generateEnhancedVocabulary(
             chartData.mainStar || '紫微',
             dimension,
             chartData.sihuaType || '化禄型'
         );
-        enhancedWords.forEach(function(word) {
-            if (allWords.indexOf(word) < 0) {
+        enhancedWords.forEach(word => {
+            if (!allWords.includes(word)) {
                 allWords.push(word);
             }
         });
         
         // 3. 去重并限制数量
-        var uniqueWords = [];
-        allWords.forEach(function(word) {
-            if (uniqueWords.indexOf(word) < 0) {
-                uniqueWords.push(word);
-            }
-        });
+        const uniqueWords = [...new Set(allWords)];
         return uniqueWords.slice(0, Math.min(count, uniqueWords.length));
     }
 
@@ -300,15 +290,15 @@
     // ─────────────────────────────────────────────────────────────────────
 
     global.WritingLibraryEnhancer = {
-        getRelevantLibraryCategories: getRelevantLibraryCategories,
-        extractKeywordsFromCategories: extractKeywordsFromCategories,
-        generateEnhancedVocabulary: generateEnhancedVocabulary,
-        generateEnhancedWordLibrary: generateEnhancedWordLibrary,
-        getCombinedVocabulary: getCombinedVocabulary,
+        getRelevantLibraryCategories,
+        extractKeywordsFromCategories,
+        generateEnhancedVocabulary,
+        generateEnhancedWordLibrary,
+        getCombinedVocabulary,
         
         // 常量导出
-        WRITING_LIBRARY_CATEGORIES: WRITING_LIBRARY_CATEGORIES,
-        STAR_TO_LIBRARY_MAPPING: STAR_TO_LIBRARY_MAPPING
+        WRITING_LIBRARY_CATEGORIES,
+        STAR_TO_LIBRARY_MAPPING
     };
 
-})(typeof window !== 'undefined' ? window : this);
+})(window);
