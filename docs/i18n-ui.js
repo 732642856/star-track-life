@@ -35,6 +35,7 @@ const UI_TEXT = {
         labelOccupation: '职业方向',
         labelName: '角色名称（选填）',
         placeholderName: '为这个角色起个名字…',
+        unnamedChar: '未命名角色',
         genderMale: '男',
         genderFemale: '女',
         btnGenerate: '生成命盘传记',
@@ -141,6 +142,7 @@ const UI_TEXT = {
         // 步骤4：8属性细化
         step4Title: '8属性细化',
         step4Subtitle: '完善角色的8个核心维度',
+        step4Hint: '💡 填得越多，人物越生动',
         btnGenerateBio: '生成人物小传',
 
         // 步骤5：人物小传
@@ -219,6 +221,7 @@ const UI_TEXT = {
         labelOccupation: '職業方向',
         labelName: '角色名稱（選填）',
         placeholderName: '為這個角色起個名字…',
+        unnamedChar: '未命名角色',
         genderMale: '男',
         genderFemale: '女',
         btnGenerate: '生成命盤傳記',
@@ -314,6 +317,7 @@ const UI_TEXT = {
 
         step4Title: '8屬性細化',
         step4Subtitle: '完善角色的8個核心維度',
+        step4Hint: '💡 填得越多，人物越生動',
         btnGenerateBio: '生成人物小傳',
 
         step5Title: '人物小傳',
@@ -390,6 +394,7 @@ const UI_TEXT = {
         labelOccupation: 'Occupation',
         labelName: 'Character Name (optional)',
         placeholderName: 'Give this character a name…',
+        unnamedChar: 'Unnamed Character',
         genderMale: 'Male',
         genderFemale: 'Female',
         btnGenerate: 'Generate Chart & Biography',
@@ -485,6 +490,7 @@ const UI_TEXT = {
 
         step4Title: 'Refine Attributes',
         step4Subtitle: 'Define 8 core character dimensions.',
+        step4Hint: '💡 The more you fill, the more vivid the character becomes',
         btnGenerateBio: 'Generate Biography',
 
         step5Title: 'Character Biography',
@@ -711,6 +717,15 @@ const UI_DYNAMIC = {
         // 时代地图
         eraMap: { ancient: '古代', modern: '近代', contemporary: '现代' },
         ageMap: { youth: '青年', middle: '中年', senior: '老年' },
+        // 命盘格局名称
+        patternNames: {
+            '杀破狼': '杀破狼', '紫府廉武相': '紫府廉武相', '机月同梁': '机月同梁', '巨日': '巨日',
+            '七杀独坐': '七杀独坐', '破军独坐': '破军独坐', '贪狼独坐': '贪狼独坐',
+            '紫微独坐': '紫微独坐', '天府独坐': '天府独坐', '廉贞独坐': '廉贞独坐',
+            '武曲独坐': '武曲独坐', '天同独坐': '天同独坐', '天机独坐': '天机独坐',
+            '太阳独坐': '太阳独坐', '太阴独坐': '太阴独坐', '巨门独坐': '巨门独坐',
+            '天相独坐': '天相独坐', '天梁独坐': '天梁独坐'
+        },
         // 命盘推荐徽章
         badgeTop1: '✦ 命盘首选',
         badgeTop2: '◈ 次选',
@@ -795,6 +810,15 @@ const UI_DYNAMIC = {
         compatGenderDiff: '性別：異性互補 +5',
         eraMap: { ancient: '古代', modern: '近代', contemporary: '現代' },
         ageMap: { youth: '青年', middle: '中年', senior: '老年' },
+        // 命盤格局名稱
+        patternNames: {
+            '杀破狼': '殺破狼', '紫府廉武相': '紫府廉武相', '机月同梁': '機月同梁', '巨日': '巨日',
+            '七杀独坐': '七殺獨坐', '破军独坐': '破軍獨坐', '贪狼独坐': '貪狼獨坐',
+            '紫微独坐': '紫微獨坐', '天府独坐': '天府獨坐', '廉贞独坐': '廉貞獨坐',
+            '武曲独坐': '武曲獨坐', '天同独坐': '天同獨坐', '天机独坐': '天機獨坐',
+            '太阳独坐': '太陽獨坐', '太阴独坐': '太陰獨坐', '巨门独坐': '巨門獨坐',
+            '天相独坐': '天相獨坐', '天梁独坐': '天梁獨坐'
+        },
         badgeTop1: '✦ 命盤首選',
         badgeTop2: '◈ 次選',
         badgeSource: (src) => (src || '命盤') + '推薦：',
@@ -875,6 +899,15 @@ const UI_DYNAMIC = {
         compatGenderDiff: 'Gender: complementary +5',
         eraMap: { ancient: 'Ancient', modern: 'Modern', contemporary: 'Contemporary' },
         ageMap: { youth: 'Young', middle: 'Middle-aged', senior: 'Senior' },
+        // Pattern names
+        patternNames: {
+            '杀破狼': 'Sha-Po-Lang', '紫府廉武相': 'Zi-Fu-Lian-Wu-Xiang', '机月同梁': 'Ji-Yue-Tong-Liang', '巨日': 'Ju-Ri',
+            '七杀独坐': 'Qi Sha (Solo)', '破军独坐': 'Po Jun (Solo)', '贪狼独坐': 'Tan Lang (Solo)',
+            '紫微独坐': 'Zi Wei (Solo)', '天府独坐': 'Tian Fu (Solo)', '廉贞独坐': 'Lian Zhen (Solo)',
+            '武曲独坐': 'Wu Qu (Solo)', '天同独坐': 'Tian Tong (Solo)', '天机独坐': 'Tian Ji (Solo)',
+            '太阳独坐': 'Tai Yang (Solo)', '太阴独坐': 'Tai Yin (Solo)', '巨门独坐': 'Ju Men (Solo)',
+            '天相独坐': 'Tian Xiang (Solo)', '天梁独坐': 'Tian Liang (Solo)'
+        },
         badgeTop1: '✦ Chart Pick',
         badgeTop2: '◈ Alt',
         badgeSource: (src) => (src || 'Chart') + ' rec: ',
