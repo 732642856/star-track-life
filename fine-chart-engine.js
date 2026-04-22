@@ -1,342 +1,199 @@
 /**
- * ziwei-engine — 紫微斗数排盘核心模块
- * ============================================
- * 版本：v3.0（来自 fine-chart-engine.js，去 UI 耦合后提炼）
- * 算法来源：付老师全套讲义 + 梁若瑜飞星派 + 令东来体系 跨派共识
- * 修正记录：见 references/algorithm-corrections.md
- *
- * 对外接口（开发者直接用这几个函数）：
- *   calcMingPalace(lunarMonth, shichen) → 命宫地支索引
- *   calcShenPalace(lunarMonth, shichen) → 身宫地支索引
- *   calcZiweiPosition(lunarMonth, lunarDay, yearGan, mingIdx) → 紫微星地支索引
- *   calcMainStars(ziweiIdx) → 十四主星位置表 Object
- *   calcMinorStars(yearGan, yearZhiIdx, lunarMonth, shichenIdx) → 六吉六煞位置表 Object
- *   calcFourTransformations(yearGan, mainStars) → 四化落宫 Object
- *   calcSanFangSiZheng(mingIdx) → 三方四正 Object
- *   calcWuxingJu(yearGan) → 五行局数 (2/3/4/5/6)
- *   yearToGanZhi(year) → { gan, zhi, zhiIdx, ganIdx }
- *
- * 标准 JSON 输出格式：见 references/api-spec.md
- * 测试用例：见 references/test-cases.md
+ * 紫微斗数正统排盘引擎 v3.0
+ * =====================================================
+ * 修复内容（相对旧版）：
+ *  1. 紫微星位置：改用正统"五虎遁年起月+安命寅宫法"，不再用时辰序号代替
+ *  2. 十四主星布局：紫微系与天府系各自独立安星，不再用等差偏移
+ *  3. 四化规则：改为生年天干驱动（甲乙丙丁戊己庚辛壬癸各对应不同禄权科忌）
+ *  4. 三方四正：基于地支三合宫位（命财官迁）正确计算
+ *  5. 命宫安法：安命寅宫逆数月，顺数时，正确对应出生时辰
+ *  6. 身宫安法：从寅宫顺时针数时辰
+ *  7. 六吉六煞：部分按年干/生月安星，摆脱固定顺序
+ * =====================================================
  */
 
-'use strict';
+// ==================== 地支/天干常量 ====================
 
-// ==================== 基础常量 ====================
-
-const DIZHI  = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+const DIZHI = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
 const TIANGAN = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+
+// 十二宫名（以命宫为起点，逆时针排列，对应地支索引）
+// 紫微斗数：命宫起寅，十二宫按地支排列（固定）
 const PALACE_NAMES = [
     '命宫','兄弟宫','夫妻宫','子女宫','财帛宫','疾厄宫',
     '迁移宫','交友宫','官禄宫','田宅宫','福德宫','父母宫'
 ];
 
-// ==================== 年份 → 干支 ====================
+// 地支三合局：命/财/官/迁 四宫三方
+// 寅午戌：2/6/10  申子辰：8/0/4  亥卯未：11/3/7  巳酉丑：5/9/1
+const SANHE_GROUPS = [
+    [2,6,10],  // 寅午戌
+    [8,0,4],   // 申子辰
+    [11,3,7],  // 亥卯未
+    [5,9,1]    // 巳酉丑
+];
+
+// ==================== 命宫安法 ====================
 
 /**
- * 公历年份 → 天干地支
- * @param {number} year - 公历年（如 1990）
- * @returns {{ gan: string, zhi: string, zhiIdx: number, ganIdx: number }}
- */
-function yearToGanZhi(year) {
-    const ganIdx = (year - 4 + 40) % 10;
-    const zhiIdx = (year - 4 + 48) % 12;
-    return { gan: TIANGAN[ganIdx], zhi: DIZHI[zhiIdx], zhiIdx, ganIdx };
-}
-
-// ==================== 五行局 ====================
-
-/**
- * 命宫纳音五行局（正统算法 - 付老师体系）
- * 以命宫宫干+命宫地支查纳音得五行局数
+ * 正统安命宫：从寅宫(地支索引2)起正月，顺时针数到生月，
+ * 再逆时针数到生时辰，得到命宫地支索引。
+ * 对应口诀："寅宫起正月，逆布十二支，安命逆数月，数到生时止"
  *
- * 天干配数：甲乙=1, 丙丁=2, 戊己=3, 庚辛=4, 壬癸=5
- * 地支配数：子丑午未=1, 寅卯申酉=2, 辰巳戌亥=3
- * 干支数相加，大于5则减5，余数查表：1→木三, 2→金四, 3→水二, 4→火六, 5→土五
- *
- * @param {string} mingGan - 命宫宫干（天干）
- * @param {string} mingDz  - 命宫地支
- * @returns {number} 五行局数（2/3/4/5/6）
- */
-const NAYIN_TG_NUM  = {'甲':1,'乙':1,'丙':2,'丁':2,'戊':3,'己':3,'庚':4,'辛':4,'壬':5,'癸':5};
-const NAYIN_DZ_NUM  = {'子':1,'丑':1,'午':1,'未':1,'寅':2,'卯':2,'申':2,'酉':2,'辰':3,'巳':3,'戌':3,'亥':3};
-const NAYIN_JU_MAP  = {1:3, 2:4, 3:2, 4:6, 5:5};
-
-function calcWuxingJuNaYin(mingGan, mingDz) {
-    let sum = (NAYIN_TG_NUM[mingGan] || 1) + (NAYIN_DZ_NUM[mingDz] || 1);
-    if (sum > 5) sum -= 5;
-    return NAYIN_JU_MAP[sum] || 3;
-}
-
-/**
- * 年干简化法（用于快速估算，不如纳音准确）
- * 甲己→土五(5)，乙庚→金四(4)，丙辛→水二(2)，丁壬→木三(3)，戊癸→火六(6)
- * @deprecated 建议使用 calcWuxingJuNaYin，需要命宫宫干支
- */
-function calcWuxingJu(yearGan) {
-    return { '甲':5,'己':5,'乙':4,'庚':4,'丙':2,'辛':2,'丁':3,'壬':3,'戊':6,'癸':6 }[yearGan] || 3;
-}
-
-// ==================== 命宫 / 身宫 ====================
-
-/**
- * 安命宫：寅宫起正月顺数到生月，再逆数到生时
- * 口诀：虎起正月顺布月，逆数时辰得命宫
- * @param {number} lunarMonth - 农历月(1-12)
- * @param {string} shichen    - 时辰地支名（'子'~'亥'）
- * @returns {number} 命宫地支索引 (0=子 … 11=亥)
+ * @param {number} lunarMonth - 农历月份(1-12)
+ * @param {string} shichen    - 生辰时辰名（子丑寅...亥）
+ * @returns {number} 命宫地支索引(0=子,1=丑,...,11=亥)
  */
 function calcMingPalace(lunarMonth, shichen) {
-    const monthIdx = (2 + lunarMonth - 1) % 12;  // 寅=2 顺数
-    const timeIdx  = DIZHI.indexOf(shichen);
-    return (monthIdx - timeIdx + 12) % 12;
+    // 安命口诀：虎(寅=2)起正月顺数到生月，再逆数到生时
+    // 顺数月：从寅(2)顺时针+月-1
+    const monthIdx = (2 + (lunarMonth - 1)) % 12;
+    // 逆数时辰：time idx 从子(0)开始
+    const timeIdx = DIZHI.indexOf(shichen);
+    // 命宫 = 顺到月宫后再逆数时辰宫数
+    const mingIdx = (monthIdx - timeIdx + 12) % 12;
+    return mingIdx;
 }
 
 /**
- * 安身宫：寅宫起正月顺数到生月，再顺数到生时
+ * 安身宫：从寅宫(2)起正月顺数到生月，再顺数到生时
  */
 function calcShenPalace(lunarMonth, shichen) {
-    const monthIdx = (2 + lunarMonth - 1) % 12;
-    const timeIdx  = DIZHI.indexOf(shichen);
-    return (monthIdx + timeIdx) % 12;
+    const monthIdx = (2 + (lunarMonth - 1)) % 12;
+    const timeIdx = DIZHI.indexOf(shichen);
+    const shenIdx = (monthIdx + timeIdx) % 12;
+    return shenIdx;
 }
 
-// ==================== 紫微星 ====================
+// ==================== 紫微星安法 ====================
 
 /**
- * 安紫微星（付老师/传统算法：只加不减到整除，阳退阴进）
+ * 正统紫微星定位（五虎遁年安紫微）
+ * 紫微星位置由农历月日推算：
+ * 口诀：以生月数，寅宫起子，寻至生日所在宫，即为紫微所在宫。
  *
- * 口诀：生日除局商为月，一自寅起紫微定。只加不减到整除，阳退阴进记心中。
+ * 标准算法：
+ *  1. 取生日(1-30)，按五行局数查表求"寅宫起子"到紫微落宫
+ *  2. 本工具简化为：以生月为基，以出生日在该局中的宫位偏移
+ *     实际采用五行局（水2/木3/金4/土5/火6）查表方案
  *
- * 步骤：
- *   1. 用农历日数 ÷ 五行局数；若整除，商数即组号
- *   2. 若不能整除，日数不断加1直到整除；记录所加的数(added)
- *   3. 商数从寅(1)起数，商=1→寅, 2→卯...得到基础宫位
- *   4. 若added>0：奇数→逆退added位；偶数→顺进added位
+ * 正统完整实现：
+ *   根据生年天干+地支确定命宫五行局数，
+ *   然后用以下口诀：
+ *   水二局 子宫起1，木三局 寅宫起1，金四局 申宫起1，土五局 午宫起1，火六局 亥宫起1
+ *   顺布到生日数，落到哪个宫就是紫微宫。
  *
- * @param {number} lunarDay  - 农历日(1-30)
- * @param {number} wuxingJu  - 命宫纳音五行局数（2/3/4/5/6），必须用纳音法！
+ * @param {number} lunarMonth - 农历月份
+ * @param {number} lunarDay   - 农历日(1-30)
+ * @param {string} yearGan    - 生年天干
+ * @param {number} mingIdx    - 命宫地支索引
  * @returns {number} 紫微星地支索引
  */
-function calcZiweiPosition(lunarDay, wuxingJu) {
-    let d     = lunarDay;
-    let added = 0;
-    while (d % wuxingJu !== 0) { d++; added++; }
-    const quotient = d / wuxingJu;
-    // 从寅起数quotient格（寅=1对应寅，寅地支索引=2）
-    let zhiIdx = (2 + quotient - 1) % 12;  // 寅(2)起，商数作步数
-    // 添加量处理：奇数退，偶数进
-    if (added > 0) {
-        if (added % 2 === 1) {
-            zhiIdx = (zhiIdx - added + 120) % 12;   // 退（逆）
-        } else {
-            zhiIdx = (zhiIdx + added) % 12;           // 进（顺）
-        }
-    }
-    return zhiIdx;
+function calcZiweiPosition(lunarMonth, lunarDay, yearGan, mingIdx) {
+    // 1. 根据命宫五行局确定起算宫位及局数
+    const wuxingJu = getMingWuxingJu(yearGan, mingIdx);
+    // 起始宫位（地支索引）
+    const startPalace = {
+        2: 0,   // 水二局，子宫起
+        3: 2,   // 木三局，寅宫起
+        4: 8,   // 金四局，申宫起
+        5: 6,   // 土五局，午宫起
+        6: 11   // 火六局，亥宫起
+    }[wuxingJu] || 2;
+
+    // 2. 从起始宫位顺数，每隔局数跳一宫，找到生日落宫
+    // 即：第1日在起始宫，第(1+局数)日在下一宫…
+    // 生日在哪组范围，紫微就在哪宫
+    const groupIdx = Math.ceil(lunarDay / wuxingJu) - 1;
+    const ziweiIdx = (startPalace + groupIdx) % 12;
+    return ziweiIdx;
 }
 
-// ==================== 十四主星 ====================
+/**
+ * 根据年天干+命宫地支，查命宫五行局
+ * 五虎遁年：
+ *   甲己年生 → 土五局
+ *   乙庚年生 → 金四局
+ *   丙辛年生 → 水二局
+ *   丁壬年生 → 木三局
+ *   戊癸年生 → 火六局
+ *
+ * 严格而言还需看命宫纳音，此处按年干五虎遁简化（精度满足编剧用途）
+ */
+function getMingWuxingJu(yearGan, mingIdx) {
+    const ganJuMap = {
+        '甲':5,'己':5,
+        '乙':4,'庚':4,
+        '丙':2,'辛':2,
+        '丁':3,'壬':3,
+        '戊':6,'癸':6
+    };
+    return ganJuMap[yearGan] || 3;
+}
+
+// ==================== 十四主星安法 ====================
 
 /**
- * 安十四主星
- *
- * 紫微系（逆布）：
- *   口诀：紫微天机逆行旁，隔一阳武天同当，又隔二位廉贞地
- *   紫微(±0) → 天机(-1) → [空] → 太阳(-3) → 武曲(-4) → 天同(-5) → [空空] → 廉贞(-8)
- *
- * 天府位置：紫微宫 + 天府宫 ≡ 4 (mod 12)  [Bug#1 修正]
- *   tianfuIdx = (4 - ziweiIdx + 12) % 12
+ * 正统安主星：
+ * 紫微系（逆布）：紫微-天机-〇-太阳-武曲-天同-〇-〇-廉贞
+ *   逆数：紫微在某宫，天机在其前一宫(逆)，太阳在紫微后退2宫，以此类推
+ *   紫微系布局（从紫微宫逆时针）：
+ *     紫微(+0), 天机(-1), 太阳(-2), 武曲(-3), 天同(-4), 廉贞(-5)
+ *   （廉贞在紫微逆数第5宫）
  *
  * 天府系（顺布）：
- *   口诀：天府太阴与贪狼，巨门天相及天梁，七杀空三破军位
- *   天府(+0) → 太阴(+1) → 贪狼(+2) → 巨门(+3) → 天相(+4) → 天梁(+5) → 七杀(+6) → [空3] → 破军(+10)
+ *   天府与紫微在宫位上以"子午"对称（相隔宫数 = 两星地支差）
+ *   口诀：天府与紫微隔12宫相对（子对午、丑对未...以命宫地支为轴）
+ *   实际：紫微 + 天府 在地支上"隔宫相对"，具体：
+ *     天府宫 = 紫微宫的"对冲宫"（相差6）再向前调整
+ *   标准算法：天府宫 = (紫微宫 + 紫微宫)对应宫，即：
+ *     天府所在宫地支 = 12宫中与紫微宫对应的"同宫序"
+ *     精确：天府 = 寅 起，顺时针数 = 紫微逆方向相对的宫
+ *     口诀：紫微在午(6)，天府在午(6)，同宫；紫微在子，天府在子...
+ *     实际标准表：天府宫位与紫微宫位之和 = 12（即互补）
+ *     所以：tianfuIdx = (12 - ziweiIdx) % 12
+ *   天府系（从天府宫顺时针）：
+ *     天府(+0), 太阴(+1), 贪狼(+2), 巨门(+3), 天相(+4), 天梁(+5), 七杀(+6), 破军(+10)
  *
- * @param {number} ziweiIdx
- * @returns {Object} { '紫微': idx, '天机': idx, ... }（14个键）
+ * @param {number} ziweiIdx - 紫微星地支索引
+ * @returns {Object} 十四主星位置表 { 星名: 地支索引 }
  */
 function calcMainStars(ziweiIdx) {
-    const s = {};
-    // 紫微系
-    s['紫微'] = ziweiIdx;
-    s['天机'] = (ziweiIdx - 1 + 12) % 12;
-    s['太阳'] = (ziweiIdx - 3 + 12) % 12;  // 跳1空宫
-    s['武曲'] = (ziweiIdx - 4 + 12) % 12;
-    s['天同'] = (ziweiIdx - 5 + 12) % 12;
-    s['廉贞'] = (ziweiIdx - 8 + 12) % 12;  // 跳2空宫 [Bug#2 修正：旧为-5]
+    const stars = {};
 
-    // 天府位置 [Bug#1 修正：旧为 (12-ziweiIdx)%12]
-    const tf = (4 - ziweiIdx + 12) % 12;
-    // 天府系
-    s['天府'] = tf;
-    s['太阴'] = (tf + 1)  % 12;
-    s['贪狼'] = (tf + 2)  % 12;
-    s['巨门'] = (tf + 3)  % 12;
-    s['天相'] = (tf + 4)  % 12;
-    s['天梁'] = (tf + 5)  % 12;
-    s['七杀'] = (tf + 6)  % 12;
-    s['破军'] = (tf + 10) % 12;  // 跳3空宫
-    return s;
-}
+    // —— 紫微系（逆布，从紫微宫逆时针排列）——
+    stars['紫微'] = ziweiIdx;
+    stars['天机'] = (ziweiIdx - 1 + 12) % 12;
+    // 太阳：紫微逆2
+    stars['太阳'] = (ziweiIdx - 2 + 12) % 12;
+    stars['武曲'] = (ziweiIdx - 3 + 12) % 12;
+    stars['天同'] = (ziweiIdx - 4 + 12) % 12;
+    stars['廉贞'] = (ziweiIdx - 5 + 12) % 12;  // 廉贞在紫微逆5
 
-// ==================== 四化 ====================
+    // —— 天府系（顺布，从天府宫顺时针排列）——
+    const tianfuIdx = (12 - ziweiIdx) % 12;
+    stars['天府'] = tianfuIdx;
+    stars['太阴'] = (tianfuIdx + 1) % 12;
+    stars['贪狼'] = (tianfuIdx + 2) % 12;
+    stars['巨门'] = (tianfuIdx + 3) % 12;
+    stars['天相'] = (tianfuIdx + 4) % 12;
+    stars['天梁'] = (tianfuIdx + 5) % 12;
+    stars['七杀'] = (tianfuIdx + 6) % 12;
+    // 破军：天府系末尾，距天府+10
+    stars['破军'] = (tianfuIdx + 10) % 12;
 
-/**
- * 生年四化表（跨派共识）
- * 天干 → { 化禄, 化权, 化科, 化忌 }
- */
-const SIHUA_TABLE = {
-    '甲': { '化禄':'廉贞', '化权':'破军', '化科':'武曲', '化忌':'太阳' },
-    '乙': { '化禄':'天机', '化权':'天梁', '化科':'紫微', '化忌':'太阴' },
-    '丙': { '化禄':'天同', '化权':'天机', '化科':'文昌', '化忌':'廉贞' },
-    '丁': { '化禄':'太阴', '化权':'天同', '化科':'天机', '化忌':'巨门' },
-    '戊': { '化禄':'贪狼', '化权':'太阴', '化科':'右弼', '化忌':'天机' },
-    '己': { '化禄':'武曲', '化权':'贪狼', '化科':'天梁', '化忌':'文曲' },
-    '庚': { '化禄':'太阳', '化权':'武曲', '化科':'太阴', '化忌':'天同' },
-    '辛': { '化禄':'巨门', '化权':'太阳', '化科':'文曲', '化忌':'文昌' },
-    '壬': { '化禄':'天梁', '化权':'紫微', '化科':'左辅', '化忌':'武曲' },
-    '癸': { '化禄':'破军', '化权':'巨门', '化科':'太阴', '化忌':'贪狼' }
-};
-
-/**
- * 计算四化落宫（含辅星：文昌/文曲/左辅/右弼）
- * @param {string} yearGan
- * @param {Object} mainStars  - calcMainStars() 的返回值
- * @param {Object} [minorStars] - calcMinorStars() 的返回值（可选，用于文昌文曲左辅右弼化）
- * @returns {{ '化禄': { star, palaceIdx, palaceDizhi }, ... }}
- */
-function calcFourTransformations(yearGan, mainStars, minorStars) {
-    const rule = SIHUA_TABLE[yearGan] || SIHUA_TABLE['甲'];
-    const result = {};
-    for (const [sihua, star] of Object.entries(rule)) {
-        // 先查主星，再查辅星
-        let palaceIdx = mainStars[star];
-        if (palaceIdx === undefined && minorStars && minorStars[star]) {
-            palaceIdx = minorStars[star].palaceIdx;
-        }
-        result[sihua] = {
-            star,
-            palaceIdx:   palaceIdx !== undefined ? palaceIdx : -1,
-            palaceDizhi: palaceIdx !== undefined ? DIZHI[palaceIdx] : '未知'
-        };
-    }
-    return result;
-}
-
-// ==================== 三方四正 ====================
-
-const SANHE_GROUPS = [[2,6,10],[8,0,4],[11,3,7],[5,9,1]];
-
-/**
- * 计算三方四正
- * 三方 = 命宫 + 财帛宫(+4) + 官禄宫(+8)
- * 四正 = 三方 + 迁移宫(对冲, +6)
- * @param {number} mingIdx
- * @returns {{ mingIdx, caiboIdx, guanluIdx, qianyiIdx }}
- */
-function calcSanFangSiZheng(mingIdx) {
-    const qianyiIdx = (mingIdx + 6) % 12;
-    let caiboIdx = (mingIdx + 4) % 12;
-    let guanluIdx = (mingIdx + 8) % 12;
-    // 优先从三合组精确匹配
-    for (const g of SANHE_GROUPS) {
-        if (g.includes(mingIdx)) {
-            const others = g.filter(i => i !== mingIdx);
-            caiboIdx  = others.find(i => (i - mingIdx + 12) % 12 === 4) ?? caiboIdx;
-            guanluIdx = others.find(i => (i - mingIdx + 12) % 12 === 8) ?? guanluIdx;
-            break;
-        }
-    }
-    return { mingIdx, caiboIdx, guanluIdx, qianyiIdx };
-}
-
-// ==================== 六吉六煞 ====================
-
-/** 天魁天钺贵人表（年干 → 宫位索引）[Bug#4 修正] */
-const KUIYUE = {
-    '甲':{魁:1,钺:7},'戊':{魁:1,钺:7},'庚':{魁:1,钺:7},
-    '乙':{魁:0,钺:8},'己':{魁:0,钺:8},   // 申=8（旧代码6是错的）
-    '丙':{魁:11,钺:9},'丁':{魁:11,钺:9},
-    '壬':{魁:3,钺:5},'癸':{魁:3,钺:5},   // 卯=3，巳=5（旧代码4/4是错的）
-    '辛':{魁:6,钺:2}                        // 午=6，寅=2（旧代码3/3是错的）
-};
-
-/** 禄存宫位表（年干）[Bug#5 修正：丁=6，己=6] */
-const LUXUN_BY_GAN = { '甲':2,'乙':3,'丙':5,'丁':6,'戊':5,'己':6,'庚':8,'辛':9,'壬':11,'癸':0 };
-
-/** 火星起宫（年支三合局）*/
-const HUOXING_START = {
-    2:1,6:1,10:1,   // 寅午戌 → 丑(1)
-    8:2,0:2,4:2,    // 申子辰 → 寅(2)
-    5:3,9:3,1:3,    // 巳酉丑 → 卯(3)
-    11:9,3:9,7:9    // 亥卯未 → 酉(9)
-};
-
-/** 铃星起宫（年支三合局）*/
-const LINGXING_START = { 2:3,6:3,10:3 };  // 寅午戌→卯(3)，其余默认戌(10)
-
-/**
- * 计算六吉六煞位置
- * [Bug#3 修正] 文昌文曲按生时，不是年支
- * [Bug#6 修正] 火铃按年支起宫+生时顺数，不是仅年支
- *
- * @param {string} yearGan     - 生年天干
- * @param {number} yearZhiIdx  - 生年地支索引
- * @param {number} lunarMonth  - 农历月(1-12)
- * @param {number} shichenIdx  - 生时地支索引(0=子…11=亥)
- * @returns {Object} { '文昌': { palaceIdx, type }, ... }
- */
-function calcMinorStars(yearGan, yearZhiIdx, lunarMonth, shichenIdx) {
-    const shi = shichenIdx ?? 0;
-    const result = {};
-
-    // ── 文昌/文曲（生时安，非年支）[Bug#3 修正] ──
-    result['文昌'] = { palaceIdx: (10 - shi + 12) % 12, type: '吉' };  // 戌(10)起逆数
-    result['文曲'] = { palaceIdx: (4  + shi) % 12,       type: '吉' };  // 辰(4)起顺数
-
-    // ── 天魁/天钺（年干贵人表）[Bug#4 修正] ──
-    const ky = KUIYUE[yearGan] || { 魁:1, 钺:7 };
-    result['天魁'] = { palaceIdx: ky.魁, type: '吉' };
-    result['天钺'] = { palaceIdx: ky.钺, type: '吉' };
-
-    // ── 左辅/右弼（生月安）──
-    result['左辅'] = { palaceIdx: (4  + lunarMonth - 1) % 12, type: '吉' };  // 辰(4)起正月顺
-    result['右弼'] = { palaceIdx: (10 - lunarMonth + 1 + 12) % 12, type: '吉' }; // 戌(10)起正月逆
-
-    // ── 禄存/擎羊/陀罗（年干）[Bug#5 修正] ──
-    const lu = LUXUN_BY_GAN[yearGan] ?? 2;
-    result['禄存'] = { palaceIdx: lu,                   type: '吉' };
-    result['擎羊'] = { palaceIdx: (lu + 1) % 12,        type: '煞' };
-    result['陀罗'] = { palaceIdx: (lu - 1 + 12) % 12,   type: '煞' };
-
-    // ── 火星/铃星（年支三合局起宫+生时）[Bug#6 修正] ──
-    const fireStart = HUOXING_START[yearZhiIdx] ?? 2;
-    const bellStart = LINGXING_START[yearZhiIdx] ?? 10;
-    result['火星'] = { palaceIdx: (fireStart + shi) % 12, type: '煞' };
-    result['铃星'] = { palaceIdx: (bellStart + shi) % 12, type: '煞' };
-
-    // ── 地劫/地空（生时安）──
-    // 地劫：亥(11)起子时顺数  地空：亥(11)起子时逆数
-    result['地劫'] = { palaceIdx: (11 + shi) % 12,       type: '煞' };
-    result['地空'] = { palaceIdx: (11 - shi + 12) % 12,  type: '煞' };
-
-    // ── 天马（年支三合局）──
-    const TIANMA = { 2:8,6:8,10:8, 8:2,0:2,4:2, 5:11,9:11,1:11, 11:5,3:5,7:5 };
-    result['天马'] = { palaceIdx: TIANMA[yearZhiIdx] ?? 8, type: '吉' };
-
-    return result;
+    return stars;
 }
 
 // ==================== 星曜庙旺利陷 ====================
 
 /**
- * 各主星庙旺利陷表
- * 数据来源：《紫微斗数全书》
+ * 各主星在十二地支宫位的庙旺利陷等级
+ * 数据来源：正统紫微斗数经典（《紫微斗数全书》）
  * 等级：庙(4) > 旺(3) > 利(2) > 平(1) > 陷(0)
- * 索引：0=子, 1=丑, ..., 11=亥
  */
 const STAR_BRIGHTNESS_TABLE = {
-    '紫微': [1,2,4,1,2,3,3,2,1,3,2,4],
+    '紫微': [1,2,4,1,2,3,3,2,1,3,2,4],  // 子丑寅卯辰巳午未申酉戌亥
     '天机': [2,4,1,3,2,4,1,3,2,4,1,3],
     '太阳': [0,1,2,3,4,4,4,3,2,1,0,1],
     '武曲': [3,2,1,3,2,1,3,2,1,4,2,1],
@@ -351,663 +208,568 @@ const STAR_BRIGHTNESS_TABLE = {
     '七杀': [2,1,3,1,2,4,2,1,3,1,2,4],
     '破军': [1,0,2,0,1,3,1,0,2,0,1,3]
 };
+
 const BRIGHTNESS_NAMES = ['陷','平','利','旺','庙'];
 
 function getStarBrightness(starName, palaceIdx) {
-    const t = STAR_BRIGHTNESS_TABLE[starName];
-    if (!t) return '平';
-    return BRIGHTNESS_NAMES[t[palaceIdx] ?? 0];
+    const table = STAR_BRIGHTNESS_TABLE[starName];
+    if (!table) return '平';
+    return BRIGHTNESS_NAMES[table[palaceIdx] || 0];
 }
 
-// ==================== 完整排盘入口 ====================
+// ==================== 四化：生年天干驱动 ====================
 
 /**
- * 排一张完整命盘（最小化输入版本）
+ * 正统四化表（根据生年天干）
+ * 来源：《紫微斗数全书》及《飞星紫微》主流版本
  *
- * @param {Object} input
- * @param {number} input.year       - 公历出生年份
- * @param {number} input.lunarMonth - 农历生月(1-12)
- * @param {number} input.lunarDay   - 农历生日(1-30)
- * @param {string} input.shichen    - 生时地支名('子'~'亥')
- * @param {string} [input.gender]   - 'male'/'female'
- *
- * @returns {Object} 标准命盘 JSON（见 references/api-spec.md）
+ *  天干  化禄    化权    化科    化忌
+ *  甲    廉贞    破军    武曲    太阳
+ *  乙    天机    天梁    紫微    太阴
+ *  丙    天同    天机    文昌    廉贞
+ *  丁    太阴    天同    天机    巨门
+ *  戊    贪狼    太阴    右弼    天机
+ *  己    武曲    贪狼    天梁    文曲
+ *  庚    太阳    武曲    太阴    天同
+ *  辛    巨门    太阳    文曲    文昌
+ *  壬    天梁    紫微    左辅    武曲
+ *  癸    破军    巨门    太阴    贪狼
  */
-function generateChart(input) {
-    const { year, lunarMonth, lunarDay, shichen, gender = 'male' } = input;
+const SIHUA_BY_TIANGAN = {
+    '甲': { '化禄':'廉贞', '化权':'破军', '化科':'武曲', '化忌':'太阳' },
+    '乙': { '化禄':'天机', '化权':'天梁', '化科':'紫微', '化忌':'太阴' },
+    '丙': { '化禄':'天同', '化权':'天机', '化科':'文昌', '化忌':'廉贞' },
+    '丁': { '化禄':'太阴', '化权':'天同', '化科':'天机', '化忌':'巨门' },
+    '戊': { '化禄':'贪狼', '化权':'太阴', '化科':'右弼', '化忌':'天机' },
+    '己': { '化禄':'武曲', '化权':'贪狼', '化科':'天梁', '化忌':'文曲' },
+    '庚': { '化禄':'太阳', '化权':'武曲', '化科':'太阴', '化忌':'天同' },
+    '辛': { '化禄':'巨门', '化权':'太阳', '化科':'文曲', '化忌':'文昌' },
+    '壬': { '化禄':'天梁', '化权':'紫微', '化科':'左辅', '化忌':'武曲' },
+    '癸': { '化禄':'破军', '化权':'巨门', '化科':'太阴', '化忌':'贪狼' }
+};
 
-    const shichenIdx = DIZHI.indexOf(shichen);
-    const { gan: yearGan, zhi: yearZhi, zhiIdx: yearZhiIdx } = yearToGanZhi(year);
-    const mingIdx    = calcMingPalace(lunarMonth, shichen);
-    const shenIdx    = calcShenPalace(lunarMonth, shichen);
-
-    // 安宫干（五虎遁）
-    const palaceGans = calcPalaceGan(yearGan);
-    const mingGan    = palaceGans[mingIdx];    // 命宫宫干
-    const mingDz     = DIZHI[mingIdx];         // 命宫地支
-
-    // 五行局：用命宫纳音（正统）
-    const wuxingJu = calcWuxingJuNaYin(mingGan, mingDz);
-
-    // 紫微定宫（付老师真实算法）
-    const ziweiIdx   = calcZiweiPosition(lunarDay, wuxingJu);
-    const mainStars  = calcMainStars(ziweiIdx);
-    const minorStars = calcMinorStars(yearGan, yearZhiIdx, lunarMonth, shichenIdx);
-    const fourTrans  = calcFourTransformations(yearGan, mainStars, minorStars);
-    const sanfang    = calcSanFangSiZheng(mingIdx);
-
-    // 十二宫星曜汇总
-    const palaces = Array.from({ length: 12 }, (_, i) => {
-        const name = PALACE_NAMES[(i - mingIdx + 12) % 12];
-        const stars = Object.entries(mainStars)
-            .filter(([,idx]) => idx === i).map(([s]) => s);
-        const minor = Object.entries(minorStars)
-            .filter(([,v]) => v.palaceIdx === i).map(([s]) => s);
-        const sihua = Object.entries(fourTrans)
-            .filter(([,v]) => v.palaceIdx === i).map(([s]) => s);
-        return {
-            dizhi: DIZHI[i],
-            palaceIdx: i,
-            palaceName: name,
-            palaceGan: palaceGans[i],
-            mainStars: stars,
-            minorStars: minor,
-            sihua,
-            brightness: stars.reduce((acc, s) => {
-                acc[s] = getStarBrightness(s, i); return acc;
-            }, {})
+/**
+ * 计算命盘四化，返回每颗四化星的落宫
+ * @param {string} yearGan   - 生年天干
+ * @param {Object} mainStars - 十四主星位置表
+ * @returns {Object} { 化禄:{ star, palaceIdx }, 化权:..., 化科:..., 化忌:... }
+ */
+function calcFourTransformations(yearGan, mainStars) {
+    const rule = SIHUA_BY_TIANGAN[yearGan] || SIHUA_BY_TIANGAN['甲'];
+    const result = {};
+    for (const [sihuaName, starName] of Object.entries(rule)) {
+        const palaceIdx = mainStars[starName];
+        result[sihuaName] = {
+            star: starName,
+            palaceIdx: (palaceIdx !== undefined) ? palaceIdx : -1,
+            palaceDizhi: (palaceIdx !== undefined) ? DIZHI[palaceIdx] : '未知'
         };
-    });
+    }
+    return result;
+}
+
+// ==================== 三方四正 ====================
+
+/**
+ * 计算命宫的三方四正
+ * 三方：命宫所在地支三合局的另外两宫（财帛、官禄）
+ * 四正：加上对宫（迁移宫）
+ * @param {number} mingIdx - 命宫地支索引
+ * @returns {Object} { 命宫, 财帛宫, 官禄宫, 迁移宫 } 各自地支索引
+ */
+function calcSanFangSiZheng(mingIdx) {
+    // 迁移宫：命宫对面，差6
+    const qianyiIdx = (mingIdx + 6) % 12;
+    // 找命宫所在三合组
+    let sanheGroup = null;
+    for (const group of SANHE_GROUPS) {
+        if (group.includes(mingIdx)) {
+            sanheGroup = group;
+            break;
+        }
+    }
+    // 财帛宫、官禄宫：三合组中除命宫外的另外两宫
+    const others = sanheGroup ? sanheGroup.filter(i => i !== mingIdx) : [];
+    // 财帛宫在命宫顺数第4位（命宫顺数：命→父→福→田→官→交→迁→疾→财→子→妻→兄→命）
+    // 实际上三方：在三合组里，顺时针方向前后两宫分别是财帛和官禄
+    // 口诀：命前为财，财前为官（三合同一组，地支差4和8）
+    const caiboCandidates = others.filter(i => (i - mingIdx + 12) % 12 === 4 || (i - mingIdx + 12) % 12 === 8);
+    let caiboIdx = caiboCandidates.find(i => (i - mingIdx + 12) % 12 === 4);
+    let guanluIdx = caiboCandidates.find(i => (i - mingIdx + 12) % 12 === 8);
+    // 若三合找不到（不应发生），用偏移4/8补救
+    if (caiboIdx === undefined) caiboIdx = (mingIdx + 4) % 12;
+    if (guanluIdx === undefined) guanluIdx = (mingIdx + 8) % 12;
+    return {
+        mingIdx,
+        caiboIdx,
+        guanluIdx,
+        qianyiIdx
+    };
+}
+
+// ==================== 六吉六煞（部分按年干/月安）====================
+
+/**
+ * 文昌、文曲：按生年地支安（年支遁文昌/文曲）
+ * 擎羊、陀罗：按生年天干安（在禄星前后一位）
+ * 火星、铃星：按生年地支安
+ * 左辅、右弼：按生月安
+ * 天魁、天钺：按生年天干安
+ *
+ * 注：此处仅实现关键吉煞，精度满足编剧角色设计需求
+ */
+
+// 文昌按年支（子→戌，丑→酉，...）
+const WENCHANG_BY_ZHISUP = { 0:10, 1:9, 2:8, 3:7, 4:6, 5:5, 6:4, 7:3, 8:2, 9:1, 10:0, 11:11 };
+// 文曲按年支（子→辰，丑→卯，...）
+const WENQU_BY_ZHI = { 0:4, 1:3, 2:2, 3:1, 4:0, 5:11, 6:10, 7:9, 8:8, 9:7, 10:6, 11:5 };
+
+// 天魁/天钺按年天干
+const KUIYUE = {
+    '甲':{魁:1,钺:7},'戊':{魁:1,钺:7},'庚':{魁:1,钺:7},
+    '乙':{魁:0,钺:6},'己':{魁:0,钺:6},
+    '丙':{魁:11,钺:9},'丁':{魁:11,钺:9},
+    '壬':{魁:4,钺:4},'癸':{魁:4,钺:4},
+    '辛':{魁:3,钺:3}
+};
+
+// 禄存（按年天干，同时出擎羊=禄存前一位，陀罗=禄存后一位）
+const LUXUN_BY_GAN = { '甲':2,'乙':3,'丙':5,'丁':5,'戊':5,'己':7,'庚':8,'辛':10,'壬':11,'癸':0 };
+
+/**
+ * 计算六吉六煞位置
+ */
+function calcMinorStars(yearGan, yearZhiIdx, lunarMonth) {
+    const result = {};
+
+    // 文昌、文曲
+    result['文昌'] = { palaceIdx: WENCHANG_BY_ZHISUP[yearZhiIdx] ?? 0, type: '吉' };
+    result['文曲'] = { palaceIdx: WENQU_BY_ZHI[yearZhiIdx] ?? 0, type: '吉' };
+
+    // 天魁、天钺
+    const ky = KUIYUE[yearGan] || { 魁:1, 钺:7 };
+    result['天魁'] = { palaceIdx: ky.魁, type: '吉' };
+    result['天钺'] = { palaceIdx: ky.钺, type: '吉' };
+
+    // 左辅：生月从辰(4)起正月，顺布
+    result['左辅'] = { palaceIdx: (4 + lunarMonth - 1) % 12, type: '吉' };
+    // 右弼：生月从戌(10)起正月，逆布
+    result['右弼'] = { palaceIdx: (10 - (lunarMonth - 1) + 12) % 12, type: '吉' };
+
+    // 禄存
+    const luxunIdx = LUXUN_BY_GAN[yearGan] ?? 2;
+    result['禄存'] = { palaceIdx: luxunIdx, type: '吉' };
+    // 擎羊 = 禄存前一宫（顺时针）
+    result['擎羊'] = { palaceIdx: (luxunIdx + 1) % 12, type: '煞' };
+    // 陀罗 = 禄存后一宫（逆时针）
+    result['陀罗'] = { palaceIdx: (luxunIdx - 1 + 12) % 12, type: '煞' };
+
+    // 火星、铃星（年支安，简化版）
+    result['火星'] = { palaceIdx: (yearZhiIdx + 2) % 12, type: '煞' };
+    result['铃星'] = { palaceIdx: (yearZhiIdx + 8) % 12, type: '煞' };
+
+    // 地空：生时逆布（时支逆数）
+    result['地空'] = { palaceIdx: 0, type: '煞' };  // 占位，需时辰参数
+    result['地劫'] = { palaceIdx: 6, type: '煞' };  // 占位
+
+    return result;
+}
+
+// ==================== 生年天干/地支推算 ====================
+
+/**
+ * 根据出生年份（公历）推算天干地支
+ * @param {number} year - 公历年份（如1990）
+ * @returns {{ gan: string, zhi: string, zhiIdx: number }}
+ */
+function yearToGanZhi(year) {
+    // 天干：(年份-4) % 10，甲=0
+    const ganIdx = (year - 4 + 40) % 10;
+    // 地支：(年份-4) % 12，子=0
+    const zhiIdx = (year - 4 + 48) % 12;
+    return {
+        gan: TIANGAN[ganIdx],
+        zhi: DIZHI[zhiIdx],
+        zhiIdx,
+        ganIdx
+    };
+}
+
+// ==================== 主入口：排盘 ====================
+
+/**
+ * 1152盘排盘主入口
+ * -------------------------------------------------------
+ * 坐标系：144盘 × 8刻 = 1152 唯一命盘
+ *
+ * 三层坐标：
+ *  第一层（~12种）：时代 × 年龄组 → 年干（10天干，实际出现约3-4种/时代×年龄）
+ *  第二层（~12种）：性别 × 年支 → 农历月日 → 命宫地支（12宫）
+ *  第三层（8刻）：  步骤3用户选择的子类型序号 keIdx(0-7) → 锁定时辰细刻
+ *
+ * 用户每多选一个维度，就缩小一层坐标，最终锁定唯一盘。
+ *
+ * @param {Object} userInputs - { era, gender, age, name, keIdx(0-7可选), ... }
+ * @returns {Object} 完整命盘数据（含唯一 chartUid）
+ */
+function generate144Chart(userInputs) {
+    const { era, gender, age: ageGroup, keIdx: rawKeIdx } = userInputs;
+
+    // ── 第一层：时代+年龄 → 年份 → 年干地支 ──────────────────────────
+    const repYear = getRepresentativeYear(era, ageGroup);
+    const { gan: yearGan, zhi: yearZhi, zhiIdx: yearZhiIdx } = yearToGanZhi(repYear);
+
+    // ── 第二层：性别+年干+年支 → 农历月日 ────────────────────────────
+    const { lunarMonth, lunarDay } = deriveLunarBirthdate(era, gender, yearGan, yearZhiIdx);
+
+    // ── 第三层：keIdx = 步骤3选择的刻序号(0-7) → 时辰细刻 ───────────
+    // keIdx未传时（步骤3尚未选择），用派生值产生8种候选时辰，展示用
+    const keIdx = (rawKeIdx !== undefined && rawKeIdx !== null)
+        ? (parseInt(rawKeIdx) % 8)
+        : deriveDefaultKe(era, gender, yearGan);
+
+    // 时辰：12时辰 × 每时辰8刻 = 96刻
+    // 本引擎把12时辰的第0-7刻对应到步骤3的8个子选项
+    // 基础时辰由前两层决定，刻度由keIdx决定
+    const baseShichen = deriveShichen(era, gender, yearGan);
+    const baseShichenIdx = DIZHI.indexOf(baseShichen);
+    // 每个keIdx对应"基础时辰±偏移"中的不同时辰（每2刻换一个时辰，共覆盖4个相邻时辰）
+    // ke 0-1 → 基础时辰-1，ke 2-3 → 基础时辰，ke 4-5 → 基础时辰+1，ke 6-7 → 基础时辰+2
+    const shichenOffset = Math.floor(keIdx / 2) - 1;
+    const finalShichenIdx = (baseShichenIdx + shichenOffset + 12) % 12;
+    const shichen = DIZHI[finalShichenIdx];
+    // 刻内精度（每刻对应不同的日干，影响词汇层）
+    const keInShichen = keIdx % 2; // 0=上刻 1=下刻
+
+    // ── 排盘 ─────────────────────────────────────────────────────────
+    const mingIdx  = calcMingPalace(lunarMonth, shichen);
+    const shenIdx  = calcShenPalace(lunarMonth, shichen);
+    const ziweiIdx = calcZiweiPosition(lunarMonth, lunarDay, yearGan, mingIdx);
+    const mainStars = calcMainStars(ziweiIdx);
+    const fourTrans = calcFourTransformations(yearGan, mainStars);
+    const sanfang  = calcSanFangSiZheng(mingIdx);
+    const minorStars = calcMinorStars(yearGan, yearZhiIdx, lunarMonth);
+
+    // ── 命宫分析 ─────────────────────────────────────────────────────
+    const mingStars = getStarsInPalace(mainStars, mingIdx);
+    const patternType = classifyPattern(mingStars, fourTrans, mainStars, mingIdx);
+    const sihuaType   = classifySihuaType(fourTrans, mingIdx, sanfang);
+
+    // ── 命宫主星亮度 ─────────────────────────────────────────────────
+    const mingStarBrightness = {};
+    for (const star of mingStars) {
+        mingStarBrightness[star] = getStarBrightness(star, mingIdx);
+    }
+
+    // ── 四化落宫摘要（用于词汇驱动）────────────────────────────────
+    const sihuaPalaceMap = {}; // { 化禄: '命宫', 化权: '官禄宫', ... }
+    for (const [sihua, data] of Object.entries(fourTrans)) {
+        if (data.palaceIdx >= 0) {
+            sihuaPalaceMap[sihua] = PALACE_NAMES[(data.palaceIdx - mingIdx + 12) % 12] || PALACE_NAMES[0];
+        }
+    }
+
+    // ── 生成8种人格子类型（步骤3展示用）────────────────────────────
+    const personalityTypes = generatePersonalityTypes(patternType, sihuaType, yearGan, gender);
+
+    // ── 唯一盘坐标 chartUid ──────────────────────────────────────────
+    // 格式：era(1位) + gender(1位) + yearGan(1位) + mingIdx(2位) + keIdx(1位)
+    const chartUid = buildChartUid(era, gender, yearGan, yearZhiIdx, lunarMonth, mingIdx, keIdx);
 
     return {
-        input: { year, lunarMonth, lunarDay, shichen, gender },
-        yearGanZhi: { gan: yearGan, zhi: yearZhi },
-        wuxingJu,
-        wuxingJuName: {2:'水二局',3:'木三局',4:'金四局',5:'土五局',6:'火六局'}[wuxingJu] || '',
-        mingPalace:  { dizhi: DIZHI[mingIdx],  index: mingIdx,  gan: mingGan },
-        shenPalace:  { dizhi: DIZHI[shenIdx],  index: shenIdx },
-        ziweiPalace: { dizhi: DIZHI[ziweiIdx], index: ziweiIdx },
-        palaceGans,
-        palaces,
+        // ── 基础参数（坐标） ──
+        era, gender, ageGroup, repYear,
+        yearGan, yearZhi, lunarMonth, lunarDay,
+        shichen, keIdx, keInShichen,
+        // ── 宫位 ──
+        mingIdx, shenIdx,
+        mingDizhi: DIZHI[mingIdx],
+        shenDizhi: DIZHI[shenIdx],
+        // ── 星曜 ──
         mainStars,
         minorStars,
-        fourTransformations: fourTrans,
-        sanFangSiZheng: sanfang,
-        _meta: {
-            engine: 'ziwei-engine v3.0',
-            source: '跨派共识（付老师+梁若瑜+令东来）',
-            wuxingMethod: '命宫纳音五行局（付老师正统算法）',
-            generatedAt: new Date().toISOString()
-        }
+        fourTrans,
+        sanfang,
+        sihuaPalaceMap,
+        // ── 分析结果 ──
+        mingStars,
+        mingStarBrightness,
+        patternType,
+        sihuaType,
+        personalityTypes,
+        // ── 格局展示（兼容旧UI） ──
+        pattern: buildPatternDisplay(mingStars, patternType, mainStars, mingIdx),
+        patternTypeDisplay: patternType,
+        // ── 唯一标识 ──
+        chartUid,
+        chartId: chartUid // 向后兼容
     };
 }
 
-// ==================== 宫干安法（五虎遁）+ 飞星宫干飞化 ====================
-//
-// 【飞星体系核心逻辑】（付老师体系）
-//
-// 第一步：安宫干
-//   口诀"五虎遁年起月法"——寅宫天干由年干决定，再顺布十二宫：
-//     甲己之年丙作首 → 年干甲/己，寅宫起丙
-//     乙庚之岁戊为头 → 年干乙/庚，寅宫起戊
-//     丙辛必定寻庚起 → 年干丙/辛，寅宫起庚
-//     丁壬壬位顺行流 → 年干丁/壬，寅宫起壬
-//     若问戊癸何方发，甲寅之上好追求 → 年干戊/癸，寅宫起甲
-//
-// 第二步：飞星飞化
-//   每个宫位都有宫干，宫干查四化表（SIHUA_TABLE），得到该宫飞出的四化落在哪个宫
-//   这就是"宫干飞化"，也叫"飞宫四化"
-
 /**
- * 五虎遁：年干 → 寅宫天干索引
- * 寅宫(地支索引=2)固定，此函数只返回天干索引
+ * 步骤3尚未选择时，派生默认keIdx（用于首次进入步骤3时展示）
  */
-const WUHU_DUAN = {
-    '甲':2, '己':2,   // 丙寅 (丙=TIANGAN[2])
-    '乙':4, '庚':4,   // 戊寅 (戊=TIANGAN[4])
-    '丙':6, '辛':6,   // 庚寅 (庚=TIANGAN[6])
-    '丁':8, '壬':8,   // 壬寅 (壬=TIANGAN[8])
-    '戊':0, '癸':0    // 甲寅 (甲=TIANGAN[0])
-};
-
-/**
- * 安十二宫宫干
- * 以命宫年干（即生年天干）为基准，五虎遁得到寅宫天干，再顺布十二宫
- *
- * 注意：宫干以"寅宫"为起点顺布，地支盘固定(子丑寅卯…亥)
- * 所以宫位 i 的天干索引 = (寅宫天干索引 + (i - 2 + 12)) % 10
- *                           = (寅宫天干索引 + i - 2 + 20) % 10
- *
- * @param {string} yearGan - 生年天干（不是大限/流年的年干，这里安本命宫干）
- * @returns {string[]} 12个地支宫位对应的天干，索引0=子宫天干…11=亥宫天干
- */
-function calcPalaceGan(yearGan) {
-    const yinGanIdx = WUHU_DUAN[yearGan] ?? 0;  // 寅宫(index=2)的天干索引
-    return DIZHI.map((_, i) => {
-        // i=0→子, i=1→丑, i=2→寅(起点)
-        // 关键：先 (i-2+12)%12 得到"距离寅宫的步数"，再 % 10 确保天干循环
-        const step   = (i - 2 + 12) % 12;
-        const ganIdx = (yinGanIdx + step) % 10;
-        return TIANGAN[ganIdx];
-    });
+function deriveDefaultKe(era, gender, yearGan) {
+    const ganIdx = TIANGAN.indexOf(yearGan);
+    const eraOff = { ancient:0, modern:1, contemporary:2 }[era] || 0;
+    const genOff = gender === 'female' ? 4 : 0;
+    return (ganIdx + eraOff + genOff) % 8;
 }
 
 /**
- * 飞星宫干飞化
- * 每个宫位的宫干飞出四化，落在哪个宫（查主星+辅星位置）
- *
- * @param {string[]} palaceGans   - calcPalaceGan() 返回的12宫天干数组
- * @param {Object}   mainStars    - calcMainStars() 返回的主星位置对象
- * @param {Object}   [minorStars] - calcMinorStars() 返回的辅星位置（可选，含文昌文曲左辅右弼）
- * @returns {Array}  12个宫位的飞化信息
+ * 生成唯一盘UID（确保同一用户选择→同一盘→同一描述）
  */
-function calcFlyingStars(palaceGans, mainStars, minorStars) {
-    return palaceGans.map((gan, i) => {
-        const rule = SIHUA_TABLE[gan] || {};
-        const sihua = {};
-        for (const [name, star] of Object.entries(rule)) {
-            let targetIdx = mainStars[star];
-            if (targetIdx === undefined && minorStars && minorStars[star]) {
-                targetIdx = minorStars[star].palaceIdx;
-            }
-            sihua[name] = {
-                star,
-                targetIdx:   targetIdx !== undefined ? targetIdx : -1,
-                targetDizhi: targetIdx !== undefined ? DIZHI[targetIdx] : '未知'
-            };
+function buildChartUid(era, gender, yearGan, yearZhiIdx, lunarMonth, mingIdx, keIdx) {
+    const eC = { ancient:0, modern:1, contemporary:2 }[era] || 0;
+    const gC = gender === 'female' ? 1 : 0;
+    const ganC = TIANGAN.indexOf(yearGan);
+    // uid = 多维坐标编码，每个维度不同 → uid必然不同
+    return `${eC}${gC}${ganC.toString(16)}${yearZhiIdx.toString(16)}${lunarMonth.toString(16).padStart(2,'0')}${mingIdx.toString(16)}${keIdx}`;
+}
+
+// ==================== 辅助：路径推算 ====================
+
+/**
+ * 根据时代+年龄组给出代表性出生年份（用于推天干地支）
+ */
+function getRepresentativeYear(era, ageGroup) {
+    const baseYears = {
+        ancient: { youth: 1895, middle: 1880, senior: 1865 },
+        modern:  { youth: 1955, middle: 1940, senior: 1925 },
+        contemporary: { youth: 1995, middle: 1980, senior: 1965 }
+    };
+    return (baseYears[era] || baseYears.contemporary)[ageGroup] || 1990;
+}
+
+/**
+ * 根据时代/性别/年干/年支推算农历月日（产生差异化的核心）
+ * 保证在时代×性别×天干（10种）框架内产生足够多差异化路径
+ */
+function deriveLunarBirthdate(era, gender, yearGan, yearZhiIdx) {
+    // 天干序号（甲=0...癸=9）
+    const ganIdx = TIANGAN.indexOf(yearGan);
+    // 时代偏移：古=0, 近=1, 当代=2
+    const eraOffset = { ancient:0, modern:1, contemporary:2 }[era] || 0;
+    // 性别偏移：男=0, 女=6
+    const genderOffset = gender === 'female' ? 6 : 0;
+
+    // 月份：在1-12范围内，根据天干+时代+地支衍生
+    const lunarMonth = ((ganIdx * 2 + eraOffset * 3 + yearZhiIdx) % 12) + 1;
+    // 日：1-30，根据天干+性别+地支衍生
+    const lunarDay = ((ganIdx * 3 + genderOffset + yearZhiIdx * 2) % 30) + 1;
+
+    return { lunarMonth, lunarDay };
+}
+
+/**
+ * 根据时代/性别/年干推算时辰
+ */
+function deriveShichen(era, gender, yearGan) {
+    const ganIdx = TIANGAN.indexOf(yearGan);
+    const eraOffset = { ancient:0, modern:1, contemporary:2 }[era] || 0;
+    const genderOffset = gender === 'female' ? 6 : 0;
+    const shichenIdx = (ganIdx + eraOffset * 2 + genderOffset) % 12;
+    return DIZHI[shichenIdx];
+}
+
+// ==================== 格局分类 ====================
+
+/**
+ * 获取指定宫位的所有主星
+ */
+function getStarsInPalace(mainStars, palaceIdx) {
+    return Object.entries(mainStars)
+        .filter(([, idx]) => idx === palaceIdx)
+        .map(([name]) => name);
+}
+
+/**
+ * 根据命宫主星+四化+宫位，判断命盘格局类型
+ * 对应 CHART_DATABASE 的四大系列
+ */
+function classifyPattern(mingStars, fourTrans, mainStars, mingIdx) {
+    const has = (star) => mingStars.includes(star) ||
+        getStarsInPalace(mainStars, (mingIdx+6)%12).includes(star); // 对宫也算
+
+    // 杀破狼系
+    if (has('七杀') || has('破军') || has('贪狼')) return '杀破狼';
+    // 紫府廉武相系
+    if (has('紫微') || has('天府') || has('廉贞') || has('武曲') || has('天相')) return '紫府廉武相';
+    // 机月同梁系
+    if (has('天机') || has('太阴') || has('天同') || has('天梁')) return '机月同梁';
+    // 巨日系
+    if (has('巨门') || has('太阳')) return '巨日';
+    // 默认
+    return '机月同梁';
+}
+
+/**
+ * 根据四化落宫判断四化类型
+ * 优先看四化落命宫/财帛/官禄的情况
+ */
+function classifySihuaType(fourTrans, mingIdx, sanfang) {
+    const keyPalaces = new Set([mingIdx, sanfang.caiboIdx, sanfang.guanluIdx]);
+    const sihuaInMing = [];
+    for (const [sihua, data] of Object.entries(fourTrans)) {
+        if (keyPalaces.has(data.palaceIdx)) {
+            sihuaInMing.push(sihua);
         }
+    }
+    if (sihuaInMing.includes('化禄') && sihuaInMing.includes('化权')) return '禄权叠加型';
+    if (sihuaInMing.includes('化权') && sihuaInMing.includes('化忌')) return '权忌冲突型';
+    if (sihuaInMing.includes('化科') && sihuaInMing.includes('化忌')) return '科忌矛盾型';
+    if (sihuaInMing.includes('化禄') && sihuaInMing.includes('化忌')) return '禄忌纠缠型';
+    if (sihuaInMing.includes('化禄')) return '化禄型';
+    if (sihuaInMing.includes('化权')) return '化权型';
+    if (sihuaInMing.includes('化科')) return '化科型';
+    if (sihuaInMing.includes('化忌')) return '化忌型';
+    // 无四化落三方：看命宫主星强弱决定
+    return '化禄型';
+}
+
+// ==================== 8人格子类型生成（步骤3 = 锁定时辰刻） ====================
+
+/**
+ * 8种子类型 = 8刻时辰坐标
+ * 用户在步骤3选哪个，就把 keIdx 传回排盘引擎，锁定最终唯一盘。
+ * 标签名称本身就是对那个刻度命盘的"形容词摘要"。
+ *
+ * 标签生成逻辑：
+ *  底色词 = 格局类型决定（杀破狼/紫府…/机月同梁/巨日）
+ *  修饰词 = 四化类型决定（禄/权/科/忌×四种组合）
+ *  性别词 = gender决定微调
+ *  刻序   = 0-7固定对应，不随机
+ */
+function generatePersonalityTypes(patternType, sihuaType, yearGan, gender) {
+    // 每种格局的8个底色词（代表8种不同时辰能量方向）
+    const KE_BASE_WORDS = {
+        '杀破狼': [
+            '破局者','铁血将','孤胆刃','狂浪客','冰火将','刀锋主','雷霆志','逆命者'
+        ],
+        '紫府廉武相': [
+            '帝星主','金库守','阴谋家','刚刃将','印信臣','双星贵','炽欲者','权威印'
+        ],
+        '机月同梁': [
+            '月下谋','星河织','福德主','清风梁','细腻机','长辈星','仁慈月','幕后智'
+        ],
+        '巨日': [
+            '光明使','正义刃','口才星','公道者','真理探','辩才士','日曜主','舌灿者'
+        ]
+    };
+
+    // 四化修饰（加在底色词后面，形成完整标签）
+    const SIHUA_SUFFIX = {
+        '化禄型':     ['·顺星','·天赋','·流禄','·顺遂','·禄命','·贵运','·德星','·祥运'],
+        '化权型':     ['·掌权','·铁腕','·主宰','·强势','·霸主','·控局','·威命','·权驱'],
+        '化科型':     ['·声名','·理智','·才华','·名誉','·克制','·文星','·声望','·冷静'],
+        '化忌型':     ['·执念','·困局','·灵伤','·暗劫','·忌命','·深执','·幽伤','·纠缠'],
+        '禄权叠加型': ['·禄权双驱','·富贵兼备','·欲望双星','·强运加持','·禄权并临','·双星护命','·财权并旺','·禄权双煞'],
+        '权忌冲突型': ['·权忌撕裂','·强弱交战','·矛盾将星','·权忌纠缠','·对抗将','·裂变者','·冲突主','·矛盾核'],
+        '科忌矛盾型': ['·科忌暗战','·面子与执','·理性执念','·克制深伤','·科忌并发','·矛盾理性','·内战者','·隐忌科命'],
+        '禄忌纠缠型': ['·禄忌缠身','·享乐执念','·甜蜜伤痕','·情感张力','·禄忌双缚','·纠缠主','·苦乐星','·矛盾禄']
+    };
+
+    const baseWords = KE_BASE_WORDS[patternType] || KE_BASE_WORDS['机月同梁'];
+    const suffixArr = SIHUA_SUFFIX[sihuaType] || SIHUA_SUFFIX['化禄型'];
+
+    // 根据年干做轻微偏移（相同格局+四化但不同年干→标签不同）
+    const ganOffset = TIANGAN.indexOf(yearGan) % 8;
+    const genderShift = gender === 'female' ? 4 : 0;
+
+    return baseWords.map((base, i) => {
+        const suffixIdx = (i + ganOffset + genderShift) % suffixArr.length;
         return {
-            palaceIdx:   i,
-            palaceDizhi: DIZHI[i],
-            palaceGan:   gan,
-            sihua
+            label: base + suffixArr[suffixIdx],  // 完整标签，步骤3显示
+            keIdx: i,                              // 对应刻序号，选中后传回排盘
+            shortBase: base,
+            sihuaSuffix: suffixArr[suffixIdx]
         };
     });
 }
 
+// ==================== 展示信息构建 ====================
+
 /**
- * 自化判断
- * 当某宫的宫干飞出的四化落回本宫，称为"自化"（最重要的飞星现象之一）
- *
- * @param {Array} flyingStars - calcFlyingStars() 的返回值
- * @returns {Array} 自化列表，每项 { palaceIdx, palaceGan, sihuaName, star }
+ * 构建兼容旧UI的 pattern 对象
  */
-function findSelfTransformations(flyingStars) {
-    const result = [];
-    for (const palace of flyingStars) {
-        for (const [name, info] of Object.entries(palace.sihua)) {
-            if (info.targetIdx === palace.palaceIdx) {
-                result.push({
-                    palaceIdx:   palace.palaceIdx,
-                    palaceDizhi: palace.palaceDizhi,
-                    palaceGan:   palace.palaceGan,
-                    sihuaName:   name,
-                    star:        info.star,
-                    meaning:     _selfTransMeaning(name)
-                });
+function buildPatternDisplay(mingStars, patternType, mainStars, mingIdx) {
+    // 从 CHART_DATABASE（app-v2.js里定义）匹配最佳格局条目
+    // 此处直接构建，不依赖外部变量
+    const db = (typeof window !== 'undefined' && window.CHART_DATABASE) ? window.CHART_DATABASE : {};
+    const group = db[patternType];
+    let best = null;
+    if (group) {
+        for (const p of group.patterns) {
+            if (p.stars.some(s => mingStars.includes(s))) {
+                best = p;
+                break;
             }
         }
+        if (!best) best = group.patterns[0];
     }
-    return result;
-}
-
-/** 自化象意简注（付老师体系） */
-function _selfTransMeaning(sihuaName) {
-    return {
-        '化禄': '自化禄：我喜好此宫事，但易三分热度、无头无尾，主花钱心不痛',
-        '化权': '自化权：主观意识强，我掌控此宫事，但易刚愎自用、不听劝',
-        '化科': '自化科：此宫事我有才华，但易自我标榜、表现欲强',
-        '化忌': '自化忌：此宫事我有执念障碍，★最凶★，主此宫事业出不来'
-    }[sihuaName] || '';
-}
-
-
-// ==================== 大限推演 ====================
-//
-// 【大限规则】（付老师第33节）
-//   1. 起运年龄 = 五行局数（水二=2岁, 木三=3岁, 金四=4岁, 土五=5岁, 火六=6岁）
-//   2. 阳男阴女：顺行（命宫→兄弟→夫妻→…）
-//      阴男阳女：逆行（命宫→父母→福德→…）
-//   3. 每宫管10年
-//   4. 大限宫位也有宫干（用大限所在宫的原始宫干），可再做飞星飞化
-//
-// 【阴阳判断】：
-//   年支为子寅辰午申戌（奇数地支索引0,2,4,6,8,10）→ 阳年
-//   年支为丑卯巳未酉亥（偶数地支索引1,3,5,7,9,11）→ 阴年
-//   注：子=0,丑=1… 所以 zhiIdx%2==0 为阳，zhiIdx%2==1 为阴
-
-/**
- * 判断是否顺行大限
- * @param {number} yearZhiIdx - 生年地支索引
- * @param {string} gender     - 'male' / 'female'
- * @returns {boolean} true=顺行, false=逆行
- */
-function isForwardDaxian(yearZhiIdx, gender) {
-    const isYangYear = (yearZhiIdx % 2 === 0);  // 子寅辰午申戌为阳年
-    const isMale = (gender === 'male');
-    // 阳男阴女 顺行；阴男阳女 逆行
-    return (isYangYear && isMale) || (!isYangYear && !isMale);
-}
-
-/**
- * 计算大限序列
- * 返回每个大限的：起始年龄、结束年龄、所在宫位索引、宫位名、宫干
- *
- * @param {number} mingIdx     - 命宫地支索引
- * @param {number} wuxingJu    - 五行局数(2/3/4/5/6)
- * @param {number} yearZhiIdx  - 生年地支索引（判断阴阳）
- * @param {string} gender      - 'male'/'female'
- * @param {string[]} palaceGans - 十二宫宫干数组（calcPalaceGan返回）
- * @param {number}  [count=12]  - 要算几个大限（默认12个，覆盖120岁）
- * @returns {Array} 大限序列
- *   [{ index:0, startAge:3, endAge:12, palaceIdx:6, palaceDizhi:'午',
- *      palaceName:'迁移宫', palaceGan:'丙', sihua:{...} }, ...]
- */
-function calcDaxianSequence(mingIdx, wuxingJu, yearZhiIdx, gender, palaceGans, mainStars, count = 12) {
-    const forward = isForwardDaxian(yearZhiIdx, gender);
-    const result  = [];
-    let startAge  = wuxingJu;  // 起运年龄 = 五行局数
-
-    for (let n = 0; n < count; n++) {
-        // 第n个大限所在宫位
-        let palaceIdx;
-        if (forward) {
-            palaceIdx = (mingIdx + n) % 12;
-        } else {
-            palaceIdx = (mingIdx - n + 120) % 12;
-        }
-        const endAge = startAge + 9;
-        const palaceGan = palaceGans[palaceIdx];
-
-        // 该大限的宫干飞化（用该宫天干查四化表）
-        const rule = SIHUA_TABLE[palaceGan] || {};
-        const sihua = {};
-        for (const [name, star] of Object.entries(rule)) {
-            const targetIdx = mainStars[star];
-            sihua[name] = {
-                star,
-                targetIdx:   targetIdx !== undefined ? targetIdx : -1,
-                targetDizhi: targetIdx !== undefined ? DIZHI[targetIdx] : '未知'
-            };
-        }
-
-        result.push({
-            index:       n,
-            startAge,
-            endAge,
-            palaceIdx,
-            palaceDizhi: DIZHI[palaceIdx],
-            palaceName:  PALACE_NAMES[(palaceIdx - mingIdx + 12) % 12],
-            palaceGan,
-            sihua,
-            label: `${startAge}-${endAge}岁 · ${PALACE_NAMES[(palaceIdx - mingIdx + 12) % 12]}大限`
-        });
-
-        startAge += 10;
+    if (!best) {
+        best = { name: mingStars.join('') || '空宫', stars: mingStars, desc: '命宫无主星，借对宫之力' };
     }
-    return result;
+    return best;
 }
 
 /**
- * 根据年龄查当前所在大限
- * @param {Array}  daxianSeq - calcDaxianSequence() 的返回值
- * @param {number} age       - 当前年龄
- * @returns {Object|null} 对应的大限对象，不在范围内返回null
+ * 构建命盘唯一ID（用于识别差异化）
  */
-function getDaxianByAge(daxianSeq, age) {
-    return daxianSeq.find(d => age >= d.startAge && age <= d.endAge) || null;
+function buildChartId(era, gender, yearGan, yearZhiIdx, lunarMonth) {
+    const eraCode = { ancient:0, modern:1, contemporary:2 }[era] || 0;
+    const genderCode = gender === 'female' ? 1 : 0;
+    const ganIdx = TIANGAN.indexOf(yearGan);
+    return eraCode * 480 + genderCode * 240 + ganIdx * 24 + yearZhiIdx * 2 + (lunarMonth > 6 ? 1 : 0);
 }
 
-
-// ==================== 流年 / 流月 / 流日 / 流时 ====================
-//
-// 【流年规则】
-//   流年干支 = 当年的农历年干支（公历年算法同 yearToGanZhi）
-//   流年宫位 = 从命宫起，虎跑（正月）寅宫算起，流年所在宫...
-//   实际用法：以流年太岁地支直接"照临"该地支宫位，无需另算
-//
-// 【流年宫干飞化】
-//   流年干支出来后，查流年干的四化表，得流年四化落宫
-//   （同本命年干飞化，只是用流年天干）
-//
-// 【流月规则】
-//   流月地支：正月=寅(2), 二月=卯(3)...十二月=丑(1)
-//   流月天干：由流年天干查"五虎遁"，寅月起顺布
-//
-// 【流日规则】
-//   流日从流月初一所在日，以纳甲（六十甲子）逐日推进
-//   简化算法：流年甲子序 + 距年初的天数
-//
-// 【流时规则】
-//   流时：当日干支 + 时辰，五鼠遁（日干→子时天干）
-//   口诀：甲己还加甲，乙庚丙作初，丙辛从戊起，丁壬庚子居，戊癸何方发，壬子是真途
+// ==================== 人格描述生成（供步骤3 UI调用）====================
 
 /**
- * 流年推算
- * @param {number} flowYear - 流年公历年份（如 2026）
- * @param {number} mingIdx  - 命宫地支索引
- * @param {Object} mainStars - 本命主星位置
- * @returns {{
- *   year: number,
- *   gan: string, zhi: string, zhiIdx: number,
- *   palaceIdx: number,      // 流年太岁照临宫位（= 流年地支索引）
- *   palaceDizhi: string,
- *   sihua: Object           // 流年干飞化（查四化表）
- * }}
+ * 根据人格类型+命盘数据生成描述
+ * @param {string} personalityType - 人格类型标签
+ * @param {Object} chartData       - generate144Chart 返回值
+ * @returns {{ shortDesc, visibleTrait, hiddenNeed }}
  */
-function calcLiuNian(flowYear, mingIdx, mainStars, minorStars) {
-    const { gan, zhi, zhiIdx } = yearToGanZhi(flowYear);
-    // 流年太岁照临：流年地支就是所在宫位（子宫=0, 丑宫=1…）
-    const palaceIdx = zhiIdx;
-    const rule = SIHUA_TABLE[gan] || {};
-    const sihua = {};
-    for (const [name, star] of Object.entries(rule)) {
-        let targetIdx = mainStars[star];
-        if (targetIdx === undefined && minorStars && minorStars[star]) targetIdx = minorStars[star].palaceIdx;
-        sihua[name] = {
-            star,
-            targetIdx:   targetIdx !== undefined ? targetIdx : -1,
-            targetDizhi: targetIdx !== undefined ? DIZHI[targetIdx] : '未知'
-        };
-    }
-    return { year: flowYear, gan, zhi, zhiIdx, palaceIdx, palaceDizhi: DIZHI[palaceIdx], sihua };
-}
+function generatePersonalityDescription(personalityType, chartData) {
+    const { patternType, sihuaType, yearGan, gender } = chartData;
+    const he = gender === 'female' ? '她' : '他';
 
-/**
- * 流月推算
- * 五虎遁：流年天干 → 寅月(正月)天干 → 顺布十二月
- *
- * @param {string} liuNianGan  - 流年天干
- * @param {number} lunarMonth  - 农历月(1-12)
- * @param {Object} mainStars   - 本命主星位置（用于飞化落宫）
- * @returns {{
- *   lunarMonth: number,
- *   gan: string, zhi: string, zhiIdx: number,
- *   palaceIdx: number,     // 流月地支对应宫位（正月寅=2...）
- *   sihua: Object          // 流月干飞化
- * }}
- */
-function calcLiuYue(liuNianGan, lunarMonth, mainStars, minorStars) {
-    // 五虎遁：流年天干 → 寅月起始天干
-    const yinMonthGanIdx = WUHU_DUAN[liuNianGan] ?? 0;
-    // 第n月(正月=1)的天干索引 = (寅月干索引 + n - 1) % 10
-    const ganIdx  = (yinMonthGanIdx + lunarMonth - 1) % 10;
-    // 月地支：正月寅=2, 顺序: 寅卯辰巳午未申酉戌亥子丑
-    const zhiIdx  = (2 + lunarMonth - 1) % 12;
-    const gan     = TIANGAN[ganIdx];
-    const zhi     = DIZHI[zhiIdx];
-    const rule    = SIHUA_TABLE[gan] || {};
-    const sihua   = {};
-    for (const [name, star] of Object.entries(rule)) {
-        let targetIdx = mainStars[star];
-        if (targetIdx === undefined && minorStars && minorStars[star]) targetIdx = minorStars[star].palaceIdx;
-        sihua[name] = {
-            star,
-            targetIdx:   targetIdx !== undefined ? targetIdx : -1,
-            targetDizhi: targetIdx !== undefined ? DIZHI[targetIdx] : '未知'
-        };
-    }
-    return { lunarMonth, gan, zhi, zhiIdx, palaceIdx: zhiIdx, palaceDizhi: zhi, sihua };
-}
+    // 四化对可见特质和隐藏需求的修饰
+    const sihuaModifiers = {
+        '化禄型':     { visible:'天赋顺遂，做事轻松', hidden:'渴望持续被认可' },
+        '化权型':     { visible:'掌控欲强，主导一切', hidden:'内心渴望被真正接纳' },
+        '化科型':     { visible:'注重声誉，理性克制', hidden:'害怕被看轻、被误解' },
+        '化忌型':     { visible:'执念深重，专注偏执', hidden:'灵魂深处有未愈的伤' },
+        '禄权叠加型': { visible:'既有天赋又有野心', hidden:'贪欲与恐惧并存' },
+        '权忌冲突型': { visible:'强势而矛盾的存在', hidden:'控制与失控之间的撕裂' },
+        '科忌矛盾型': { visible:'理性外表下暗流涌动', hidden:'面子与执念的长期内战' },
+        '禄忌纠缠型': { visible:'享乐与执念缠绕不清', hidden:'情感世界充满张力与矛盾' }
+    };
 
-/**
- * 流日推算（简化版：基于公历日期推干支）
- *
- * 干支纪日以甲子日为基准：
- *   基准：公历 1900-01-01 = 甲戌日（天干0=甲, 地支11=戌? 需校准）
- *   实用基准：2000-01-01 = 己卯日（己=5, 卯=3）
- *
- * @param {number} year  - 公历年
- * @param {number} month - 公历月(1-12)
- * @param {number} day   - 公历日
- * @param {Object} mainStars - 本命主星（用于飞化）
- * @returns {{ gan, zhi, ganIdx, zhiIdx, palaceIdx, sihua }}
- */
-function calcLiuRi(year, month, day, mainStars, minorStars) {
-    // 基准：2000-01-01 为甲子日（ganIdx=0, zhiIdx=0）
-    const base = new Date(2000, 0, 1);
-    const curr = new Date(year, month - 1, day);
-    const diffDays = Math.round((curr - base) / 86400000);
-    const ganIdx = ((diffDays % 10) + 10) % 10;
-    const zhiIdx = ((diffDays % 12) + 12) % 12;
-    const gan    = TIANGAN[ganIdx];
-    const zhi    = DIZHI[zhiIdx];
-    const rule   = SIHUA_TABLE[gan] || {};
-    const sihua  = {};
-    for (const [name, star] of Object.entries(rule)) {
-        let targetIdx = mainStars[star];
-        if (targetIdx === undefined && minorStars && minorStars[star]) targetIdx = minorStars[star].palaceIdx;
-        sihua[name] = {
-            star,
-            targetIdx:   targetIdx !== undefined ? targetIdx : -1,
-            targetDizhi: targetIdx !== undefined ? DIZHI[targetIdx] : '未知'
-        };
-    }
-    return { year, month, day, gan, zhi, ganIdx, zhiIdx, palaceIdx: zhiIdx, palaceDizhi: zhi, sihua };
-}
-
-/**
- * 流时推算（五鼠遁）
- * 根据流日天干推子时起始天干，再顺布十二时辰
- *
- * 五鼠遁口诀：
- *   甲己还加甲 → 甲/己日，子时起甲
- *   乙庚丙作初 → 乙/庚日，子时起丙
- *   丙辛从戊起 → 丙/辛日，子时起戊
- *   丁壬庚子居 → 丁/壬日，子时起庚
- *   戊癸何方发，壬子是真途 → 戊/癸日，子时起壬
- *
- * @param {string} dayGan  - 流日天干
- * @param {string} shichen - 时辰地支名('子'~'亥')
- * @param {Object} mainStars
- * @returns {{ gan, zhi, zhiIdx, palaceIdx, sihua }}
- */
-const WUSHU_DUAN = {
-    '甲':0, '己':0,   // 甲子 (甲=TIANGAN[0])
-    '乙':2, '庚':2,   // 丙子 (丙=TIANGAN[2])
-    '丙':4, '辛':4,   // 戊子 (戊=TIANGAN[4])
-    '丁':6, '壬':6,   // 庚子 (庚=TIANGAN[6])
-    '戊':8, '癸':8    // 壬子 (壬=TIANGAN[8])
-};
-
-function calcLiuShi(dayGan, shichen, mainStars, minorStars) {
-    const ziGanIdx  = WUSHU_DUAN[dayGan] ?? 0;  // 子时天干索引
-    const zhiIdx    = DIZHI.indexOf(shichen);
-    const ganIdx    = (ziGanIdx + zhiIdx) % 10;
-    const gan       = TIANGAN[ganIdx];
-    const rule      = SIHUA_TABLE[gan] || {};
-    const sihua     = {};
-    for (const [name, star] of Object.entries(rule)) {
-        let targetIdx = mainStars[star];
-        if (targetIdx === undefined && minorStars && minorStars[star]) targetIdx = minorStars[star].palaceIdx;
-        sihua[name] = {
-            star,
-            targetIdx:   targetIdx !== undefined ? targetIdx : -1,
-            targetDizhi: targetIdx !== undefined ? DIZHI[targetIdx] : '未知'
-        };
-    }
-    return { dayGan, shichen, gan, zhi: shichen, zhiIdx, palaceIdx: zhiIdx, palaceDizhi: shichen, sihua };
-}
-
-/**
- * 完整流盘（宫职重叠分析入口）
- * 将大限、流年、流月宫位与本命十二宫叠加，得到"宫职重叠"列表
- * 这是付老师飞星体系最核心的分析方法
- *
- * @param {Object} chart      - generateChart() 或 generateFullChart() 返回的本命盘
- * @param {Object} flowParams - { flowYear, lunarMonth, age }
- * @returns {Object} 完整流盘分析
- */
-function calcFullFlow(chart, flowParams) {
-    const { flowYear, lunarMonth = 1, age } = flowParams;
-    const { mingPalace, mainStars, minorStars, wuxingJu, palaceGans, yearGanZhi } = chart;
-    const yearZhiIdx = DIZHI.indexOf(yearGanZhi.zhi);
-    const gender     = chart.input.gender;
-    const mingIdx    = mingPalace.index;
-
-    // 飞星宫干飞化（本命）
-    const flyingStars  = calcFlyingStars(palaceGans, mainStars, minorStars);
-    // 自化检测
-    const selfTrans    = findSelfTransformations(flyingStars);
-    // 大限序列
-    const daxianSeq    = calcDaxianSequence(mingIdx, wuxingJu, yearZhiIdx, gender, palaceGans, mainStars);
-    // 当前大限
-    const currentDaxian = age !== undefined ? getDaxianByAge(daxianSeq, age) : null;
-    // 流年
-    const liuNian = calcLiuNian(flowYear, mingIdx, mainStars);
-    // 流月
-    const liuYue  = calcLiuYue(liuNian.gan, lunarMonth, mainStars);
-
-    // 宫职重叠分析（命宫维度）
-    const overlap = [];
-    if (currentDaxian) {
-        const dx = currentDaxian.palaceIdx;
-        const ly = liuNian.palaceIdx;
-        overlap.push({
-            desc: '大限宫与流年宫关系',
-            daxianPalace:  DIZHI[dx] + ' ' + PALACE_NAMES[(dx - mingIdx + 12) % 12],
-            liuNianPalace: DIZHI[ly] + ' ' + PALACE_NAMES[(ly - mingIdx + 12) % 12],
-            offset: (ly - dx + 12) % 12,
-            note: _overlapNote((ly - dx + 12) % 12)
-        });
-    }
+    const modifier = sihuaModifiers[sihuaType] || sihuaModifiers['化禄型'];
 
     return {
-        palaceGans,
-        flyingStars,
-        selfTransformations: selfTrans,
-        daxianSequence:      daxianSeq,
-        currentDaxian,
-        liuNian,
-        liuYue,
-        overlap,
-        _meta: { engine: 'ziwei-engine v3.0', source: '付老师飞星体系' }
+        shortDesc: `${personalityType}——${modifier.visible}`,
+        visibleTrait: `${personalityType}：${modifier.visible}，以${patternType}格局为底色，${he}的行事风格鲜明独特`,
+        hiddenNeed: modifier.hidden
     };
 }
-
-/** 大限与流年宫位偏移量的象意简注 */
-function _overlapNote(offset) {
-    const notes = {
-        0:  '大限流年同宫：此年为该大限中最重要的爆发年，格局好则大吉，格局差则大凶',
-        6:  '大限流年对冲：此年为该大限中的重要变动年，主明显转折',
-        4:  '流年进入大限财帛宫：财运应期',
-        8:  '流年进入大限官禄宫：事业应期',
-        3:  '流年进入大限兄弟宫：六亲/兄弟应期',
-        9:  '流年进入大限田宅宫：家宅/不动产应期'
-    };
-    return notes[offset] || `大限与流年差${offset}宫，结合飞化做具体分析`;
-}
-
-
-// ==================== 更新 generateChart 加入飞星模块 ====================
-
-/**
- * 增强版排盘入口（完整飞星体系）
- * 在 generateChart 基础上额外返回：飞星飞化、自化列表、大限序列
- *
- * @param {Object} input - 同 generateChart，额外可传 { age, flowYear, lunarFlowMonth }
- * @returns {Object} 完整命盘 + 飞星体系
- */
-function generateFullChart(input) {
-    const base = generateChart(input);
-    const { yearGanZhi, mainStars, minorStars, mingPalace, wuxingJu, palaceGans } = base;
-    const yearZhiIdx = DIZHI.indexOf(yearGanZhi.zhi);
-
-    // 飞星宫干飞化（palaceGans 已在 generateChart 内计算并返回）
-    const flyingStars = calcFlyingStars(palaceGans, mainStars, minorStars);
-    // 自化
-    const selfTrans   = findSelfTransformations(flyingStars);
-    // 大限序列
-    const daxianSeq   = calcDaxianSequence(
-        mingPalace.index, wuxingJu, yearZhiIdx,
-        input.gender || 'male', palaceGans, mainStars
-    );
-
-    // 可选：流盘
-    let flow = null;
-    if (input.flowYear) {
-        flow = calcFullFlow(base, {
-            flowYear:   input.flowYear,
-            lunarMonth: input.lunarFlowMonth || 1,
-            age:        input.age
-        });
-    }
-
-    return {
-        ...base,
-        flyingStars,
-        selfTransformations: selfTrans,
-        daxianSequence: daxianSeq,
-        flow,
-        _meta: {
-            engine:      'ziwei-engine v3.0',
-            source:      '跨派共识（付老师+梁若瑜+令东来）',
-            wuxingMethod:'命宫纳音五行局（付老师正统算法）',
-            flyingStars: '付老师飞星体系（五虎遁宫干+四化飞宫）',
-            generatedAt: new Date().toISOString()
-        }
-    };
-}
-
 
 // ==================== 导出 ====================
-// Node.js 环境
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        yearToGanZhi, calcWuxingJu, calcWuxingJuNaYin,
-        calcMingPalace, calcShenPalace,
-        calcZiweiPosition, calcMainStars,
-        calcMinorStars, calcFourTransformations,
-        calcSanFangSiZheng, getStarBrightness,
-        calcPalaceGan, calcFlyingStars,
-        findSelfTransformations,
-        calcDaxianSequence, getDaxianByAge,
-        isForwardDaxian,
-        calcLiuNian, calcLiuYue, calcLiuRi, calcLiuShi,
-        calcFullFlow,
-        generateChart, generateFullChart,
-        DIZHI, TIANGAN, PALACE_NAMES, SIHUA_TABLE, WUHU_DUAN, WUSHU_DUAN
-    };
-}
-// 浏览器环境
+
+// 浏览器环境挂载到 window
 if (typeof window !== 'undefined') {
-    window.ZiweiEngine = {
-        yearToGanZhi, calcWuxingJu, calcWuxingJuNaYin,
-        calcMingPalace, calcShenPalace,
-        calcZiweiPosition, calcMainStars,
-        calcMinorStars, calcFourTransformations,
-        calcSanFangSiZheng, getStarBrightness,
-        calcPalaceGan, calcFlyingStars,
-        findSelfTransformations,
-        calcDaxianSequence, getDaxianByAge,
-        isForwardDaxian,
-        calcLiuNian, calcLiuYue, calcLiuRi, calcLiuShi,
-        calcFullFlow,
-        generateChart, generateFullChart,
-        DIZHI, TIANGAN, PALACE_NAMES, SIHUA_TABLE, WUHU_DUAN, WUSHU_DUAN
-    };
-
-    // ── FineChartEngine 别名（兼容 app-v2.js 的旧引用名称）──
-    // app-v2.js 里用的是 window.FineChartEngine，实际引擎导出为 window.ZiweiEngine
-    // 这里做别名桥接，两个名字都能用
-    window.FineChartEngine = {
-        // 供 generate144Chart() 使用的简化入口
-        generateChart: function(inputs) {
-            // inputs: { birthYear, birthMonth, birthDay, birthHour, gender, era }
-            // 转换为 fine-chart-engine 标准 input 格式
-            const year        = inputs.birthYear || new Date().getFullYear() - 25;
-            const lunarMonth  = inputs.lunarMonth  || inputs.birthMonth  || 6;
-            const lunarDay    = inputs.lunarDay    || inputs.birthDay    || 15;
-            // birthHour(0-23) → 时辰地支
-            const hourToShichen = ['子','丑','丑','寅','寅','卯','卯','辰','辰','巳','巳','午',
-                                    '午','未','未','申','申','酉','酉','戌','戌','亥','亥','子'];
-            const shichen = inputs.shichen || hourToShichen[inputs.birthHour || 12] || '午';
-            const gender  = (inputs.gender === '女' || inputs.gender === 'female') ? 'female' : 'male';
-
-            // 调用真实排盘（带完整飞星/大限）
-            return generateFullChart({ year, lunarMonth, lunarDay, shichen, gender });
-        }
-    };
-
-    console.log('[fine-chart-engine] ZiweiEngine v3.0 + FineChartEngine 别名 已挂载');
+    window.generate144Chart = generate144Chart;
+    window.generatePersonalityDescription = generatePersonalityDescription;
+    window.calcFourTransformations = calcFourTransformations;
+    window.calcMainStars = calcMainStars;
+    window.calcMingPalace = calcMingPalace;
+    window.calcSanFangSiZheng = calcSanFangSiZheng;
+    window.SIHUA_BY_TIANGAN = SIHUA_BY_TIANGAN;
+    window.DIZHI = DIZHI;
+    window.TIANGAN = TIANGAN;
+    window.BRIGHTNESS_NAMES = BRIGHTNESS_NAMES;
+    window.getStarBrightness = getStarBrightness;
+    window.getStarsInPalace = getStarsInPalace;
 }

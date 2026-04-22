@@ -771,27 +771,10 @@ if (typeof module !== 'undefined' && module.exports) {
         SIHUA_PSYCHOLOGY_MAPPING,
         PALACE_PSYCHOLOGY_MAPPING,
         CP_PREFERENCE_RULES,
-        GAN_FLYING_PSYCHOLOGY,
-        SAN_FANG_SI_ZHENG_PSYCHOLOGY,
-        JIA_JU_PSYCHOLOGY,
-        AN_HE_PSYCHOLOGY,
-        generatePsychologyAnalysis,
-        analyzeMingGong,
-        analyzeFuDeGong,
-        analyzeFuQiGong,
-        analyzeSiHuaPsychology,
-        generateCPPreference,
-        analyzeSpaceInteractionPsychology
-    };
-}
-
-// 浏览器环境挂载到 window
-if (typeof window !== 'undefined') {
-    window.ZiweiPsychology = {
-        PSYCHOLOGY_TERMS,
-        SIHUA_PSYCHOLOGY_MAPPING,
-        PALACE_PSYCHOLOGY_MAPPING,
-        CP_PREFERENCE_RULES,
+        GAN_FLYING_PSYCHOLOGY,        // 宫干飞星
+        SAN_FANG_SI_ZHENG_PSYCHOLOGY, // 三方四正
+        JIA_JU_PSYCHOLOGY,            // 夹局影响
+        AN_HE_PSYCHOLOGY,             // 暗合影响
         generatePsychologyAnalysis,
         analyzeMingGong,
         analyzeFuDeGong,

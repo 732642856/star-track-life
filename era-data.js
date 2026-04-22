@@ -657,12 +657,4 @@ const TIME_KE_CUTS = [
     { name: '末刻', range: '105-120分钟', code: 'mo' }
 ];
 
-// 导出所有数据（浏览器兼容格式）
-if (typeof window !== 'undefined') {
-    window.ERAS = ERAS;
-    window.CAREERS = CAREERS;
-    window.FAMILY_BACKGROUNDS = FAMILY_BACKGROUNDS;
-    window.LIFE_EXPERIENCES = LIFE_EXPERIENCES;
-    window.TIME_PERIODS = TIME_PERIODS;
-    window.TIME_KE_CUTS = TIME_KE_CUTS;
-}
+// 全局变量，供其他JS直接访问（不使用ES Module export，保持与普通script标签兼容）

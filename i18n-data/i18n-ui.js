@@ -171,7 +171,7 @@ const UI_TEXT = {
         toastSelectSiblings: '请选择手足关系',
         toastFinishChartMatch: '请先完成星盘匹配',
         toastSelectSihua: '请选择四化类型',
-        toastAttrsPartial: (n) => n + ' 项未选择，对应内容将以模糊风格呈现',
+        toastAttrsPartial: (n) => '💡 ' + n + ' 项未选择，对应内容将以模糊风格呈现',
         toastGenerateError: (msg) => '生成出错，请重试（' + msg + '）',
         toastSavedFull: '最多只能保存10个角色，请先删除一些',
         toastSavedSuccess: (name, n) => '「' + name + '」已保存 (' + n + '/10)',
@@ -340,9 +340,9 @@ const UI_TEXT = {
         toastSelectSocial: '請選擇社會地位',
         toastSelectParents: '請選擇父母關係',
         toastSelectSiblings: '請選擇手足關係',
-        toastFinishChartMatch: '請先完成星盘匹配',
+        toastFinishChartMatch: '請先完成星盤匹配',
         toastSelectSihua: '請選擇四化類型',
-        toastAttrsPartial: (n) => n + ' 項未選擇，對應內容將以模糊風格呈現',
+        toastAttrsPartial: (n) => '💡 ' + n + ' 項未選擇，對應內容將以模糊風格呈現',
         toastGenerateError: (msg) => '生成出錯，請重試（' + msg + '）',
         toastSavedFull: '最多只能儲存10個角色，請先刪除一些',
         toastSavedSuccess: (name, n) => '「' + name + '」已儲存 (' + n + '/10)',
@@ -513,7 +513,7 @@ const UI_TEXT = {
         toastSelectSiblings: 'Please select a sibling/friend dynamic',
         toastFinishChartMatch: 'Please complete the chart match first',
         toastSelectSihua: 'Please select a transformation type',
-        toastAttrsPartial: (n) => n + ' attribute(s) unset — those sections will be rendered in outline style',
+        toastAttrsPartial: (n) => '💡 ' + n + ' attribute(s) unset — those sections will be rendered in outline style',
         toastGenerateError: (msg) => 'Generation failed, please try again (' + msg + ')',
         toastSavedFull: 'You can save up to 10 characters. Please delete one first.',
         toastSavedSuccess: (name, n) => '"' + name + '" saved (' + n + '/10)',
@@ -538,18 +538,6 @@ const UI_TEXT = {
         cmpSectionDrama: 'Dramatic Dynamic',
         cmpSectionContext: 'Context Note',
         cmpCharLabel: 'Character',
-        
-        // 8 Attributes (for dynamic usage) - NEW FIXED VERSION
-        attr: {
-            appearance: { name: 'Appearance', options: ['Commanding', 'Gentle & Refined', 'Sharp & Capable', 'Warm & Approachable', 'Distinctive', 'Unassuming'] },
-            speech: { name: 'Speaking Style', options: ['Direct & Concise', 'Tactful & Soft', 'Enthusiastic', 'Calm & Measured', 'Humorous', 'Reserved'] },
-            behavior: { name: 'Habits', options: ['Decisive', 'Thoughtful', 'Spontaneous', 'Cautious', 'Methodical', 'Free-spirited'] },
-            emotion: { name: 'Emotional Expression', options: ['Openly Expressive', 'Reserved', 'Changeable', 'Stable', 'Rationally Controlled', 'Impulsive'] },
-            social: { name: 'Social Style', options: ['Leader', 'Supporter', 'Observer', 'Connector', 'Independent', 'Group-oriented'] },
-            crisis: { name: 'Crisis Response', options: ['Confront directly', 'Analyze calmly', 'Seek help', 'Hide & evade', 'Take charge', 'Adapt & change'] },
-            learning: { name: 'Learning & Adaptation', options: ['Practical', 'Theoretical', 'Intuitive', 'Methodical', 'Experimental', 'Traditional'] },
-            growth: { name: 'Growth Direction', options: ['Achievement', 'Contribution', 'Connection', 'Knowledge', 'Self-mastery', 'Balance'] }
-        },
     }
 };
 
@@ -600,20 +588,6 @@ function applyI18nToDOM() {
         return (val != null && typeof val !== 'object' && typeof val !== 'function') ? val : null;
     }
 
-    // 第一步：清除所有有 data-i18n 属性的元素的硬编码内容
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-            // input/textarea 元素，清除 placeholder（如果有硬编码的）
-            if (el.hasAttribute('placeholder') && el.getAttribute('data-i18n')) {
-                el.placeholder = '';  // 先清空，等会儿会重新设置
-            }
-        } else {
-            // 其他元素，清除 textContent
-            el.textContent = '';
-        }
-    });
-
-    // 第二步：应用翻译
     // data-i18n → textContent (input/textarea → placeholder)
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
@@ -632,17 +606,6 @@ function applyI18nToDOM() {
         const key = el.getAttribute('data-i18n-placeholder');
         const val = resolve(key);
         if (val !== null) el.placeholder = val;
-    });
-
-    // 第三步：处理有 data-i18n-placeholder 但没有 placeholder 属性的元素
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-            const key = el.getAttribute('data-i18n-placeholder');
-            const val = resolve(key);
-            if (val !== null) {
-                el.placeholder = val;
-            }
-        }
     });
 
     // data-i18n-html → innerHTML（用于带标签的富文本）
@@ -692,7 +655,7 @@ const UI_DYNAMIC = {
         compatLabels: { high: '高度契合', good: '关系良好', tension: '张力显著', conflict: '冲突型组合' },
         compatTitle: '命盘相性',
         
-        // 8大维度（简洁清晰版，去除重复冗余）- FIXED: Now using array format
+        // 8大维度（统一使用数组格式，与英文版保持一致）
         attr: [
             { id: 'appearance', name: '外貌特征', options: ['威严霸气', '温和儒雅', '锐利干练', '柔和亲和', '独特个性', '低调朴素'] },
             { id: 'speech', name: '说话方式', options: ['简洁有力', '温和委婉', '热情洋溢', '沉稳冷静', '幽默风趣', '寡言内敛'] },
@@ -782,7 +745,7 @@ const UI_DYNAMIC = {
         compatLabels: { high: '高度契合', good: '關係良好', tension: '張力顯著', conflict: '衝突型組合' },
         compatTitle: '命盤相性',
         
-        // 8大维度（简洁清晰版，去除重复冗余）- FIXED: Now using array format
+        // 8大维度（统一使用数组格式）
         attr: [
             { id: 'appearance', name: '外貌特徵', options: ['威嚴霸氣', '溫和儒雅', '銳利幹練', '柔和親和', '獨特個性', '低調樸素'] },
             { id: 'speech', name: '說話方式', options: ['簡潔有力', '溫和委婉', '熱情洋溢', '沉穩冷靜', '幽默風趣', '寡言內斂'] },
@@ -816,7 +779,7 @@ const UI_DYNAMIC = {
             '謀局者_執念者': '一個算計全局，一個死磕一點。前者容易把後者當棋子，後者往往是最後翻盤的變量。適合設計利用與被利用、最終失控的關係。',
             '執念者_謀局者': '一個算計全局，一個死磕一點。前者容易把後者當棋子，後者往往是最後翻盤的變量。適合設計利用與被利用、最終失控的關係。',
             '隱忍者_執念者': '兩人都有強烈內驅力，一個向內消化，一個向外固著。放在親密關係裡尤其有戲——彼此理解卻互相消耗。',
-            '執念者_隱忍者': '兩人都有強烈內驅力，一個向內消化，一个向外固著。放在親密關係裡尤其有戲——彼此理解卻互相消耗。',
+            '執念者_隱忍者': '兩人都有強烈內驅力，一個向內消化，一個向外固著。放在親密關係裡尤其有戲——彼此理解卻互相消耗。',
         },
         relationDefault: '這幾種類型並置，核心戲劇張力來自各自動機的碰撞——目標交叉時衝突自然產生，合作也帶著裂縫。',
         contextCrossEra: (eraList) => '角色處於不同時代（' + eraList.join(' / ') + '），若需同框需設計跨時代敘事結構。',
@@ -860,10 +823,7 @@ const UI_DYNAMIC = {
             { label: 'Wanderer', desc: 'Can\'t find a real home. Always on the road — stopping brings more confusion, not less.', coreConflict: 'Craving belonging vs. feeling suffocated when they finally settle', wound: 'Never had a real home, even in childhood.', starHint: 'Tian Ji / Tan Lang strong in Travel Palace; empty Life Palace or Hua Ji in Ming' },
             { label: 'Endurer', desc: 'Carries everything. Only breaks at the limit. Looks more composed than anyone — until they don\'t.', coreConflict: 'Endurance is power vs. endurance slowly erasing the self', wound: 'Exploded once, lost too much. Learned to suppress everything after that.', starHint: 'Tian Xiang / Tai Yin / Wu Qu charts; Hua Ji in Fortune Palace' },
         ],
-        compatLabels: { high: 'Highly Compatible', good: 'Good Dynamic', tension: 'Charged Tension', conflict: 'Conflict-Driven' },
-        compatTitle: 'Chart Compatibility',
-        
-        // 8大维度（简洁清晰版，去除重复冗余）- FIXED: Now using array format
+        // 8 Attributes (统一使用 attr 数组格式，与中文版保持一致)
         attr: [
             { id: 'appearance', name: 'Appearance', options: ['Commanding', 'Gentle & Refined', 'Sharp & Capable', 'Warm & Approachable', 'Distinctive', 'Unassuming'] },
             { id: 'speech', name: 'Speaking Style', options: ['Direct & Concise', 'Tactful & Soft', 'Enthusiastic', 'Calm & Measured', 'Humorous', 'Reserved'] },
@@ -874,6 +834,8 @@ const UI_DYNAMIC = {
             { id: 'learning', name: 'Adaptability', options: ['Fast Learner', 'Steady Accumulator', 'Experience-reliant', 'Highly Adaptive', 'Stubborn', 'Flexible'] },
             { id: 'growth', name: 'Growth Direction', options: ['Achievement', 'Freedom', 'Stability', 'Truth', 'Connection', 'Balance'] }
         ],
+        compatLabels: { high: 'Highly Compatible', good: 'Good Dynamic', tension: 'Charged Tension', conflict: 'Conflict-Driven' },
+        compatTitle: 'Chart Compatibility',
         sihuaScoreMap: {
             '化禄型_化权型': [+12, 'Lu & Quan: one empowers, one commands. Natural drive for collaboration.'],
             '化权型_化禄型': [+12, 'Lu & Quan: one empowers, one commands. Natural drive for collaboration.'],

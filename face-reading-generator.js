@@ -349,7 +349,7 @@ function generateAppearance(chartData, gender, age, luckyStars = [], malignantSt
     
     // 气质特征
     appearance += '【气质】\n';
-    appearance += `整体气质${starFeatures.temperament}。\n`;
+    appearance += `整体气质${starFeatures.temperaturement}。\n`;
     appearance += `声音${starFeatures.voice}。\n\n`;
     
     // 六吉星影响
@@ -374,20 +374,16 @@ function generateAppearance(chartData, gender, age, luckyStars = [], malignantSt
         appearance += '\n';
     }
     
-    // 性别调整（gender 可能是 'male'/'female' 或 '男'/'女'）
-    const genderKeyMap = { male: '男', female: '女' };
-    const genderKey = genderKeyMap[gender] || gender || '男';
-    const genderAdjustment = GENDER_ADJUSTMENTS[genderKey] ? 
-        GENDER_ADJUSTMENTS[genderKey][mainStar] : '';
+    // 性别调整
+    const genderAdjustment = GENDER_ADJUSTMENTS[gender] ? 
+        GENDER_ADJUSTMENTS[gender][mainStar] : '';
     if (genderAdjustment) {
         appearance += '【性别特征】\n';
         appearance += `${genderAdjustment}。\n\n`;
     }
     
-    // 年龄特征（age 可能是英文 'youth'/'middle'/'senior' 或中文）
-    const ageKeyMap = { youth: '青年', middle: '中年', senior: '老年' };
-    const ageKey = ageKeyMap[age] || age || '青年';
-    const ageFeatures = AGE_FEATURES[ageKey] || AGE_FEATURES['青年'];
+    // 年龄特征
+    const ageFeatures = AGE_FEATURES[age] || AGE_FEATURES['青年'];
     appearance += '【年龄特征】\n';
     appearance += `${ageFeatures.skin}。\n`;
     appearance += `${ageFeatures.eyes}。\n`;
@@ -422,7 +418,7 @@ function generateDetailFeatures(star, malignantStars, age) {
         '破军': '眼神不定，透着对变动的渴望和不满足。'
     };
     
-    details += (eyeDetails[star] || eyeDetails['紫微']) + '\n';
+    details += eyeDetails[star] || eyeDetails['紫微'] + '\n';
     
     // 手势特征
     const gestureDetails = {
@@ -442,7 +438,7 @@ function generateDetailFeatures(star, malignantStars, age) {
         '破军': '手势快速多变，透着变动和开创的欲望。'
     };
     
-    details += (gestureDetails[star] || gestureDetails['紫微']) + '\n';
+    details += gestureDetails[star] || gestureDetails['紫微'] + '\n';
     
     // 身体气味（基于煞星）
     if (malignantStars.length > 0) {
@@ -478,7 +474,7 @@ function generateDetailFeatures(star, malignantStars, age) {
             '七杀': '身上有淡淡的血腥味，透着武将的杀气。',
             '破军': '身上有种变动的味道，难以捉摸。'
         };
-        details += (defaultSmells[star] || defaultSmells['紫微']) + '\n';
+        details += defaultSmells[star] || defaultSmells['紫微'] + '\n';
     }
     
     // 疤痕或特殊标记（基于煞星）
